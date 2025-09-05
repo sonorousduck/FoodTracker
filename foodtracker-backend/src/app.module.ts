@@ -2,10 +2,21 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule } from "@nestjs/config";
 import { Module } from "@nestjs/common";
 
+import { FoodmeasurementModule } from "./foodmeasurement/foodmeasurement.module";
+import { RecipefoodController } from "./recipefood/recipefood.controller";
+import { RecipefoodService } from "./recipefood/recipefood.service";
+import { RecipefoodModule } from "./recipefood/recipefood.module";
+import { FoodentryModule } from "./foodentry/foodentry.module";
+import { MealController } from "./meal/meal.controller";
+import { RecipeModule } from "./recipe/recipe.module";
+import { AuthModule } from "./auth old/auth.module";
 import { UsersModule } from "./users/users.module";
+import { MealService } from "./meal/meal.service";
 import { AppController } from "./app.controller";
-import { AuthModule } from "./auth/auth.module";
+import { MealModule } from "./meal/meal.module";
+import { FoodModule } from "./food/food.module";
 import { AppService } from "./app.service";
+
 
 @Module({
   imports: [
@@ -22,8 +33,14 @@ import { AppService } from "./app.service";
       autoLoadEntities: true,
       synchronize: true, // TODO: Remove! This isn't safe for production code
     }),
+    FoodModule,
+    FoodentryModule,
+    MealModule,
+    RecipeModule,
+    RecipefoodModule,
+    FoodmeasurementModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, MealController, RecipefoodController],
+  providers: [AppService, MealService, RecipefoodService],
 })
 export class AppModule {}

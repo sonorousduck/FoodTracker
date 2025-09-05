@@ -5,6 +5,7 @@ import { Repository } from "typeorm";
 import { CreateUserDto } from "./dto/createuser.dto";
 import { User } from "./entities/user.entity";
 
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -19,7 +20,7 @@ export class UsersService {
       throw new ConflictException();
     }
 
-    this.userRepository.create({
+    return this.userRepository.save({
       ...createUserDto,
     });
   }
