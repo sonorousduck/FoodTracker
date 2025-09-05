@@ -9,12 +9,12 @@ import { RecipefoodModule } from "./recipefood/recipefood.module";
 import { FoodentryModule } from "./foodentry/foodentry.module";
 import { MealController } from "./meal/meal.controller";
 import { RecipeModule } from "./recipe/recipe.module";
-import { AuthModule } from "./auth old/auth.module";
 import { UsersModule } from "./users/users.module";
 import { MealService } from "./meal/meal.service";
 import { AppController } from "./app.controller";
 import { MealModule } from "./meal/meal.module";
 import { FoodModule } from "./food/food.module";
+import { AuthModule } from "./auth/auth.module";
 import { AppService } from "./app.service";
 
 

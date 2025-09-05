@@ -1,10 +1,10 @@
 import { Controller, Get, Post, HttpCode, HttpStatus, UseGuards, Request, Body } from "@nestjs/common";
-import { CreateUserDto } from "src/users/dto/create-user.dto";
+import { CreateUserDto } from "src/users/dto/createuser.dto";
 
 import { PassportJwtAuthGuard } from "./guards/passportjwt.guard";
-import { PassportLocalGuard } from "./guards/passportauth.guard";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
+
 
 @Controller("auth")
 export class AuthController {
@@ -17,7 +17,7 @@ export class AuthController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @Post("create-account")
+  @Post("create")
   create(@Body() createUserDto: CreateUserDto) {
     return this.authService.createUser(createUserDto);
   }

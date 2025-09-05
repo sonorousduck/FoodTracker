@@ -13,7 +13,7 @@ export class User {
   @Column()
   email: string;
 
-  @Column({ type: "bytes" })
+  @Column()
   password: string;
 
   @Column()

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { CreateUserDto } from "src/users/dto/createuser.dto";
 import { UsersService } from "src/users/users.service";
 import { IsEmail } from "class-validator";
@@ -21,7 +21,7 @@ export class AuthService {
     const user = await this.validateUser(input);
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new ForbiddenException();
     }
 
     return this.signIn(user);
@@ -31,7 +31,7 @@ export class AuthService {
     const user = await this.userService.findOneByEmail(input.email);
 
     if (!user) {
-      throw new UnauthorizedException();
+      return null;
     }
 
     if (user && user.password === input.password) {

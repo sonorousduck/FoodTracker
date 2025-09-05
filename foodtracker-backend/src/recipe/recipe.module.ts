@@ -1,9 +1,15 @@
-import { Module } from '@nestjs/common';
-import { RecipeService } from './recipe.service';
-import { RecipeController } from './recipe.controller';
+import { RecipeFood } from "src/recipefood/entities/recipefood.entity";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Module } from "@nestjs/common";
+
+import { RecipeController } from "./recipe.controller";
+import { Recipe } from "./entities/recipe.entity";
+import { RecipeService } from "./recipe.service";
+
 
 @Module({
+  imports: [TypeOrmModule.forFeature([Recipe, RecipeFood])],
   providers: [RecipeService],
-  controllers: [RecipeController]
+  controllers: [RecipeController],
 })
 export class RecipeModule {}
