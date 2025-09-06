@@ -120,11 +120,10 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   modalContent: {
-    height: "60%",
-    width: "100%",
+    padding: 8,
+    paddingBottom: 32,
     borderTopRightRadius: 18,
     borderTopLeftRadius: 18,
-    padding: 8,
   },
   shadow: {
     shadowColor: "#000",
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     height: 4,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 2,
-    marginBottom: 8,
+    marginBottom: 16,
   },
   closeButton: {
     padding: 4,

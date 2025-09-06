@@ -1,5 +1,6 @@
 import AddModal from "@/components/modal/addmodal";
 import { Colors } from "@/constants/Colors";
+import { localization } from "@/constants/localization";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, { useState } from "react";
@@ -30,25 +31,22 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
       ></IconButton>
 
       <AddModal isVisible={modalVisible} onClose={() => setModalVisible(false)}>
-        <Text style={styles.modalTitle}>Add New Item</Text>
-        <Text style={styles.modalText}>This is your popup content!</Text>
-
         <View style={styles.buttonContainer}>
           <AddModalPrimaryAction style={[styles.modalButton]}>
             <MaterialDesignIcons name="food-variant" color={Colors[colorScheme ?? "light"].icon} size={36} />
-            <Text style={styles.modalPrimaryActionButton}>Log food</Text>
+            <Text style={styles.modalPrimaryActionButton}>{localization.logFood}</Text>
           </AddModalPrimaryAction>
           <AddModalPrimaryAction style={[styles.modalButton]}>
             <FontAwesome name="barcode" color={Colors[colorScheme ?? "light"].icon} size={36} />
-            <Text style={styles.modalPrimaryActionButton}>Scan barcode</Text>
+            <Text style={styles.modalPrimaryActionButton}>{localization.scanBarcode}</Text>
           </AddModalPrimaryAction>
           <AddModalPrimaryAction style={[styles.modalButton]}>
             <Ionicons name="scale-outline" color={Colors[colorScheme ?? "light"].icon} size={36} />
-            <Text style={styles.modalPrimaryActionButton}>Log weight</Text>
+            <Text style={styles.modalPrimaryActionButton}>{localization.logWeight}</Text>
           </AddModalPrimaryAction>
           <AddModalPrimaryAction style={[styles.modalButton]}>
             <MaterialIcons name="set-meal" color={Colors[colorScheme ?? "light"].icon} size={36} />
-            <Text style={styles.modalPrimaryActionButton}>Create recipe</Text>
+            <Text style={styles.modalPrimaryActionButton}>{localization.createRecipe}</Text>
           </AddModalPrimaryAction>
         </View>
       </AddModal>
