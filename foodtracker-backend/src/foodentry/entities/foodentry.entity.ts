@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from "typeorm";
+import { Recipe } from "src/recipe/entities/recipe.entity";
 import { User } from "src/users/entities/user.entity";
 import { Meal } from "src/meal/entities/meal.entity";
 import { Food } from "src/food/entities/food.entity";
@@ -15,8 +16,8 @@ export class FoodEntry {
   @ManyToOne(() => Food, { nullable: true })
   food?: Food;
 
-  // @ManyToOne(() => Recipe, { nullable: true })
-  // recipe?: Recipe;
+  @ManyToOne(() => Recipe, { nullable: true })
+  recipe?: Recipe;
 
   @Column("decimal", { precision: 10, scale: 4 })
   servings: number;
