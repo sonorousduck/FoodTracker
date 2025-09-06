@@ -40,7 +40,7 @@ import { AppService } from "./app.service";
     RecipefoodModule,
     FoodmeasurementModule,
   ],
-  controllers: [AppController, MealController, RecipefoodController],
-  providers: [AppService, MealService, RecipefoodService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
