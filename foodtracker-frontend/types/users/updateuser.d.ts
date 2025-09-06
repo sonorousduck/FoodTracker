@@ -1,5 +1,5 @@
 /**
- * Auto-generated from backend DTOs/Entities on 2025-09-05 22:19:56
+ * Auto-generated from backend DTOs/Entities on 2025-09-06 07:48:25
  * Do not edit manually.
  */
 
