@@ -1,5 +1,5 @@
-import AddButton from "@/components/addbutton";
 import { HapticTab } from "@/components/HapticTab";
+import AddButton from "@/components/interactions/buttons/addbutton";
 import TabBarBackground from "@/components/ui/TabBarBackground";
 import { Colors } from "@/constants/Colors";
 import { AntDesign, Ionicons } from "@expo/vector-icons";

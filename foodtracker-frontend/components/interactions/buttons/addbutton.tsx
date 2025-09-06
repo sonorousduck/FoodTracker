@@ -1,9 +1,12 @@
+import AddModal from "@/components/modal/addmodal";
 import { Colors } from "@/constants/Colors";
+import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { StyleSheet, Text, useColorScheme, View } from "react-native";
 import { IconButton } from "react-native-paper";
 
-import AddModal from "./addmodal";
+import AddModalPrimaryAction from "./addmodalprimaryaction";
 
 export default function AddButton({ onPress }: { onPress?: () => void }) {
   const colorScheme = useColorScheme();
@@ -31,20 +34,22 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
         <Text style={styles.modalText}>This is your popup content!</Text>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.modalButton, styles.confirmButton]}
-            onPress={() => {
-              // Handle your action here
-              console.log("Action confirmed");
-              setModalVisible(false);
-            }}
-          >
-            <Text style={styles.confirmButtonText}>Confirm</Text>
-          </TouchableOpacity>
+          <AddModalPrimaryAction style={[styles.modalButton]}>
+            <MaterialDesignIcons name="food-variant" color={Colors[colorScheme ?? "light"].icon} size={36} />
+            <Text style={styles.modalPrimaryActionButton}>Log food</Text>
+          </AddModalPrimaryAction>
+          <AddModalPrimaryAction style={[styles.modalButton]}>
+            <FontAwesome name="barcode" color={Colors[colorScheme ?? "light"].icon} size={36} />
+            <Text style={styles.modalPrimaryActionButton}>Scan barcode</Text>
+          </AddModalPrimaryAction>
+          <AddModalPrimaryAction style={[styles.modalButton]}>
+            <Ionicons name="scale-outline" color={Colors[colorScheme ?? "light"].icon} size={36} />
+            <Text style={styles.modalPrimaryActionButton}>Log weight</Text>
+          </AddModalPrimaryAction>
+          <AddModalPrimaryAction style={[styles.modalButton]}>
+            <MaterialIcons name="set-meal" color={Colors[colorScheme ?? "light"].icon} size={36} />
+            <Text style={styles.modalPrimaryActionButton}>Create recipe</Text>
+          </AddModalPrimaryAction>
         </View>
       </AddModal>
     </>
@@ -59,7 +64,6 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    // backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -84,6 +88,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: "center",
   },
+  modalPrimaryActionButton: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
   modalText: {
     fontSize: 16,
     marginBottom: 20,
@@ -92,6 +101,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     gap: 10,
   },
@@ -100,9 +110,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#f0f0f0",
   },
   confirmButton: {
     backgroundColor: "#007AFF",
