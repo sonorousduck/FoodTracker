@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, OneToMany, Index } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, OneToMany, Index, Unique } from "typeorm";
 import { FoodMeasurement } from "src/foodmeasurement/entities/foodmeasurement.entity";
 import { RecipeFood } from "src/recipefood/entities/recipefood.entity";
 import { User } from "src/users/entities/user.entity";
@@ -9,7 +9,7 @@ export class Food {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, unique: true })
   sourceId?: string; // Original ID from CSV for reference
 
   @Index()

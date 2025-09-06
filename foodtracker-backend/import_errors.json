@@ -1,0 +1,757 @@
+[
+  {
+    "food": "George Weston Bakeries Thomas English Muffins",
+    "error": "\u274c Failed to create George Weston Bakeries Thomas English Muffins: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Waffles Buttermilk Frozen Ready-To-Heat",
+    "error": "\u274c Failed to create Waffles Buttermilk Frozen Ready-To-Heat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Waffle Buttermilk Frozen Ready-To-Heat Toasted",
+    "error": "\u274c Failed to create Waffle Buttermilk Frozen Ready-To-Heat Toasted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Waffle Buttermilk Frozen Ready-To-Heat Microwaved",
+    "error": "\u274c Failed to create Waffle Buttermilk Frozen Ready-To-Heat Microwaved: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Waffle Plain Frozen Ready-To-Heat Microwave",
+    "error": "\u274c Failed to create Waffle Plain Frozen Ready-To-Heat Microwave: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pie Crust Cookie-Type Graham Cracker Ready Crust",
+    "error": "\u274c Failed to create Pie Crust Cookie-Type Graham Cracker Ready Crust: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pie Crust Cookie-Type Chocolate Ready Crust",
+    "error": "\u274c Failed to create Pie Crust Cookie-Type Chocolate Ready Crust: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Dutch Apple Pie",
+    "error": "\u274c Failed to create Dutch Apple Pie: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pie Crust Deep Dish Frozen Unbaked Made With Enriched Flour",
+    "error": "\u274c Failed to create Pie Crust Deep Dish Frozen Unbaked Made With Enriched Flour: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Waffles Chocolate Chip Frozen Ready-To-Heat",
+    "error": "\u274c Failed to create Waffles Chocolate Chip Frozen Ready-To-Heat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Tostada Shells Corn",
+    "error": "\u274c Failed to create Tostada Shells Corn: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Bread Salvadoran Sweet Cheese (Quesadilla Salvadorena)",
+    "error": "\u274c Failed to create Bread Salvadoran Sweet Cheese (Quesadilla Salvadorena): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Bread Pound Cake Type Pan De Torta Salvadoran",
+    "error": "\u274c Failed to create Bread Pound Cake Type Pan De Torta Salvadoran: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pastry Pastelitos De Guava (Guava Pastries)",
+    "error": "\u274c Failed to create Pastry Pastelitos De Guava (Guava Pastries): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Crackers Snack Goya Crackers",
+    "error": "\u274c Failed to create Crackers Snack Goya Crackers: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Crackers Cream Gamesa Sabrosas",
+    "error": "\u274c Failed to create Crackers Cream Gamesa Sabrosas: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Crackers Cream La Moderna Rikis Cream Crackers",
+    "error": "\u274c Failed to create Crackers Cream La Moderna Rikis Cream Crackers: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Bread White Wheat",
+    "error": "\u274c Failed to create Bread White Wheat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Bagels Wheat",
+    "error": "\u274c Failed to create Bagels Wheat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Puff Eclair Custard Or Cream Filled Iced",
+    "error": "\u274c Failed to create Cream Puff Eclair Custard Or Cream Filled Iced: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Tortillas Ready-To-Bake Or -Fry Flour Shelf Stable",
+    "error": "\u274c Failed to create Tortillas Ready-To-Bake Or -Fry Flour Shelf Stable: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Beef Jerky Chopped And Formed",
+    "error": "\u274c Failed to create Snacks Beef Jerky Chopped And Formed: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Corn-Based Extruded Chips Plain",
+    "error": "\u274c Failed to create Snacks Corn-Based Extruded Chips Plain: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Corn-Based Extruded Chips Barbecue-Flavor",
+    "error": "\u274c Failed to create Snacks Corn-Based Extruded Chips Barbecue-Flavor: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Corn-Based Extruded Cones Plain",
+    "error": "\u274c Failed to create Snacks Corn-Based Extruded Cones Plain: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Fruit Leather Pieces",
+    "error": "\u274c Failed to create Snacks Fruit Leather Pieces: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Fruit Leather Rolls",
+    "error": "\u274c Failed to create Snacks Fruit Leather Rolls: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Hard Plain",
+    "error": "\u274c Failed to create Snacks Granola Bars Hard Plain: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Hard Almond",
+    "error": "\u274c Failed to create Snacks Granola Bars Hard Almond: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Soft Uncoated Raisin",
+    "error": "\u274c Failed to create Snacks Granola Bars Soft Uncoated Raisin: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Soft Coated Milk Chocolate Coating Chocolate Chip",
+    "error": "\u274c Failed to create Snacks Granola Bars Soft Coated Milk Chocolate Coating Chocolate Chip: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Honey-Combed With Peanut Butter",
+    "error": "\u274c Failed to create Honey-Combed With Peanut Butter: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Soft Coated Milk Chocolate Coating Peanut Butter",
+    "error": "\u274c Failed to create Snacks Granola Bars Soft Coated Milk Chocolate Coating Peanut Butter: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Granola Bars Soft Uncoated Peanut Butter And Chocolate Chip",
+    "error": "\u274c Failed to create Snacks Granola Bars Soft Uncoated Peanut Butter And Chocolate Chip: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Popcorn Oil-Popped Microwave Regular Flavor No Trans Fat",
+    "error": "\u274c Failed to create Snacks Popcorn Oil-Popped Microwave Regular Flavor No Trans Fat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Popcorn Cakes",
+    "error": "\u274c Failed to create Snacks Popcorn Cakes: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Popcorn Caramel-Coated With Peanuts",
+    "error": "\u274c Failed to create Snacks Popcorn Caramel-Coated With Peanuts: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Popcorn Caramel-Coated Without Peanuts",
+    "error": "\u274c Failed to create Snacks Popcorn Caramel-Coated Without Peanuts: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Potato Chips Made From Dried Potatoes Reduced Fat",
+    "error": "\u274c Failed to create Snacks Potato Chips Made From Dried Potatoes Reduced Fat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Potato Chips Made From Dried Potatoes Sour-Cream And Onion-Flavor",
+    "error": "\u274c Failed to create Snacks Potato Chips Made From Dried Potatoes Sour-Cream And Onion-Flavor: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Pretzels Hard Plain Salted",
+    "error": "\u274c Failed to create Snacks Pretzels Hard Plain Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Pretzels Hard Confectioners Coating Chocolate-Flavor",
+    "error": "\u274c Failed to create Snacks Pretzels Hard Confectioners Coating Chocolate-Flavor: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Rice Cakes Brown Rice Sesame Seed",
+    "error": "\u274c Failed to create Snacks Rice Cakes Brown Rice Sesame Seed: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Tortilla Chips Plain White Corn Salted",
+    "error": "\u274c Failed to create Snacks Tortilla Chips Plain White Corn Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Tortilla Chips Nacho Cheese",
+    "error": "\u274c Failed to create Snacks Tortilla Chips Nacho Cheese: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Tortilla Chips Ranch-Flavor",
+    "error": "\u274c Failed to create Snacks Tortilla Chips Ranch-Flavor: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Trail Mix Regular",
+    "error": "\u274c Failed to create Snacks Trail Mix Regular: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Almond Joy Candy Bar",
+    "error": "\u274c Failed to create Almond Joy Candy Bar: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Twizzlers Cherry Bites",
+    "error": "\u274c Failed to create Twizzlers Cherry Bites: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Nestle Bit-O-Honey Candy Chews",
+    "error": "\u274c Failed to create Nestle Bit-O-Honey Candy Chews: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Nestle Butterfinger Bar",
+    "error": "\u274c Failed to create Nestle Butterfinger Bar: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Caramels Chocolate-Flavor Roll",
+    "error": "\u274c Failed to create Caramels Chocolate-Flavor Roll: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Baking Chocolate Unsweetened Liquid",
+    "error": "\u274c Failed to create Baking Chocolate Unsweetened Liquid: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Unsweetened Baking Chocolate",
+    "error": "\u274c Failed to create Unsweetened Baking Chocolate: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Confectioners Coating Yogurt",
+    "error": "\u274c Failed to create Confectioners Coating Yogurt: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Confectioners Coating Peanut Butter",
+    "error": "\u274c Failed to create Confectioners Coating Peanut Butter: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "White Chocolate",
+    "error": "\u274c Failed to create White Chocolate: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ice Creams Vanilla Light",
+    "error": "\u274c Failed to create Ice Creams Vanilla Light: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ice Creams Vanilla Rich",
+    "error": "\u274c Failed to create Ice Creams Vanilla Rich: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Desserts Flan Caramel Custard Prepared-From-Recipe",
+    "error": "\u274c Failed to create Desserts Flan Caramel Custard Prepared-From-Recipe: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ice Creams Vanilla",
+    "error": "\u274c Failed to create Ice Creams Vanilla: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ice Creams Vanilla Light Soft-Serve",
+    "error": "\u274c Failed to create Ice Creams Vanilla Light Soft-Serve: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Sherbet Orange",
+    "error": "\u274c Failed to create Sherbet Orange: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Fudge Peanut Butter Prepared-From-Recipe",
+    "error": "\u274c Failed to create Fudge Peanut Butter Prepared-From-Recipe: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Fudge Vanilla Prepared-From-Recipe",
+    "error": "\u274c Failed to create Fudge Vanilla Prepared-From-Recipe: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Fudge Vanilla With Nuts",
+    "error": "\u274c Failed to create Fudge Vanilla With Nuts: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Nestle Goobers Chocolate Covered Peanuts",
+    "error": "\u274c Failed to create Nestle Goobers Chocolate Covered Peanuts: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Nestle Baby Ruth Bar",
+    "error": "\u274c Failed to create Nestle Baby Ruth Bar: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Twizzlers Strawberry Twists Candy",
+    "error": "\u274c Failed to create Twizzlers Strawberry Twists Candy: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Syrups Table Blends Pancake With Butter",
+    "error": "\u274c Failed to create Syrups Table Blends Pancake With Butter: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ice Creams Chocolate Light",
+    "error": "\u274c Failed to create Ice Creams Chocolate Light: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Nestle Chunky Bar",
+    "error": "\u274c Failed to create Nestle Chunky Bar: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Chocolate",
+    "error": "\u274c Failed to create Milk Chocolate: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Puddings Banana Dry Mix Instant Prepared With 2% Milk",
+    "error": "\u274c Failed to create Puddings Banana Dry Mix Instant Prepared With 2% Milk: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Puddings Banana Dry Mix Regular Prepared With 2% Milk",
+    "error": "\u274c Failed to create Puddings Banana Dry Mix Regular Prepared With 2% Milk: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Andreas Gluten Free Soft Dinner Roll",
+    "error": "\u274c Failed to create Andreas Gluten Free Soft Dinner Roll: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Crunchmaster Multi-Grain Crisps Snack Crackers Gluten-Free",
+    "error": "\u274c Failed to create Crunchmaster Multi-Grain Crisps Snack Crackers Gluten-Free: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Glutino Gluten Free Cookies Chocolate Vanilla Creme",
+    "error": "\u274c Failed to create Glutino Gluten Free Cookies Chocolate Vanilla Creme: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Glutino Gluten Free Cookies Vanilla Creme",
+    "error": "\u274c Failed to create Glutino Gluten Free Cookies Vanilla Creme: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pepperidge Farm Goldfish Baked Snack Crackers Original",
+    "error": "\u274c Failed to create Pepperidge Farm Goldfish Baked Snack Crackers Original: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pepperidge Farm Goldfish Baked Snack Crackers Parmesan",
+    "error": "\u274c Failed to create Pepperidge Farm Goldfish Baked Snack Crackers Parmesan: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Pepperidge Farm Goldfish Baked Snack Crackers Pizza",
+    "error": "\u274c Failed to create Pepperidge Farm Goldfish Baked Snack Crackers Pizza: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Rudis Gluten-Free Bakery Original Sandwich Bread",
+    "error": "\u274c Failed to create Rudis Gluten-Free Bakery Original Sandwich Bread: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Udis Gluten Free Soft & Delicious White Sandwich Bread",
+    "error": "\u274c Failed to create Udis Gluten Free Soft & Delicious White Sandwich Bread: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Udis Gluten Free Soft & Hearty Whole Grain Bread",
+    "error": "\u274c Failed to create Udis Gluten Free Soft & Hearty Whole Grain Bread: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Udis Gluten Free Whole Grain Dinner Rolls",
+    "error": "\u274c Failed to create Udis Gluten Free Whole Grain Dinner Rolls: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Vans Gluten Free Totally Original Pancakes",
+    "error": "\u274c Failed to create Vans Gluten Free Totally Original Pancakes: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Seaweed Canadian Cultivated Emi-Tsunomata Dry",
+    "error": "\u274c Failed to create Seaweed Canadian Cultivated Emi-Tsunomata Dry: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Seaweed Canadian Cultivated Emi-Tsunomata Rehydrated",
+    "error": "\u274c Failed to create Seaweed Canadian Cultivated Emi-Tsunomata Rehydrated: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potatoes Hash Brown Refrigerated Unprepared",
+    "error": "\u274c Failed to create Potatoes Hash Brown Refrigerated Unprepared: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potatoes Hash Brown Refrigerated Prepared Pan-Fried In Canola Oil",
+    "error": "\u274c Failed to create Potatoes Hash Brown Refrigerated Prepared Pan-Fried In Canola Oil: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Sweet Potatoes French Fried Frozen As Packaged Salt Added In Processing",
+    "error": "\u274c Failed to create Sweet Potatoes French Fried Frozen As Packaged Salt Added In Processing: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Moose Meat Raw (Alaska Native)",
+    "error": "\u274c Failed to create Moose Meat Raw (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Mashu Roots Raw (Alaska Native)",
+    "error": "\u274c Failed to create Mashu Roots Raw (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Moose Liver Braised (Alaska Native)",
+    "error": "\u274c Failed to create Moose Liver Braised (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Seal Bearded (Oogruk) Meat Raw (Alaska Native)",
+    "error": "\u274c Failed to create Seal Bearded (Oogruk) Meat Raw (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Oil Bearded Seal (Oogruk) (Alaska Native)",
+    "error": "\u274c Failed to create Oil Bearded Seal (Oogruk) (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Oopah (Tunicate) Whole Animal (Alaska Native)",
+    "error": "\u274c Failed to create Oopah (Tunicate) Whole Animal (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Owl Horned Flesh Raw (Alaska Native)",
+    "error": "\u274c Failed to create Owl Horned Flesh Raw (Alaska Native): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Guava Nectar With Sucralose Canned",
+    "error": "\u274c Failed to create Guava Nectar With Sucralose Canned: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Potato Chips Plain Salted",
+    "error": "\u274c Failed to create Snacks Potato Chips Plain Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Yogurt Greek Nonfat Vanilla Chobani",
+    "error": "\u274c Failed to create Yogurt Greek Nonfat Vanilla Chobani: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Coffee Ready To Drink Vanilla Light Milk Based Sweetened",
+    "error": "\u274c Failed to create Coffee Ready To Drink Vanilla Light Milk Based Sweetened: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Tea Green Brewed Decaffeinated",
+    "error": "\u274c Failed to create Tea Green Brewed Decaffeinated: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Tropical Punch Ready-To-Drink",
+    "error": "\u274c Failed to create Tropical Punch Ready-To-Drink: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Seasoning Mix Dry Chili Original",
+    "error": "\u274c Failed to create Seasoning Mix Dry Chili Original: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Alcoholic Beverage Malt Beer Hard Lemonade",
+    "error": "\u274c Failed to create Alcoholic Beverage Malt Beer Hard Lemonade: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Potato Chips Made From Dried Potatoes (Preformed) Multigrain",
+    "error": "\u274c Failed to create Snacks Potato Chips Made From Dried Potatoes (Preformed) Multigrain: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Snacks Potato Chips Lightly Salted",
+    "error": "\u274c Failed to create Snacks Potato Chips Lightly Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Nfs",
+    "error": "\u274c Failed to create Milk Nfs: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Buttermilk Fat Free (Skim)",
+    "error": "\u274c Failed to create Buttermilk Fat Free (Skim): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Buttermilk Low Fat (1%)",
+    "error": "\u274c Failed to create Buttermilk Low Fat (1%): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Dry Reconstituted Ns As To Fat Content",
+    "error": "\u274c Failed to create Milk Dry Reconstituted Ns As To Fat Content: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Dry Reconstituted Whole",
+    "error": "\u274c Failed to create Milk Dry Reconstituted Whole: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Dry Reconstituted Low Fat (1%)",
+    "error": "\u274c Failed to create Milk Dry Reconstituted Low Fat (1%): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Dry Reconstituted Fat Free (Skim)",
+    "error": "\u274c Failed to create Milk Dry Reconstituted Fat Free (Skim): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Milk Evaporated Reduced Fat (2%)",
+    "error": "\u274c Failed to create Milk Evaporated Reduced Fat (2%): 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Non-Dairy Milk Nfs",
+    "error": "\u274c Failed to create Non-Dairy Milk Nfs: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Almond Milk Unsweetened",
+    "error": "\u274c Failed to create Almond Milk Unsweetened: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Chocolate Beverage Powder Reduced Sugar Dry Mix Not Reconstituted",
+    "error": "\u274c Failed to create Chocolate Beverage Powder Reduced Sugar Dry Mix Not Reconstituted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Ns As To Light Heavy Or Half And Half",
+    "error": "\u274c Failed to create Cream Ns As To Light Heavy Or Half And Half: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Light",
+    "error": "\u274c Failed to create Cream Light: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Half And Half",
+    "error": "\u274c Failed to create Cream Half And Half: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Half And Half Flavored",
+    "error": "\u274c Failed to create Cream Half And Half Flavored: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Cream Heavy",
+    "error": "\u274c Failed to create Cream Heavy: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Coffee Creamer Liquid Fat Free Flavored",
+    "error": "\u274c Failed to create Coffee Creamer Liquid Fat Free Flavored: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Topping From Cheese Pizza",
+    "error": "\u274c Failed to create Topping From Cheese Pizza: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Topping From Vegetable Pizza",
+    "error": "\u274c Failed to create Topping From Vegetable Pizza: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Topping From Meat Pizza",
+    "error": "\u274c Failed to create Topping From Meat Pizza: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Topping From Meat And Vegetable Pizza",
+    "error": "\u274c Failed to create Topping From Meat And Vegetable Pizza: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Ham Luncheon Meat Loaf Type",
+    "error": "\u274c Failed to create Ham Luncheon Meat Loaf Type: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Turkey Ham Prepackaged Or Deli Luncheon Meat",
+    "error": "\u274c Failed to create Turkey Ham Prepackaged Or Deli Luncheon Meat: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Antipasto With Ham Fish Cheese Vegetables",
+    "error": "\u274c Failed to create Antipasto With Ham Fish Cheese Vegetables: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Peanut Butter Lower Sodium And Lower Sugar",
+    "error": "\u274c Failed to create Peanut Butter Lower Sodium And Lower Sugar: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Peanut Butter And Jelly",
+    "error": "\u274c Failed to create Peanut Butter And Jelly: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Peanut Butter And Chocolate Spread",
+    "error": "\u274c Failed to create Peanut Butter And Chocolate Spread: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potato Skins Without Topping",
+    "error": "\u274c Failed to create Potato Skins Without Topping: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potato Skins With Cheese",
+    "error": "\u274c Failed to create Potato Skins With Cheese: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potato Skins With Cheese And Bacon",
+    "error": "\u274c Failed to create Potato Skins With Cheese And Bacon: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Potato Skins Nfs",
+    "error": "\u274c Failed to create Potato Skins Nfs: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Mixed Salad Greens Raw",
+    "error": "\u274c Failed to create Mixed Salad Greens Raw: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Table Fat Nfs",
+    "error": "\u274c Failed to create Table Fat Nfs: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Butter Whipped Tub Salted",
+    "error": "\u274c Failed to create Butter Whipped Tub Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Margarine-Like Spread Liquid Salted",
+    "error": "\u274c Failed to create Margarine-Like Spread Liquid Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Margarine Like Spread Whipped Tub Salted",
+    "error": "\u274c Failed to create Margarine Like Spread Whipped Tub Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Vegetable Oil-Butter Spread Stick Salted",
+    "error": "\u274c Failed to create Vegetable Oil-Butter Spread Stick Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Butter-Margarine Blend Stick Salted",
+    "error": "\u274c Failed to create Butter-Margarine Blend Stick Salted: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Tartar Sauce Reduced Fat/calorie",
+    "error": "\u274c Failed to create Tartar Sauce Reduced Fat/calorie: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Honey Butter",
+    "error": "\u274c Failed to create Honey Butter: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Salad Dressing NFS For Sandwiches",
+    "error": "\u274c Failed to create Salad Dressing NFS For Sandwiches: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  },
+  {
+    "food": "Sugar Cinnamon",
+    "error": "\u274c Failed to create Sugar Cinnamon: 500 - {\"statusCode\":500,\"message\":\"Internal server error\"}",
+    "status_code": 500
+  }
+]

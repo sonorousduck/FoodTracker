@@ -23,8 +23,16 @@ export class FoodService {
   }
 
   async createFood(createFood: CreateFoodDto) {
-    const food = await this.foodRepository.save(createFood);
-    return food;
+    // Get the actual food entity
+    const alreadyExistsFood = await this.foodRepository.findOneBy({
+      sourceId: createFood.sourceId,
+    });
+
+    if (alreadyExistsFood) {
+      return this.foodRepository.update(alreadyExistsFood.id, createFood);
+    } else {
+      return this.foodRepository.save(createFood);
+    }
   }
 
   async getFood(foodId: number) {
@@ -39,8 +47,9 @@ export class FoodService {
 
   async getAllFoods(limit: number = 100, page?: number): Promise<AllFoodsDto> {
     const foods = await this.foodRepository
-      .createQueryBuilder()
-      .orderBy("name", "DESC")
+      .createQueryBuilder("food")
+      .leftJoinAndSelect("food.measurements", "measurements")
+      .orderBy("food.name", "ASC")
       .take(limit)
       .skip(page ? page * limit : 0)
       .getManyAndCount();
