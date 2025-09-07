@@ -28,9 +28,11 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      await signIn({ email, password });
-      // Navigate after successful sign-in
-      router.replace("/");
+      const result = await signIn({ email, password });
+      if (result.accessToken) {
+        // Navigate after successful sign-in
+        router.replace("/");
+      }
     } catch (error) {
       Alert.alert("Sign In Failed", error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
@@ -88,7 +90,7 @@ export default function SignIn() {
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.replace("/createaccount")}>
               <Text style={styles.signUpLink}>Sign Up</Text>
             </TouchableOpacity>

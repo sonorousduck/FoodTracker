@@ -1,5 +1,6 @@
 import { Food } from 'src/food/entities/food.entity';
 import { FoodEntry } from 'src/foodentry/entities/foodentry.entity';
+import { Goal } from 'src/goal/entities/goal.entity';
 import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
 import { Weight } from 'src/weight/entities/weight.entity';
@@ -37,4 +38,7 @@ export class User {
 
   @OneToMany(() => Weight, (weight) => weight.user)
   weightEntries: ReadonlyArray<Weight>;
+
+  @OneToMany(() => Goal, (goal) => goal.user)
+  goals: ReadonlyArray<Goal>;
 }

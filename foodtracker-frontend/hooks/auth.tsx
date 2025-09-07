@@ -45,20 +45,13 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const signIn = async (loginDto: LoginDto): Promise<AuthResult> => {
     try {
-      console.log("Attempting login with:", { email: loginDto.email }); // Don't log password
-      console.log("API base URL:", apiService.getAxiosInstance().defaults.baseURL);
-
       const response = await apiService.post<AuthResult>("/auth/login", loginDto);
-
-      console.log("Login response status:", response.status);
-      console.log("Login response data:", response.data);
 
       const authResult = response.data;
 
       if (authResult?.accessToken) {
         // Set session in storage (useStorageState)
         setSession(authResult.accessToken);
-        // The useEffect above will automatically update the API service token
       }
 
       return authResult;
@@ -66,13 +59,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
       console.error("Login error details:", error);
 
       if (isAxiosError(error)) {
-        console.log(error.response);
-        console.log(error.cause);
-        console.log(error.code);
-        console.error("Axios error response:", error.response?.data);
-        console.error("Axios error status:", error.response?.status);
-        console.error("Axios error message:", error.message);
-
         const message = error.response?.data?.message || error.message || "Login failed";
         throw new Error(message);
       }

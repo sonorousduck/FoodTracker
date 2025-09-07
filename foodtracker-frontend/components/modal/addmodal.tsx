@@ -1,7 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { BlurView } from "expo-blur";
-import { PropsWithChildren, useEffect } from "react";
-import React from "react";
+import React, { PropsWithChildren, useEffect } from "react";
 import { Dimensions, Modal, Pressable, StyleSheet, useColorScheme, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
@@ -90,7 +89,6 @@ export default function AddModal({ isVisible, children, onClose }: Props) {
               styles.shadow,
             ]}
           >
-            {/* Add a drag indicator */}
             <View
               style={[
                 styles.dragIndicator,

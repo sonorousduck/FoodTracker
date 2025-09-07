@@ -33,7 +33,6 @@ export class WeightService {
   }
 
   async create(createWeightDto: CreateWeightDto, userId: number) {
-    console.log(userId);
     const newWeightEntry = await this.weightRepository.save({ ...createWeightDto, user: { id: userId } });
 
     if (!newWeightEntry) {
@@ -47,7 +46,7 @@ export class WeightService {
     const weightEntry = await this.weightRepository.findOne({ where: { id: weightId } });
 
     if (!weightEntry) {
-      throw new NotFoundException(`Weight entry with was not would with id: ${weightId}`);
+      throw new NotFoundException(`Weight entry was not found with id: ${weightId}`);
     }
 
     await this.weightRepository.remove(weightEntry);

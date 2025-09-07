@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
@@ -28,14 +27,9 @@ export class WeightController {
   @UseGuards(PassportJwtAuthGuard)
   get(
     @User() user: UserRequest,
-    @Query("userId", new ParseIntPipe()) userId: number,
     @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
     @Query("since", new ParseDatePipe({ optional: true })) since?: Date
   ) {
-    if (user.userId != userId) {
-      throw new ForbiddenException();
-    }
-
     return this.weightService.getWeightEntries({ userId: user.userId, limit, since });
   }
 
