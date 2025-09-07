@@ -1,14 +1,13 @@
-import { ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { CreateUserDto } from "src/users/dto/createuser.dto";
-import { UsersService } from "src/users/users.service";
-import { IsEmail } from "class-validator";
-import { JwtService } from "@nestjs/jwt";
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto } from 'src/users/dto/createuser.dto';
+import { UsersService } from 'src/users/users.service';
 
-import { LoginDto } from "./dto/login.dto";
+import { AuthResult } from './dto/authResult.dto';
+import { LoginDto } from './dto/login.dto';
 
 
 type SignInData = { userId: number; email: string };
-type AuthResult = { accessToken: string; userId: number; username: string };
 
 @Injectable()
 export class AuthService {
@@ -18,6 +17,7 @@ export class AuthService {
   ) {}
 
   async authenticate(input: LoginDto): Promise<AuthResult> {
+    console.log(input);
     const user = await this.validateUser(input);
 
     if (!user) {

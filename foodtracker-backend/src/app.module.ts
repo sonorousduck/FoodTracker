@@ -1,21 +1,17 @@
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { ConfigModule } from "@nestjs/config";
-import { Module } from "@nestjs/common";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { FoodmeasurementModule } from "./foodmeasurement/foodmeasurement.module";
-import { RecipefoodController } from "./recipefood/recipefood.controller";
-import { RecipefoodService } from "./recipefood/recipefood.service";
-import { RecipefoodModule } from "./recipefood/recipefood.module";
-import { FoodentryModule } from "./foodentry/foodentry.module";
-import { MealController } from "./meal/meal.controller";
-import { RecipeModule } from "./recipe/recipe.module";
-import { UsersModule } from "./users/users.module";
-import { MealService } from "./meal/meal.service";
-import { AppController } from "./app.controller";
-import { MealModule } from "./meal/meal.module";
-import { FoodModule } from "./food/food.module";
-import { AuthModule } from "./auth/auth.module";
-import { AppService } from "./app.service";
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { FoodModule } from './food/food.module';
+import { FoodentryModule } from './foodentry/foodentry.module';
+import { FoodmeasurementModule } from './foodmeasurement/foodmeasurement.module';
+import { MealModule } from './meal/meal.module';
+import { RecipeModule } from './recipe/recipe.module';
+import { RecipefoodModule } from './recipefood/recipefood.module';
+import { UsersModule } from './users/users.module';
 
 
 @Module({
