@@ -30,7 +30,6 @@ export default function CreateAccount() {
 
   const validateForm = () => {
     const { firstName, lastName, email, password, confirmPassword } = formData;
-    console.log("Validating");
 
     if (!firstName.trim()) {
       Alert.alert("Error", "First name is required");
@@ -47,7 +46,6 @@ export default function CreateAccount() {
       return false;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert("Error", "Please enter a valid email address");
@@ -58,7 +56,6 @@ export default function CreateAccount() {
       Alert.alert("Error", "Password is required");
       return false;
     }
-    console.log("fjdksal");
 
     if (password.length < 6) {
       Alert.alert("Error", "Password must be at least 6 characters long");
@@ -70,8 +67,6 @@ export default function CreateAccount() {
       return false;
     }
 
-    console.log("Validation successful");
-
     return true;
   };
 
@@ -79,7 +74,6 @@ export default function CreateAccount() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    console.log("Attempting account creation");
     try {
       await createAccount({
         firstName: formData.firstName,
@@ -87,13 +81,6 @@ export default function CreateAccount() {
         email: formData.email,
         password: formData.password,
       });
-
-      Alert.alert("Success", "Account created successfully!", [
-        {
-          text: "OK",
-          onPress: () => router.replace("/"),
-        },
-      ]);
     } catch (error) {
       Alert.alert("Sign Up Failed", error instanceof Error ? error.message : "An unexpected error occurred");
     } finally {
@@ -110,7 +97,7 @@ export default function CreateAccount() {
       >
         <View style={styles.content}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join us today</Text>
+          <Text style={styles.subtitle}>Track calories today</Text>
 
           <View style={styles.form}>
             <View style={styles.row}>

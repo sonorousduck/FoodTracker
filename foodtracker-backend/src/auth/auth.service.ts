@@ -17,7 +17,6 @@ export class AuthService {
   ) {}
 
   async authenticate(input: LoginDto): Promise<AuthResult> {
-    console.log(input);
     const user = await this.validateUser(input);
 
     if (!user) {
