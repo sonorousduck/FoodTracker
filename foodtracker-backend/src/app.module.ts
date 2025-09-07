@@ -12,6 +12,8 @@ import { MealModule } from './meal/meal.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { RecipefoodModule } from './recipefood/recipefood.module';
 import { UsersModule } from './users/users.module';
+import { WeightModule } from './weight/weight.module';
+import { GoalModule } from './goal/goal.module';
 
 
 @Module({
@@ -35,6 +37,8 @@ import { UsersModule } from './users/users.module';
     RecipeModule,
     RecipefoodModule,
     FoodmeasurementModule,
+    WeightModule,
+    GoalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

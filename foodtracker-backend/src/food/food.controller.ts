@@ -1,13 +1,23 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, ParseIntPipe, Post, Query, Request, UseGuards, } from "@nestjs/common";
-import { PassportJwtAuthGuard } from "src/auth/guards/passportjwt.guard";
-import { AuthenticatedRequest } from "src/auth/authenticatedrequest";
-import { User } from "src/common/user.decorator";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { PassportJwtAuthGuard } from 'src/auth/guards/passportjwt.guard';
+import { User } from 'src/common/user.decorator';
 
-import { CreateBasicFoodDto } from "./dto/createbasicfood.dto";
-import { CreateFoodDto } from "./dto/createfood.dto";
+import { CreateBasicFoodDto } from './dto/createbasicfood.dto';
+import { CreateFoodDto } from './dto/createfood.dto';
+import { FoodService } from './food.service';
+
 import type { UserRequest } from "../common/user";
-import { FoodService } from "./food.service";
-
 
 @Controller("food")
 export class FoodController {

@@ -1,8 +1,9 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { FoodEntry } from "src/foodentry/entities/foodentry.entity";
-import { Recipe } from "src/recipe/entities/recipe.entity";
-import { Meal } from "src/meal/entities/meal.entity";
-import { Food } from "src/food/entities/food.entity";
+import { Food } from 'src/food/entities/food.entity';
+import { FoodEntry } from 'src/foodentry/entities/foodentry.entity';
+import { Meal } from 'src/meal/entities/meal.entity';
+import { Recipe } from 'src/recipe/entities/recipe.entity';
+import { Weight } from 'src/weight/entities/weight.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 
 @Entity()
@@ -33,4 +34,7 @@ export class User {
 
   @OneToMany(() => Recipe, (recipe) => recipe.user)
   recipes: ReadonlyArray<Recipe>;
+
+  @OneToMany(() => Weight, (weight) => weight.user)
+  weightEntries: ReadonlyArray<Weight>;
 }
