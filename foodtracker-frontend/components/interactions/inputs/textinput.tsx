@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
 	Animated,
+	BlurEvent,
+	FocusEvent,
 	KeyboardTypeOptions,
-	NativeSyntheticEvent,
 	Platform,
 	StyleSheet,
 	Text,
 	TextInput,
-	TextInputFocusEventData,
 	TextInputProps,
 	TextStyle,
 	TouchableOpacity,
@@ -20,8 +20,8 @@ interface DuckTextInputProps extends Omit<TextInputProps, "style"> {
 	placeholder?: string;
 	value?: string;
 	onChangeText?: (text: string) => void;
-	onFocus?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
-	onBlur?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+	onFocus?: (e: FocusEvent) => void;
+	onBlur?: (e: BlurEvent) => void;
 	error?: string;
 	helperText?: string;
 	leftIcon?: React.ReactNode;
@@ -80,16 +80,12 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
 		}).start();
 	}, [isFocused, value, animatedIsFocused]);
 
-	const handleFocus = (
-		e: NativeSyntheticEvent<TextInputFocusEventData>
-	): void => {
+	const handleFocus = (e: FocusEvent): void => {
 		setIsFocused(true);
 		onFocus?.(e);
 	};
 
-	const handleBlur = (
-		e: NativeSyntheticEvent<TextInputFocusEventData>
-	): void => {
+	const handleBlur = (e: BlurEvent): void => {
 		setIsFocused(false);
 		onBlur?.(e);
 	};

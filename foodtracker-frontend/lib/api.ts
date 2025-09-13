@@ -19,7 +19,7 @@ class ApiService {
 
 	constructor() {
 		// Create axios instance with base configuration
-		const ip = process.env.EXPO_PUBLIC_BACKEND_IP ?? "10.0.0.83";
+		const ip = process.env.EXPO_PUBLIC_BACKEND_IP ?? "192.168.1.4";
 		const port = process.env.EXPO_PUBLIC_PORT ?? "3000";
 		this.api = axios.create({
 			baseURL: `http://${ip}:${port}`,
