@@ -102,7 +102,7 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
 		inputRef.current?.focus();
 	};
 
-	const labelStyle: TextStyle = {
+	const labelStyle: Animated.AnimatedProps<TextStyle> = {
 		position: "absolute",
 		left: leftIcon ? 50 : 16,
 		top: animatedIsFocused.interpolate({

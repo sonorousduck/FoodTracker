@@ -38,3 +38,6 @@ yarn-error.*
 
 app-example
 .DS_Store
+
+.expo/
+.vscode/
