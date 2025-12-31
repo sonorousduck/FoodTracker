@@ -4,5 +4,7 @@
  */
 
 
-
-export type AuthResult = { accessToken: string; userId: number; username: string };
+export interface CreateWeightDto {
+    weightEntry: number;
+    date: Date;
+}

@@ -1,8 +1,10 @@
-import pandas as pd
-import requests
 import json
 import time
 from typing import Dict, List, Optional
+
+import pandas as pd
+import requests
+
 
 class FoodImporter:
     def __init__(self, csv_file_path: str, api_base_url: str = "http://localhost:3000"):
@@ -69,7 +71,7 @@ class FoodImporter:
         """Create abbreviation from serving description"""
         # Remove numbers and common words, take first part
         import re
-        
+
         # Remove leading numbers and common words
         cleaned = re.sub(r'^\d+\s*', '', description.lower())
         cleaned = re.sub(r'\s*(piece|pieces|slice|slices|cup|cups|tablespoon|teaspoon)\s*', r'\1', cleaned)
@@ -238,7 +240,7 @@ class FoodImporter:
 # Usage example
 if __name__ == "__main__":
     # Configuration
-    CSV_FILE_PATH = "/Users/sonorousduck/Downloads/Copy of MyFoodData Nutrition Facts SpreadSheet Detailed Release 1.0 - SR Legacy and FNDDS.csv" 
+    CSV_FILE_PATH = "../data/MyFoodData Nutrition Facts SpreadSheet Release 1.4 - SR Legacy and FNDDS.csv" 
     API_BASE_URL = "http://localhost:3000"
     
     # Create importer

@@ -4,11 +4,11 @@
  */
 
 import { User } from "../users/user";
-import { FoodEntry } from "../foodentry/foodentry";
 
-export interface Meal {
-    id: string;
+export interface Weight {
+    id: number;
+    weightEntry: number;
+    date: Date;
     user: User;
-    name: string;
-    foodEntries: FoodEntry[];
+    createdDate: Date;
 }
