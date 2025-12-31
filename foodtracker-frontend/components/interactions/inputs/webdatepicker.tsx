@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View, useColorScheme } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 interface WebDatePickerProps {
 	label: string;
@@ -12,6 +13,9 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 	value,
 	onChange,
 }) => {
+	const colorScheme = useColorScheme();
+	const colors = Colors[colorScheme ?? "light"];
+
 	const formatDateForInput = (date: Date): string => {
 		return date.toISOString().split("T")[0];
 	};
@@ -28,8 +32,8 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 			style={{
 				height: 40,
 				borderWidth: 1,
-				borderColor: "#ddd",
-				backgroundColor: "#f9f9f9",
+				borderColor: colors.modalSecondary,
+				backgroundColor: colors.modal,
 				paddingHorizontal: 16,
 				borderRadius: 12,
 				justifyContent: "center",
@@ -40,6 +44,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				style={{
 					alignContent: "center",
 					flexGrow: 1,
+					color: colors.text,
 				}}
 			>
 				{label}
@@ -55,6 +60,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 					justifySelf: "center",
 					fontFamily: "system-ui, -apple-system, sans-serif",
 					backgroundColor: "transparent",
+					color: colors.text,
 				}}
 			/>
 		</View>

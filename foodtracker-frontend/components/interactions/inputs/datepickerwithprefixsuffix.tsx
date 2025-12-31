@@ -1,5 +1,12 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+	useColorScheme,
+} from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { Colors } from "@/constants/Colors";
 
 interface DatePickerWithPrefixSuffixProps {
 	label: string;
@@ -18,6 +25,9 @@ export default function DatePickerWithPrefixSuffix({
 	showPicker,
 	setShowPicker,
 }: DatePickerWithPrefixSuffixProps) {
+	const colorScheme = useColorScheme();
+	const colors = Colors[colorScheme ?? "light"];
+
 	const formatDate = (date: Date) => {
 		return date.toLocaleDateString("en-US", {
 			month: "2-digit",
@@ -42,12 +52,22 @@ export default function DatePickerWithPrefixSuffix({
 	return (
 		<View style={styles.container}>
 			<TouchableOpacity
-				style={styles.inputContainer}
+				style={[
+					styles.inputContainer,
+					{
+						backgroundColor: colors.modal,
+						borderColor: colors.modalSecondary,
+					},
+				]}
 				onPress={handlePress}
 				activeOpacity={0.7}
 			>
-				<Text style={[styles.text, styles.header]}>{label}</Text>
-				<Text style={[styles.text, styles.dateText]}>{formatDate(value)}</Text>
+				<Text style={[styles.text, styles.header, { color: colors.text }]}>
+					{label}
+				</Text>
+				<Text style={[styles.text, styles.dateText, { color: colors.text }]}>
+					{formatDate(value)}
+				</Text>
 			</TouchableOpacity>
 
 			{showPicker && (

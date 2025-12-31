@@ -5,7 +5,9 @@ import {
 	Text,
 	TextInput,
 	View,
+	useColorScheme,
 } from "react-native";
+import { Colors } from "@/constants/Colors";
 
 interface InputContainerProps {
 	label: string;
@@ -30,20 +32,39 @@ function TextInputWithPrefixSuffix({
 	maxLength,
 	enterKeyHint = "done",
 }: InputContainerProps) {
+	const colorScheme = useColorScheme();
+	const colors = Colors[colorScheme ?? "light"];
+
 	return (
-		<View style={styles.inputContainer}>
-			<Text style={[styles.text]}>{label}</Text>
+		<View
+			style={[
+				styles.inputContainer,
+				{
+					backgroundColor: colors.modal,
+					borderColor: colors.modalSecondary,
+				},
+			]}
+		>
+			<Text style={[styles.text, { color: colors.text }]}>{label}</Text>
 			<TextInput
-				style={styles.input}
+				style={[styles.input, { color: colors.text }]}
 				value={value}
 				onChangeText={onChangeText}
 				placeholder={placeholder}
+				placeholderTextColor={colors.icon}
 				enterKeyHint={enterKeyHint}
 				inputMode={inputMode}
 				keyboardType={keyboardType}
 				maxLength={maxLength}
 			/>
-			<Text style={[styles.text, { justifyContent: "flex-end" }]}>{unit}</Text>
+			<Text
+				style={[
+					styles.text,
+					{ justifyContent: "flex-end", color: colors.text },
+				]}
+			>
+				{unit}
+			</Text>
 		</View>
 	);
 }
