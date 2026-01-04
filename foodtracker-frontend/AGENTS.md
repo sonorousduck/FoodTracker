@@ -8,6 +8,7 @@ This guide applies to `foodtracker-frontend/` (Expo + React Native + TypeScript)
 - UI: `foodtracker-frontend/components`, shared logic in `foodtracker-frontend/hooks` and `foodtracker-frontend/lib`.
 - Assets: `foodtracker-frontend/assets`; types: `foodtracker-frontend/types` (generated).
 - DTOs are generated from the backend; after backend DTO changes, run `bash ../generate-dtos.sh`.
+- When sending data to the backend, always use the generated types from `foodtracker-frontend/types`.
 
 ## Build, Test, and Development Commands
 - Install: `yarn install`

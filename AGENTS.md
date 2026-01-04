@@ -1,8 +1,8 @@
 # Repository Guidelines
 
 ## Planning & Approval
-- Before starting work, draft a detailed plan, present it for approval, and wait for confirmation before making changes.
-- The plan should be complete enough that you could execute it yourself step by step.
+- Before starting work, do any needed inspection/research to understand the issue, then draft a detailed plan, present it for approval, and wait for confirmation before making changes.
+- The plan should be complete enough that the user could execute it themselves step by step.
 
 ## Project Structure & Module Organization
 - `foodtracker-backend/`: NestJS API server. Core code in `foodtracker-backend/src`, tests in `foodtracker-backend/test`.

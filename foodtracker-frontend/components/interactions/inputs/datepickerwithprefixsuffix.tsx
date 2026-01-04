@@ -13,6 +13,8 @@ interface DatePickerWithPrefixSuffixProps {
 	value: Date;
 	onChange: (date: Date) => void;
 	unit?: string;
+	error?: string;
+	disabled?: boolean;
 	showPicker: boolean;
 	setShowPicker: (show: boolean) => void;
 }
@@ -22,11 +24,14 @@ export default function DatePickerWithPrefixSuffix({
 	value,
 	onChange,
 	unit = "",
+	error,
+	disabled = false,
 	showPicker,
 	setShowPicker,
 }: DatePickerWithPrefixSuffixProps) {
 	const colorScheme = useColorScheme();
 	const colors = Colors[colorScheme ?? "light"];
+	const borderColor = error ? "#FF3B30" : colors.modalSecondary;
 
 	const formatDate = (date: Date) => {
 		return date.toLocaleDateString("en-US", {
@@ -37,6 +42,9 @@ export default function DatePickerWithPrefixSuffix({
 	};
 
 	const handlePress = () => {
+		if (disabled) {
+			return;
+		}
 		setShowPicker(true);
 	};
 
@@ -56,11 +64,13 @@ export default function DatePickerWithPrefixSuffix({
 					styles.inputContainer,
 					{
 						backgroundColor: colors.modal,
-						borderColor: colors.modalSecondary,
+						borderColor,
+						opacity: disabled ? 0.6 : 1,
 					},
 				]}
 				onPress={handlePress}
 				activeOpacity={0.7}
+				disabled={disabled}
 			>
 				<Text style={[styles.text, styles.header, { color: colors.text }]}>
 					{label}

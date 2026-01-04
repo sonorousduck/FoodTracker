@@ -15,7 +15,6 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const { isLoading } = useSession();
 
   if (!loaded) {
     // Async font loading only occurs in development.
@@ -27,7 +26,7 @@ export default function RootLayout() {
       <SessionProvider>
         <PaperProvider>
           <GestureHandlerRootView style={{ flex: 1 }}>
-            {isLoading ? <SplashScreenController /> : <RootNavigator />}
+            <RootNavigator />
           </GestureHandlerRootView>
         </PaperProvider>
       </SessionProvider>
@@ -36,7 +35,11 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session } = useSession();
+  const { session, isLoading } = useSession();
+
+  if (isLoading) {
+    return <SplashScreenController />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

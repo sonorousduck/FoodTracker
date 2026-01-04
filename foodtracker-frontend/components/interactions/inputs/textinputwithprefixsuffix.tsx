@@ -15,6 +15,8 @@ interface InputContainerProps {
 	onChangeText: (text: string) => void;
 	placeholder?: string;
 	unit: string;
+	error?: string;
+	editable?: boolean;
 	inputMode?: InputModeOptions;
 	keyboardType?: KeyboardTypeOptions;
 	maxLength?: number;
@@ -27,6 +29,8 @@ function TextInputWithPrefixSuffix({
 	onChangeText,
 	placeholder,
 	unit,
+	error,
+	editable = true,
 	inputMode = "text",
 	keyboardType = "default",
 	maxLength,
@@ -34,6 +38,7 @@ function TextInputWithPrefixSuffix({
 }: InputContainerProps) {
 	const colorScheme = useColorScheme();
 	const colors = Colors[colorScheme ?? "light"];
+	const borderColor = error ? "#FF3B30" : colors.modalSecondary;
 
 	return (
 		<View
@@ -41,7 +46,7 @@ function TextInputWithPrefixSuffix({
 				styles.inputContainer,
 				{
 					backgroundColor: colors.modal,
-					borderColor: colors.modalSecondary,
+					borderColor,
 				},
 			]}
 		>
@@ -56,6 +61,7 @@ function TextInputWithPrefixSuffix({
 				inputMode={inputMode}
 				keyboardType={keyboardType}
 				maxLength={maxLength}
+				editable={editable}
 			/>
 			<Text
 				style={[

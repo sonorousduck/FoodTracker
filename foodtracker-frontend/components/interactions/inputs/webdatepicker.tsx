@@ -1,20 +1,25 @@
+import { Colors } from "@/constants/Colors";
 import React from "react";
 import { Text, View, useColorScheme } from "react-native";
-import { Colors } from "@/constants/Colors";
 
 interface WebDatePickerProps {
 	label: string;
 	value: Date;
 	onChange: (date: Date) => void;
+	error?: string;
+	disabled?: boolean;
 }
 
 const WebDatePicker: React.FC<WebDatePickerProps> = ({
 	label,
 	value,
 	onChange,
+	error,
+	disabled = false,
 }) => {
 	const colorScheme = useColorScheme();
 	const colors = Colors[colorScheme ?? "light"];
+	const borderColor = error ? "#FF3B30" : colors.modalSecondary;
 
 	const formatDateForInput = (date: Date): string => {
 		return date.toISOString().split("T")[0];
@@ -32,12 +37,13 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 			style={{
 				height: 40,
 				borderWidth: 1,
-				borderColor: colors.modalSecondary,
+				borderColor,
 				backgroundColor: colors.modal,
 				paddingHorizontal: 16,
 				borderRadius: 12,
 				justifyContent: "center",
 				flexDirection: "row",
+				opacity: disabled ? 0.6 : 1,
 			}}
 		>
 			<Text
@@ -53,6 +59,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				type="date"
 				value={formatDateForInput(value)}
 				onChange={handleDateChange}
+				disabled={disabled}
 				style={{
 					outline: "none",
 					border: "none",

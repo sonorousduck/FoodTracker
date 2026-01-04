@@ -12,6 +12,7 @@ import AddModalPrimaryAction from "./addmodalprimaryaction";
 
 export default function AddButton({ onPress }: { onPress?: () => void }) {
 	const colorScheme = useColorScheme();
+	const colors = Colors[colorScheme ?? "light"];
 
 	const [modalVisible, setModalVisible] = useState(false);
 
@@ -34,7 +35,7 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 			<IconButton
 				icon="plus"
 				mode="contained-tonal"
-				containerColor={Colors[colorScheme ?? "light"].tint}
+				containerColor={colors.tint}
 				style={{ alignSelf: "center" }}
 				size={24}
 				onPress={handlePress}
@@ -45,20 +46,20 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 					<AddModalPrimaryAction style={[styles.modalButton]}>
 						<MaterialDesignIcons
 							name="food-variant"
-							color={Colors[colorScheme ?? "light"].icon}
+							color={colors.icon}
 							size={36}
 						/>
-						<Text style={styles.modalPrimaryActionButton}>
+						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
 							{localization.logFood}
 						</Text>
 					</AddModalPrimaryAction>
 					<AddModalPrimaryAction style={[styles.modalButton]}>
 						<FontAwesome
 							name="barcode"
-							color={Colors[colorScheme ?? "light"].icon}
+							color={colors.icon}
 							size={36}
 						/>
-						<Text style={styles.modalPrimaryActionButton}>
+						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
 							{localization.scanBarcode}
 						</Text>
 					</AddModalPrimaryAction>
@@ -68,20 +69,20 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 					>
 						<Ionicons
 							name="scale-outline"
-							color={Colors[colorScheme ?? "light"].icon}
+							color={colors.icon}
 							size={36}
 						/>
-						<Text style={styles.modalPrimaryActionButton}>
+						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
 							{localization.logWeight}
 						</Text>
 					</AddModalPrimaryAction>
 					<AddModalPrimaryAction style={[styles.modalButton]}>
 						<MaterialIcons
 							name="set-meal"
-							color={Colors[colorScheme ?? "light"].icon}
+							color={colors.icon}
 							size={36}
 						/>
-						<Text style={styles.modalPrimaryActionButton}>
+						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
 							{localization.createRecipe}
 						</Text>
 					</AddModalPrimaryAction>

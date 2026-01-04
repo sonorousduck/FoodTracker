@@ -20,7 +20,7 @@ class ApiService {
 	constructor() {
 		// Create axios instance with base configuration
 		const ip = process.env.EXPO_PUBLIC_BACKEND_IP ?? "192.168.1.4";
-		const port = process.env.EXPO_PUBLIC_PORT ?? "3000";
+		const port = process.env.EXPO_PUBLIC_PORT ?? "3001";
 		this.api = axios.create({
 			baseURL: `http://${ip}:${port}`,
 			timeout: 10000, // 10 seconds
@@ -31,6 +31,7 @@ class ApiService {
 
 		// Initialize token and set up interceptors
 		this.initialize();
+		this.setupInterceptors();
 	}
 
 	private async initialize(): Promise<void> {
