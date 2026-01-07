@@ -1,6 +1,7 @@
+import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
 import React from "react";
-import { Text, View, useColorScheme } from "react-native";
+import { View, useColorScheme } from "react-native";
 
 interface WebDatePickerProps {
 	label: string;
@@ -46,7 +47,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				opacity: disabled ? 0.6 : 1,
 			}}
 		>
-			<Text
+			<ThemedText
 				style={{
 					alignContent: "center",
 					flexGrow: 1,
@@ -54,7 +55,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				}}
 			>
 				{label}
-			</Text>
+			</ThemedText>
 			<input
 				type="date"
 				value={formatDateForInput(value)}

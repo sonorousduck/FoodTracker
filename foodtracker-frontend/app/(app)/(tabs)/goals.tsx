@@ -1,10 +1,11 @@
-import { StyleSheet, Text } from "react-native";
+import ThemedText from "@/components/themedtext";
+import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Tab() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text>Goals</Text>
+      <ThemedText>Goals</ThemedText>
     </SafeAreaView>
   );
 }

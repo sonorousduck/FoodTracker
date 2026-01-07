@@ -1,3 +1,4 @@
+import ThemedText from "@/components/themedtext";
 import { useSession } from "@/hooks/auth";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -7,7 +8,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -44,12 +44,12 @@ export default function SignIn() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.content}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <ThemedText style={styles.title}>Welcome Back</ThemedText>
+          <ThemedText style={styles.subtitle}>Sign in to your account</ThemedText>
 
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <ThemedText style={styles.label}>Email</ThemedText>
               <TextInput
                 style={styles.input}
                 value={email}
@@ -63,7 +63,7 @@ export default function SignIn() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <ThemedText style={styles.label}>Password</ThemedText>
               <TextInput
                 style={styles.input}
                 value={password}
@@ -81,18 +81,24 @@ export default function SignIn() {
               onPress={handleSignIn}
               disabled={isLoading}
             >
-              <Text style={styles.signInButtonText}>{isLoading ? "Signing In..." : "Sign In"}</Text>
+              <ThemedText style={styles.signInButtonText}>
+                {isLoading ? "Signing In..." : "Sign In"}
+              </ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.forgotPasswordButton}>
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+              <ThemedText style={styles.forgotPasswordText}>
+                Forgot Password?
+              </ThemedText>
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Don&apos;t have an account? </Text>
+            <ThemedText style={styles.footerText}>
+              Don&apos;t have an account?{" "}
+            </ThemedText>
             <TouchableOpacity onPress={() => router.replace("/createaccount")}>
-              <Text style={styles.signUpLink}>Sign Up</Text>
+              <ThemedText style={styles.signUpLink}>Sign Up</ThemedText>
             </TouchableOpacity>
           </View>
         </View>

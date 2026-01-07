@@ -42,7 +42,7 @@ export class WeightController {
 
   @Delete("delete")
   @UseGuards(PassportJwtAuthGuard)
-  delete(@Param("id", new ParseIntPipe()) id: number) {
-    return this.weightService.delete(id);
+  delete(@Param("id", new ParseIntPipe()) id: number, @User() user: UserRequest) {
+    return this.weightService.delete(id, user.userId);
   }
 }

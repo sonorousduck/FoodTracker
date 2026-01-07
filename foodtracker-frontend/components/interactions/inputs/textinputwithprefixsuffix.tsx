@@ -1,8 +1,8 @@
+import ThemedText from "@/components/themedtext";
 import {
 	InputModeOptions,
 	KeyboardTypeOptions,
 	StyleSheet,
-	Text,
 	TextInput,
 	View,
 	useColorScheme,
@@ -50,7 +50,9 @@ function TextInputWithPrefixSuffix({
 				},
 			]}
 		>
-			<Text style={[styles.text, { color: colors.text }]}>{label}</Text>
+			<ThemedText style={[styles.text, { color: colors.text }]}>
+				{label}
+			</ThemedText>
 			<TextInput
 				style={[styles.input, { color: colors.text }]}
 				value={value}
@@ -63,14 +65,14 @@ function TextInputWithPrefixSuffix({
 				maxLength={maxLength}
 				editable={editable}
 			/>
-			<Text
+			<ThemedText
 				style={[
 					styles.text,
 					{ justifyContent: "flex-end", color: colors.text },
 				]}
 			>
 				{unit}
-			</Text>
+			</ThemedText>
 		</View>
 	);
 }

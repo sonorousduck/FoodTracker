@@ -1,3 +1,4 @@
+import ThemedText from "@/components/themedtext";
 import React, { useEffect, useRef, useState } from "react";
 import {
 	Animated,
@@ -6,7 +7,6 @@ import {
 	KeyboardTypeOptions,
 	Platform,
 	StyleSheet,
-	Text,
 	TextInput,
 	TextInputProps,
 	TextStyle,
@@ -150,7 +150,7 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
 					>
 						<Animated.Text style={labelStyle}>
 							{label}
-							{required && <Text style={styles.required}> *</Text>}
+							{required && <ThemedText style={styles.required}> *</ThemedText>}
 						</Animated.Text>
 					</TouchableOpacity>
 				)}
@@ -195,7 +195,9 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
 							activeOpacity={0.7}
 						>
 							{secureTextEntry ? (
-								<Text style={styles.eyeIcon}>{isSecure ? "👁️" : "🙈"}</Text>
+								<ThemedText style={styles.eyeIcon}>
+									{isSecure ? "👁️" : "🙈"}
+								</ThemedText>
 							) : (
 								rightIcon
 							)}
@@ -208,16 +210,16 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
 				<View style={styles.bottomContainer}>
 					<View style={styles.messageContainer}>
 						{error ? (
-							<Text style={styles.errorText}>{error}</Text>
+							<ThemedText style={styles.errorText}>{error}</ThemedText>
 						) : helperText ? (
-							<Text style={styles.helperText}>{helperText}</Text>
+							<ThemedText style={styles.helperText}>{helperText}</ThemedText>
 						) : null}
 					</View>
 
 					{maxLength && (
-						<Text style={styles.characterCount}>
+						<ThemedText style={styles.characterCount}>
 							{value?.length || 0}/{maxLength}
-						</Text>
+						</ThemedText>
 					)}
 				</View>
 			)}

@@ -1,5 +1,6 @@
+import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
-import { StyleSheet, Text, useColorScheme } from "react-native";
+import { StyleSheet, useColorScheme } from "react-native";
 
 import TouchableWithFeedback, {
 	TouchableWithFeedbackProps,
@@ -32,7 +33,7 @@ export default function AddModalPrimaryAction({
 			]}
 			{...props}
 		>
-			{children || <Text>Unused</Text>}
+			{children || <ThemedText>Unused</ThemedText>}
 		</TouchableWithFeedback>
 	);
 }

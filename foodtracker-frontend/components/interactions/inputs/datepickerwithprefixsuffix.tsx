@@ -1,6 +1,6 @@
+import ThemedText from "@/components/themedtext";
 import {
 	StyleSheet,
-	Text,
 	TouchableOpacity,
 	View,
 	useColorScheme,
@@ -72,12 +72,16 @@ export default function DatePickerWithPrefixSuffix({
 				activeOpacity={0.7}
 				disabled={disabled}
 			>
-				<Text style={[styles.text, styles.header, { color: colors.text }]}>
+				<ThemedText
+					style={[styles.text, styles.header, { color: colors.text }]}
+				>
 					{label}
-				</Text>
-				<Text style={[styles.text, styles.dateText, { color: colors.text }]}>
+				</ThemedText>
+				<ThemedText
+					style={[styles.text, styles.dateText, { color: colors.text }]}
+				>
 					{formatDate(value)}
-				</Text>
+				</ThemedText>
 			</TouchableOpacity>
 
 			{showPicker && (

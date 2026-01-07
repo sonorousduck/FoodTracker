@@ -1,3 +1,4 @@
+import ThemedText from "@/components/themedtext";
 import { useSession } from "@/hooks/auth";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -7,7 +8,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
@@ -96,13 +96,13 @@ export default function CreateAccount() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Track calories today</Text>
+          <ThemedText style={styles.title}>Create Account</ThemedText>
+          <ThemedText style={styles.subtitle}>Track calories today</ThemedText>
 
           <View style={styles.form}>
             <View style={styles.row}>
               <View style={[styles.inputContainer, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>First Name</Text>
+                <ThemedText style={styles.label}>First Name</ThemedText>
                 <TextInput
                   style={styles.input}
                   value={formData.firstName}
@@ -115,7 +115,7 @@ export default function CreateAccount() {
               </View>
 
               <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Last Name</Text>
+                <ThemedText style={styles.label}>Last Name</ThemedText>
                 <TextInput
                   style={styles.input}
                   value={formData.lastName}
@@ -129,7 +129,7 @@ export default function CreateAccount() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <ThemedText style={styles.label}>Email</ThemedText>
               <TextInput
                 style={styles.input}
                 value={formData.email}
@@ -143,7 +143,7 @@ export default function CreateAccount() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <ThemedText style={styles.label}>Password</ThemedText>
               <TextInput
                 style={styles.input}
                 value={formData.password}
@@ -154,11 +154,13 @@ export default function CreateAccount() {
                 autoCorrect={false}
                 editable={!isLoading}
               />
-              <Text style={styles.helperText}>Must be at least 6 characters</Text>
+              <ThemedText style={styles.helperText}>
+                Must be at least 6 characters
+              </ThemedText>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
+              <ThemedText style={styles.label}>Confirm Password</ThemedText>
               <TextInput
                 style={styles.input}
                 value={formData.confirmPassword}
@@ -176,14 +178,18 @@ export default function CreateAccount() {
               onPress={handleSignUp}
               disabled={isLoading}
             >
-              <Text style={styles.signUpButtonText}>{isLoading ? "Creating Account..." : "Create Account"}</Text>
+              <ThemedText style={styles.signUpButtonText}>
+                {isLoading ? "Creating Account..." : "Create Account"}
+              </ThemedText>
             </TouchableOpacity>
           </View>
 
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <ThemedText style={styles.footerText}>
+              Already have an account?{" "}
+            </ThemedText>
             <TouchableOpacity onPress={() => router.push("/signin")}>
-              <Text style={styles.signInLink}>Sign In</Text>
+              <ThemedText style={styles.signInLink}>Sign In</ThemedText>
             </TouchableOpacity>
           </View>
         </View>

@@ -1,8 +1,10 @@
+import ThemedText from "@/components/themedtext";
+import WeightCardDisplay from "@/components/weightcarddisplay";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet } from "react-native";
 import { Snackbar } from "react-native-paper";
 import {
 	SafeAreaView,
@@ -44,25 +46,20 @@ export default function Tab() {
 
 	return (
 		<SafeAreaView style={styles.container}>
-			<Text>Dashboard</Text>
+			<WeightCardDisplay></WeightCardDisplay>
+
 			<Snackbar
 				visible={showToast}
 				onDismiss={() => setShowToast(false)}
 				duration={2200}
 				style={{ marginBottom: toastOffset }}
 				contentStyle={{ alignItems: "center" }}
-				theme={{
-					colors: {
-						inverseSurface: colors.modal,
-						inverseOnSurface: colors.text,
-						onSurface: colors.text,
-						surface: colors.modal,
-					},
-				}}
 			>
-				<Text style={{ color: colors.text, textAlign: "center", width: "100%" }}>
+				<ThemedText
+					style={{ color: colors.text, textAlign: "center", width: "100%" }}
+				>
 					{toastEmoji} {toastText}
-				</Text>
+				</ThemedText>
 			</Snackbar>
 		</SafeAreaView>
 	);
@@ -70,7 +67,8 @@ export default function Tab() {
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1,
-		alignItems: "center",
+		display: "flex",
+		gap: 8,
+		padding: 8,
 	},
 });

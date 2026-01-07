@@ -1,10 +1,11 @@
 import AddModal from "@/components/modal/addmodal";
+import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
 import { localization } from "@/constants/localization";
 import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import MaterialDesignIcons from "@react-native-vector-icons/material-design-icons";
 import React, { useState } from "react";
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { StyleSheet, useColorScheme, View } from "react-native";
 import { IconButton } from "react-native-paper";
 
 import { router } from "expo-router";
@@ -49,9 +50,11 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 							color={colors.icon}
 							size={36}
 						/>
-						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
+						<ThemedText
+							style={[styles.modalPrimaryActionButton, { color: colors.text }]}
+						>
 							{localization.logFood}
-						</Text>
+						</ThemedText>
 					</AddModalPrimaryAction>
 					<AddModalPrimaryAction style={[styles.modalButton]}>
 						<FontAwesome
@@ -59,9 +62,11 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 							color={colors.icon}
 							size={36}
 						/>
-						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
+						<ThemedText
+							style={[styles.modalPrimaryActionButton, { color: colors.text }]}
+						>
 							{localization.scanBarcode}
-						</Text>
+						</ThemedText>
 					</AddModalPrimaryAction>
 					<AddModalPrimaryAction
 						style={[styles.modalButton]}
@@ -72,9 +77,11 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 							color={colors.icon}
 							size={36}
 						/>
-						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
+						<ThemedText
+							style={[styles.modalPrimaryActionButton, { color: colors.text }]}
+						>
 							{localization.logWeight}
-						</Text>
+						</ThemedText>
 					</AddModalPrimaryAction>
 					<AddModalPrimaryAction style={[styles.modalButton]}>
 						<MaterialIcons
@@ -82,9 +89,11 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 							color={colors.icon}
 							size={36}
 						/>
-						<Text style={[styles.modalPrimaryActionButton, { color: colors.text }]}>
+						<ThemedText
+							style={[styles.modalPrimaryActionButton, { color: colors.text }]}
+						>
 							{localization.createRecipe}
-						</Text>
+						</ThemedText>
 					</AddModalPrimaryAction>
 				</View>
 			</AddModal>

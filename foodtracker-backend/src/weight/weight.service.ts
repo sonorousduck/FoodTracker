@@ -42,8 +42,10 @@ export class WeightService {
     return newWeightEntry;
   }
 
-  async delete(weightId: number): Promise<boolean> {
-    const weightEntry = await this.weightRepository.findOne({ where: { id: weightId } });
+  async delete(weightId: number, userId: number): Promise<boolean> {
+    const weightEntry = await this.weightRepository.findOne({
+      where: { id: weightId, user: { id: userId } },
+    });
 
     if (!weightEntry) {
       throw new NotFoundException(`Weight entry was not found with id: ${weightId}`);

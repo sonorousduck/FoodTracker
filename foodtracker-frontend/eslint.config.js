@@ -6,5 +6,14 @@ module.exports = defineConfig([
   expoConfig,
   {
     ignores: ['dist/*'],
+    rules: {
+      '@typescript-eslint/array-type': [
+        'error',
+        {
+          default: 'array',
+          readonly: 'generic',
+        },
+      ],
+    },
   },
 ]);
