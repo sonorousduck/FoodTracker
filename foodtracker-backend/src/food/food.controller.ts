@@ -38,7 +38,11 @@ export class FoodController {
 
   @Get()
   @UseGuards(PassportJwtAuthGuard)
-  get(@Query("id", new ParseIntPipe({ optional: true })) id?: number, @Query("name") foodName?: string) {
+  get(
+    @Query("id", new ParseIntPipe({ optional: true })) id?: number,
+    @Query("name") foodName?: string,
+    @Query("limit", new ParseIntPipe({ optional: true })) limit?: number
+  ) {
     if (id == null && (foodName == null || foodName === "")) {
       throw new BadRequestException("id and foodName cannot both not be null");
     }
@@ -46,10 +50,16 @@ export class FoodController {
     if (id) {
       return this.foodService.getFood(id);
     } else if (foodName) {
-      return this.foodService.getFoodsByName(foodName);
+      return this.foodService.getFoodsByName(foodName, limit ?? 20);
     }
 
     throw new BadRequestException();
+  }
+
+  @Post("reindex")
+  @UseGuards(PassportJwtAuthGuard)
+  reindexFoods() {
+    return this.foodService.reindexFoods();
   }
 
   @Get("all")

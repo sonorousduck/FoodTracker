@@ -31,6 +31,16 @@
 $ yarn install
 ```
 
+## CSV import venv setup
+
+```bash
+$ cd /home/sonorousduck/Projects/FoodTracker
+$ python3 -m venv .venv
+$ . .venv/bin/activate
+$ python -m pip install -r requirements.txt
+$ python foodtracker-backend/post_all_csv_data_to_db.py
+```
+
 ## Compile and run the project
 
 ```bash

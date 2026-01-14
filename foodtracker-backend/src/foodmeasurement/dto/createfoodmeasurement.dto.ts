@@ -8,6 +8,9 @@ export class CreateFoodMeasurementDto {
   @IsString()
   abbreviation: string; // "cup", "tbsp", "100g"
 
+  @IsString()
+  unit: string; // "cup", "tbsp", "g"
+
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   weightInGrams: number; // How many grams this measurement represents

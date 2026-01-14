@@ -1,0 +1,174 @@
+import { Colors } from '@/constants/Colors';
+import { Food } from '@/types/food/food';
+import { FoodMeasurement } from '@/types/foodmeasurement/foodmeasurement';
+import { RecipeFood } from '@/types/recipefood/recipefood';
+
+export type RecipeColors = typeof Colors.light;
+
+export type NutritionRow = {
+  key: keyof Food;
+  label: string;
+  value: number;
+  unit: string;
+};
+
+export type IngredientEntry = Pick<
+  RecipeFood,
+  'food' | 'servings' | 'measurementId'
+>;
+
+type NutritionField = {
+  key: keyof Food;
+  label: string;
+  unit: string;
+};
+
+const nutritionFields: NutritionField[] = [
+  { key: 'calories', label: 'Calories', unit: 'cal' },
+  { key: 'protein', label: 'Protein', unit: 'g' },
+  { key: 'carbs', label: 'Carbs', unit: 'g' },
+  { key: 'fat', label: 'Fat', unit: 'g' },
+  { key: 'fiber', label: 'Fiber', unit: 'g' },
+  { key: 'sugar', label: 'Sugar', unit: 'g' },
+  { key: 'sodium', label: 'Sodium', unit: 'mg' },
+  { key: 'saturatedFat', label: 'Saturated fat', unit: 'g' },
+  { key: 'transFat', label: 'Trans fat', unit: 'g' },
+  { key: 'cholesterol', label: 'Cholesterol', unit: 'mg' },
+  { key: 'addedSugar', label: 'Added sugar', unit: 'g' },
+  { key: 'netCarbs', label: 'Net carbs', unit: 'g' },
+  { key: 'solubleFiber', label: 'Soluble fiber', unit: 'g' },
+  { key: 'insolubleFiber', label: 'Insoluble fiber', unit: 'g' },
+  { key: 'water', label: 'Water', unit: 'g' },
+  { key: 'pralScore', label: 'PRAL score', unit: '' },
+  { key: 'omega3', label: 'Omega 3', unit: 'mg' },
+  { key: 'omega6', label: 'Omega 6', unit: 'mg' },
+  { key: 'calcium', label: 'Calcium', unit: 'mg' },
+  { key: 'iron', label: 'Iron', unit: 'mg' },
+  { key: 'potassium', label: 'Potassium', unit: 'mg' },
+  { key: 'magnesium', label: 'Magnesium', unit: 'mg' },
+  { key: 'vitaminAiu', label: 'Vitamin A', unit: 'IU' },
+  { key: 'vitaminArae', label: 'Vitamin A (RAE)', unit: 'mcg' },
+  { key: 'vitaminC', label: 'Vitamin C', unit: 'mg' },
+  { key: 'vitaminB12', label: 'Vitamin B12', unit: 'mcg' },
+  { key: 'vitaminD', label: 'Vitamin D', unit: 'mcg' },
+  { key: 'vitaminE', label: 'Vitamin E', unit: 'mg' },
+  { key: 'phosphorus', label: 'Phosphorus', unit: 'mg' },
+  { key: 'zinc', label: 'Zinc', unit: 'mg' },
+  { key: 'copper', label: 'Copper', unit: 'mg' },
+  { key: 'manganese', label: 'Manganese', unit: 'mg' },
+  { key: 'selenium', label: 'Selenium', unit: 'mcg' },
+  { key: 'fluoride', label: 'Fluoride', unit: 'mg' },
+  { key: 'molybdenum', label: 'Molybdenum', unit: 'mcg' },
+  { key: 'chlorine', label: 'Chlorine', unit: 'mg' },
+  { key: 'vitaminB1', label: 'Vitamin B1', unit: 'mg' },
+  { key: 'vitaminB2', label: 'Vitamin B2', unit: 'mg' },
+  { key: 'vitaminB3', label: 'Vitamin B3', unit: 'mg' },
+  { key: 'vitaminB5', label: 'Vitamin B5', unit: 'mg' },
+  { key: 'vitaminB6', label: 'Vitamin B6', unit: 'mg' },
+  { key: 'biotin', label: 'Biotin', unit: 'mcg' },
+  { key: 'folate', label: 'Folate', unit: 'mcg' },
+  { key: 'folicAcid', label: 'Folic acid', unit: 'mcg' },
+  { key: 'foodFolate', label: 'Food folate', unit: 'mcg' },
+  { key: 'folateDfe', label: 'Folate DFE', unit: 'mcg' },
+  { key: 'choline', label: 'Choline', unit: 'mg' },
+  { key: 'betaine', label: 'Betaine', unit: 'mg' },
+  { key: 'retinol', label: 'Retinol', unit: 'mcg' },
+  { key: 'caroteneBeta', label: 'Carotene beta', unit: 'mcg' },
+  { key: 'caroteneAlpha', label: 'Carotene alpha', unit: 'mcg' },
+  { key: 'lycopene', label: 'Lycopene', unit: 'mcg' },
+  { key: 'luteinZeaxanthin', label: 'Lutein zeaxanthin', unit: 'mcg' },
+  { key: 'vitaminD2', label: 'Vitamin D2', unit: 'mcg' },
+  { key: 'vitaminD3', label: 'Vitamin D3', unit: 'mcg' },
+  { key: 'vitaminDiu', label: 'Vitamin D (IU)', unit: 'IU' },
+  { key: 'vitaminK', label: 'Vitamin K', unit: 'mcg' },
+  { key: 'dihydrophylloquinone', label: 'Dihydrophylloquinone', unit: 'mcg' },
+  { key: 'menaquinone4', label: 'Menaquinone-4', unit: 'mcg' },
+  { key: 'monoFat', label: 'Monounsaturated fat', unit: 'g' },
+  { key: 'polyFat', label: 'Polyunsaturated fat', unit: 'g' },
+  { key: 'ala', label: 'ALA', unit: 'mg' },
+  { key: 'epa', label: 'EPA', unit: 'mg' },
+  { key: 'dpa', label: 'DPA', unit: 'mg' },
+  { key: 'dha', label: 'DHA', unit: 'mg' },
+];
+
+export const getFoodMeasurements = (food: Food) =>
+  Array.isArray(food.measurements) ? food.measurements : [];
+
+export const getDefaultMeasurement = (food: Food) => {
+  const measurements = getFoodMeasurements(food);
+  return (
+    measurements.find((measurement) => measurement.isDefault) ??
+    measurements[0]
+  );
+};
+
+export const getMeasurementById = (food: Food, measurementId: number | null) => {
+  if (measurementId === null) {
+    return undefined;
+  }
+  return getFoodMeasurements(food).find(
+    (measurement) => measurement.id === measurementId,
+  );
+};
+
+export const getMeasurementGrams = (measurement?: FoodMeasurement) =>
+  measurement ? measurement.weightInGrams : 100;
+
+export const formatMeasurementText = (measurement?: FoodMeasurement) => {
+  if (!measurement) {
+    return '100 g';
+  }
+  return measurement.name || measurement.abbreviation || '100 g';
+};
+
+export const formatCalories = (value: number) => `${Math.round(value)} cal`;
+
+export const normalizeAmount = (value: string) => {
+  const sanitized = value.replace(/[^0-9.]/g, '');
+  const [whole, ...decimals] = sanitized.split('.');
+
+  if (decimals.length === 0) {
+    return whole;
+  }
+
+  return `${whole}.${decimals.join('')}`;
+};
+
+export const getCaloriesForMeasurement = (
+  food: Food,
+  measurement: FoodMeasurement | undefined,
+  servingCount: number,
+) => {
+  const grams = getMeasurementGrams(measurement) * servingCount;
+  return (food.calories * grams) / 100;
+};
+
+export const buildNutritionRows = (
+  food: Food,
+  measurement: FoodMeasurement | undefined,
+  servings: number,
+): NutritionRow[] => {
+  const grams = getMeasurementGrams(measurement) * servings;
+  return nutritionFields
+    .map((field) => {
+      const rawValue = food[field.key];
+      if (typeof rawValue !== 'number') {
+        return null;
+      }
+      const scaledValue = (rawValue * grams) / 100;
+      if (scaledValue <= 0) {
+        return null;
+      }
+      const roundedValue =
+        field.key === 'calories'
+          ? Math.round(scaledValue)
+          : Number(scaledValue.toFixed(2));
+      return {
+        key: field.key,
+        label: field.label,
+        value: roundedValue,
+        unit: field.unit,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+};

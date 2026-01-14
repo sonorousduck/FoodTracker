@@ -10,8 +10,8 @@ export class FoodMeasurement {
   @ManyToOne(() => Food, (food) => food.measurements, { onDelete: "CASCADE" })
   food: Food;
 
-  @Column({ type: "int" })
-  unit: number;
+  @Column()
+  unit: string;
 
   @Column()
   name: string; // "1 cup", "1 tablespoon", "100g", etc.
