@@ -59,12 +59,16 @@ export default function IngredientModal({
               {selectedFood.name}
             </ThemedText>
             {selectedFood.brand ? (
-              <ThemedText style={[styles.modalSubtitle, { color: colors.icon }]}>
+              <ThemedText
+                style={[styles.modalSubtitle, { color: colors.icon }]}
+              >
                 {selectedFood.brand}
               </ThemedText>
             ) : null}
 
-            <ThemedText style={styles.modalSectionTitle}>Serving size</ThemedText>
+            <ThemedText style={styles.modalSectionTitle}>
+              Serving size
+            </ThemedText>
             {selectedMeasurements.length > 0 ? (
               <ScrollView
                 horizontal
@@ -183,7 +187,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 16,
-    maxHeight: '85%',
   },
   modalContent: {
     flexGrow: 1,
