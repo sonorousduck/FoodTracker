@@ -2,10 +2,10 @@ import Recipe from '@/app/(app)/recipe';
 import { searchFoods } from '@/lib/api/food';
 import { Food } from '@/types/food/food';
 import { FoodMeasurement } from '@/types/foodmeasurement/foodmeasurement';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render, within } from '@testing-library/react-native';
 import React from 'react';
+import { useColorScheme } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
-import useColorScheme from 'react-native/Libraries/Utilities/useColorScheme';
 
 jest.mock('@/lib/api/food', () => ({
   searchFoods: jest.fn(),
@@ -158,8 +158,15 @@ describe('Recipe ingredient modal flow', () => {
 
     fireEvent.press(getByTestId('ingredient-add-button'));
 
-    expect(getByTestId('selected-ingredient-1')).toBeTruthy();
+    const selectedIngredient = getByTestId('selected-ingredient-1');
+    expect(selectedIngredient).toBeTruthy();
     expect(getByText('1 serving · 1 oz')).toBeTruthy();
-    expect(getByText('28 cal')).toBeTruthy();
+    expect(within(selectedIngredient).getByText('28 cal')).toBeTruthy();
+    expect(getByTestId('recipe-calorie-sum-value')).toHaveTextContent(
+      '28 cal',
+    );
+    expect(getByTestId('recipe-calorie-sum-per-serving')).toHaveTextContent(
+      '-',
+    );
   });
 });

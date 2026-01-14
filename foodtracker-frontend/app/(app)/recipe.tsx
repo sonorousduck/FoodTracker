@@ -1,4 +1,7 @@
 import DuckTextInput from '@/components/interactions/inputs/textinput';
+import CalorieSum, {
+  CALORIE_SUM_HEIGHT,
+} from '@/components/recipe/caloriesum';
 import IngredientModal from '@/components/recipe/ingredientmodal';
 import IngredientSearch from '@/components/recipe/ingredientsearch';
 import SelectedIngredients from '@/components/recipe/selectedingredients';
@@ -6,6 +9,7 @@ import {
   buildNutritionRows,
   getDefaultMeasurement,
   getFoodMeasurements,
+  getCaloriesForMeasurement,
   getMeasurementById,
   IngredientEntry,
   normalizeAmount,
@@ -14,12 +18,7 @@ import { Colors } from '@/constants/Colors';
 import { searchFoods } from '@/lib/api/food';
 import { Food } from '@/types/food/food';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  useColorScheme,
-} from 'react-native';
+import { ScrollView, StyleSheet, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const searchDelayMs = 350;
@@ -167,6 +166,29 @@ export default function Recipe() {
     return buildNutritionRows(selectedFood, selectedMeasurement, modalServings);
   }, [modalServings, selectedFood, selectedMeasurement]);
 
+  const totalCalories = useMemo(
+    () =>
+      ingredients.reduce((total, entry) => {
+        const measurement =
+          getMeasurementById(entry.food, entry.measurementId ?? null) ??
+          getDefaultMeasurement(entry.food);
+        return (
+          total +
+          getCaloriesForMeasurement(entry.food, measurement, entry.servings)
+        );
+      }, 0),
+    [ingredients],
+  );
+
+  const perServingCalories = useMemo(() => {
+    const parsed = Number(normalizeAmount(servings));
+    const servingCount = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    if (!servingCount) {
+      return null;
+    }
+    return totalCalories / servingCount;
+  }, [servings, totalCalories]);
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -182,7 +204,7 @@ export default function Recipe() {
           value={servings}
           onChangeText={setServings}
           placeholder="Serves how many people?"
-          enterKeyHint="next"
+          enterKeyHint="done"
           inputMode="numeric"
         />
 
@@ -210,6 +232,11 @@ export default function Recipe() {
           )}
         </View>
       </ScrollView>
+      <CalorieSum
+        colors={colors}
+        totalCalories={totalCalories}
+        perServingCalories={perServingCalories}
+      />
       <IngredientModal
         colors={colors}
         visible={isIngredientModalVisible}
@@ -240,9 +267,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    gap: 4,
     paddingTop: 48,
     paddingHorizontal: 8,
-    paddingBottom: 24,
+    paddingBottom: CALORIE_SUM_HEIGHT + 24,
   },
   section: {
     marginTop: 8,
