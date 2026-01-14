@@ -8,7 +8,7 @@ export type RecipeColors = typeof Colors.light;
 export type NutritionRow = {
   key: keyof Food;
   label: string;
-  value: number;
+  value: number | null;
   unit: string;
 };
 
@@ -23,11 +23,15 @@ type NutritionField = {
   unit: string;
 };
 
-const nutritionFields: NutritionField[] = [
+const coreNutritionFields: NutritionField[] = [
   { key: 'calories', label: 'Calories', unit: 'cal' },
   { key: 'protein', label: 'Protein', unit: 'g' },
   { key: 'carbs', label: 'Carbs', unit: 'g' },
   { key: 'fat', label: 'Fat', unit: 'g' },
+];
+
+const nutritionFields: NutritionField[] = [
+  ...coreNutritionFields,
   { key: 'fiber', label: 'Fiber', unit: 'g' },
   { key: 'sugar', label: 'Sugar', unit: 'g' },
   { key: 'sodium', label: 'Sodium', unit: 'mg' },
@@ -149,14 +153,53 @@ export const buildNutritionRows = (
   servings: number,
 ): NutritionRow[] => {
   const grams = getMeasurementGrams(measurement) * servings;
-  return nutritionFields
+  return buildNutritionRowsFromFields(food, grams, nutritionFields, true);
+};
+
+export const buildCoreNutritionRows = (
+  food: Food,
+  measurement: FoodMeasurement | undefined,
+  servings: number,
+): NutritionRow[] => {
+  const grams = getMeasurementGrams(measurement) * servings;
+  return coreNutritionFields.map((field) => {
+    const parsedValue = coerceNumber(food[field.key]);
+    if (parsedValue === null) {
+      return {
+        key: field.key,
+        label: field.label,
+        value: null,
+        unit: field.unit,
+      };
+    }
+    const scaledValue = (parsedValue * grams) / 100;
+    const roundedValue =
+      field.key === 'calories'
+        ? Math.round(scaledValue)
+        : Number(scaledValue.toFixed(2));
+    return {
+      key: field.key,
+      label: field.label,
+      value: roundedValue,
+      unit: field.unit,
+    };
+  });
+};
+
+const buildNutritionRowsFromFields = (
+  food: Food,
+  grams: number,
+  fields: NutritionField[],
+  includeZero: boolean,
+): NutritionRow[] => {
+  return fields
     .map((field) => {
-      const rawValue = food[field.key];
-      if (typeof rawValue !== 'number') {
+      const parsedValue = coerceNumber(food[field.key]);
+      if (parsedValue === null) {
         return null;
       }
-      const scaledValue = (rawValue * grams) / 100;
-      if (scaledValue <= 0) {
+      const scaledValue = (parsedValue * grams) / 100;
+      if (!includeZero && scaledValue <= 0) {
         return null;
       }
       const roundedValue =
@@ -171,4 +214,15 @@ export const buildNutritionRows = (
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
+};
+
+const coerceNumber = (value: Food[keyof Food]): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
 };

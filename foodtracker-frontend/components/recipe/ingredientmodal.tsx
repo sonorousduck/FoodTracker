@@ -2,6 +2,7 @@ import DuckTextInput from '@/components/interactions/inputs/textinput';
 import ThemedText from '@/components/themedtext';
 import { Food } from '@/types/food/food';
 import { FoodMeasurement } from '@/types/foodmeasurement/foodmeasurement';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Modal, Portal } from 'react-native-paper';
 import {
@@ -20,6 +21,7 @@ type IngredientModalProps = {
   onSelectMeasurementId: (measurementId: number) => void;
   servingInput: string;
   onServingInputChange: (value: string) => void;
+  coreNutritionRows: NutritionRow[];
   nutritionRows: NutritionRow[];
   selectedEntry?: IngredientEntry;
   onRemove: () => void;
@@ -36,12 +38,18 @@ export default function IngredientModal({
   onSelectMeasurementId,
   servingInput,
   onServingInputChange,
+  coreNutritionRows,
   nutritionRows,
   selectedEntry,
   onRemove,
   onConfirm,
   onDismiss,
 }: IngredientModalProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const extraNutritionRows = nutritionRows.filter(
+    (row) => !coreNutritionRows.some((coreRow) => coreRow.key === row.key),
+  );
+
   return (
     <Portal>
       <Modal
@@ -124,27 +132,85 @@ export default function IngredientModal({
             <ThemedText style={styles.modalSectionTitle}>
               Nutrition facts
             </ThemedText>
-            <ScrollView style={styles.nutritionList}>
-              {nutritionRows.length === 0 ? (
-                <ThemedText
-                  style={[styles.modalEmptyText, { color: colors.icon }]}
-                >
-                  No nutrition data available.
-                </ThemedText>
-              ) : (
-                nutritionRows.map((row) => (
-                  <View key={row.key} style={styles.nutritionRow}>
-                    <ThemedText style={styles.nutritionLabel}>
-                      {row.label}
+            {coreNutritionRows.length === 0 ? (
+              <ThemedText
+                style={[styles.modalEmptyText, { color: colors.icon }]}
+              >
+                No nutrition data available.
+              </ThemedText>
+            ) : (
+              <View>
+                <ScrollView style={styles.nutritionList}>
+                  {coreNutritionRows.map((row, index) => (
+                    <View
+                      key={row.key}
+                      style={[
+                        styles.nutritionRow,
+                        index % 2 === 1
+                          ? { backgroundColor: colors.modalSecondary }
+                          : null,
+                      ]}
+                    >
+                      <ThemedText style={styles.nutritionLabel}>
+                        {row.label}
+                      </ThemedText>
+                      <ThemedText style={styles.nutritionValue}>
+                        {row.value === null ? '-' : row.value}
+                        {row.value === null
+                          ? ''
+                          : row.unit
+                            ? ` ${row.unit}`
+                            : ''}
+                      </ThemedText>
+                    </View>
+                  ))}
+                  {isExpanded
+                    ? extraNutritionRows.map((row, offset) => (
+                        <View
+                          key={row.key}
+                          style={[
+                            styles.nutritionRow,
+                            (coreNutritionRows.length + offset) % 2 === 1
+                              ? { backgroundColor: colors.modalSecondary }
+                              : null,
+                          ]}
+                        >
+                          <ThemedText style={styles.nutritionLabel}>
+                            {row.label}
+                          </ThemedText>
+                          <ThemedText style={styles.nutritionValue}>
+                            {row.value === null ? '-' : row.value}
+                            {row.value === null
+                              ? ''
+                              : row.unit
+                                ? ` ${row.unit}`
+                                : ''}
+                          </ThemedText>
+                        </View>
+                      ))
+                    : null}
+                </ScrollView>
+                {extraNutritionRows.length > 0 ? (
+                  <TouchableOpacity
+                    style={[
+                      styles.expandButton,
+                      {
+                        borderColor: colors.modalSecondary,
+                        backgroundColor: colors.modalSecondary,
+                      },
+                    ]}
+                    onPress={() => setIsExpanded((prev) => !prev)}
+                    testID="nutrition-expand-toggle"
+                  >
+                    <ThemedText
+                      style={[styles.expandButtonText, { color: colors.text }]}
+                    >
+                      {isExpanded ? 'Hide details' : 'Show all nutrition'}
                     </ThemedText>
-                    <ThemedText style={styles.nutritionValue}>
-                      {row.value}
-                      {row.unit ? ` ${row.unit}` : ''}
-                    </ThemedText>
-                  </View>
-                ))
-              )}
-            </ScrollView>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            )}
 
             <View style={styles.modalActions}>
               {selectedEntry ? (
@@ -184,9 +250,12 @@ export default function IngredientModal({
 
 const styles = StyleSheet.create({
   modalContainer: {
+    alignSelf: 'center',
     marginHorizontal: 16,
     borderRadius: 16,
     padding: 16,
+    width: '90%',
+    maxWidth: 512,
   },
   modalContent: {
     flexGrow: 1,
@@ -223,11 +292,24 @@ const styles = StyleSheet.create({
   },
   nutritionList: {
     maxHeight: 200,
+    marginBottom: 12,
+  },
+  expandButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  expandButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   nutritionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
   nutritionLabel: {
     fontSize: 12,

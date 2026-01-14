@@ -1,7 +1,12 @@
 import DuckTextInput from '@/components/interactions/inputs/textinput';
 import ThemedText from '@/components/themedtext';
 import { Food } from '@/types/food/food';
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   formatCalories,
   formatMeasurementText,
@@ -146,7 +151,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginBottom: 8,
+    marginBottom: 2,
   },
   resultRow: {
     flexDirection: 'row',
