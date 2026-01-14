@@ -1,23 +1,29 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { User } from "src/users/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserRequest } from "src/common/user";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 
 import { CreateBasicFoodDto } from "./dto/createbasicfood.dto";
 import { CreateFoodDto } from "./dto/createfood.dto";
 import { AllFoodsDto } from "./dto/allfoods.dto";
 import { Food } from "./entities/food.entity";
+import { FoodSearchService } from "./food-search.service";
 
 
 @Injectable()
 export class FoodService {
+  private readonly logger = new Logger(FoodService.name);
+
   constructor(
     @InjectRepository(Food)
-    private readonly foodRepository: Repository<Food>
+    private readonly foodRepository: Repository<Food>,
+    private readonly foodSearchService: FoodSearchService
   ) {}
   async createBasicFood(createBasicFoodDto: CreateBasicFoodDto, userRequest: UserRequest) {
     const food = await this.foodRepository.save({ ...createBasicFoodDto, createdBy: { id: userRequest.userId } });
+
+    await this.indexFoodSafe(food);
 
     return food;
   }
@@ -28,11 +34,17 @@ export class FoodService {
       sourceId: createFood.sourceId,
     });
 
+    let food: Food;
+
     if (alreadyExistsFood) {
-      return this.foodRepository.update(alreadyExistsFood.id, createFood);
+      food = await this.foodRepository.save({ ...alreadyExistsFood, ...createFood });
     } else {
-      return this.foodRepository.save(createFood);
+      food = await this.foodRepository.save(createFood);
     }
+
+    await this.indexFoodSafe(food);
+
+    return food;
   }
 
   async getFood(foodId: number) {
@@ -62,9 +74,33 @@ export class FoodService {
     };
   }
 
-  async getFoodsByName(foodName: string) {
-    const foods = await this.foodRepository.findBy({ name: foodName });
+  async getFoodsByName(foodName: string, limit: number = 20) {
+    const ids = await this.foodSearchService.searchFoodsByName(foodName, limit);
+    if (ids.length === 0) {
+      return [];
+    }
 
-    return foods;
+    const foods = await this.foodRepository.find({
+      where: { id: In(ids) },
+      relations: ["measurements"],
+    });
+    const foodsById = new Map(foods.map((food) => [food.id, food]));
+
+    return ids.map((id) => foodsById.get(id)).filter((food): food is Food => Boolean(food));
+  }
+
+  async reindexFoods(): Promise<{ indexedCount: number }> {
+    const foods = await this.foodRepository.find({ select: ["id", "name", "brand"] });
+    await this.foodSearchService.bulkIndexFoods(foods);
+
+    return { indexedCount: foods.length };
+  }
+
+  private async indexFoodSafe(food: Food): Promise<void> {
+    try {
+      await this.foodSearchService.indexFood(food);
+    } catch (error) {
+      this.logger.warn("Failed to index food in Elasticsearch.", error as Error);
+    }
   }
 }

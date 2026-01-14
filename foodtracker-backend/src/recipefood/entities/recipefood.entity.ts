@@ -15,5 +15,8 @@ export class RecipeFood {
   food: Food;
 
   @Column("decimal", { precision: 10, scale: 2 })
-  amount: number; // how many servings of the food are used
+  servings: number; // how many servings of the food are used
+
+  @Column("int", { nullable: true })
+  measurementId?: number | null;
 }

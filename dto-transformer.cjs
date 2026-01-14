@@ -52,6 +52,12 @@ function mapBackendPathToFrontend(file) {
 }
 
 // Step 3: Transform a single file
+const bannerRegex = /^\/\*\*\n \* Auto-generated from backend DTOs\/Entities on [^\n]+\n \* Do not edit manually\.\n \*\/\n\n/;
+
+function stripBanner(text) {
+  return text.replace(bannerRegex, "");
+}
+
 function transformFile(inputPath, outputPath) {
   const project = new Project();
   const source = project.addSourceFileAtPath(inputPath);
@@ -124,6 +130,20 @@ function transformFile(inputPath, outputPath) {
   }
 
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+  let existing = "";
+  if (fs.existsSync(outputPath)) {
+    existing = fs.readFileSync(outputPath, "utf8");
+  }
+
+  const nextComparable = stripBanner(output);
+  const existingComparable = stripBanner(existing);
+
+  if (nextComparable === existingComparable) {
+    console.log("Unchanged:", outputPath);
+    return;
+  }
+
   fs.writeFileSync(outputPath, output, "utf8");
   console.log("Generated:", outputPath);
 }
