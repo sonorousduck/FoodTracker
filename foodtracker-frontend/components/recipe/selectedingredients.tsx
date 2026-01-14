@@ -39,7 +39,7 @@ export default function SelectedIngredients({
           testID={`selected-ingredient-${entry.food.id}`}
         >
           <View style={styles.ingredientRow}>
-            <View style={styles.ingredientInfo}>
+            <View>
               <ThemedText style={styles.ingredientName}>
                 {entry.food.name}
               </ThemedText>
@@ -49,10 +49,8 @@ export default function SelectedIngredients({
                 {`${entry.servings} ${
                   entry.servings === 1 ? 'serving' : 'servings'
                 } \u00b7 ${formatMeasurementText(
-                  getMeasurementById(
-                    entry.food,
-                    entry.measurementId ?? null,
-                  ) ?? getDefaultMeasurement(entry.food),
+                  getMeasurementById(entry.food, entry.measurementId ?? null) ??
+                    getDefaultMeasurement(entry.food),
                 )}`}
               </ThemedText>
             </View>
@@ -87,17 +85,13 @@ const styles = StyleSheet.create({
   ingredientCard: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+    padding: 8,
+    marginBottom: 2,
   },
   ingredientRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  ingredientInfo: {
-    flex: 1,
-    paddingRight: 12,
   },
   ingredientName: {
     fontSize: 16,
