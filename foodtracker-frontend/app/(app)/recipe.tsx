@@ -6,6 +6,7 @@ import IngredientModal from '@/components/recipe/ingredientmodal';
 import IngredientSearch from '@/components/recipe/ingredientsearch';
 import SelectedIngredients from '@/components/recipe/selectedingredients';
 import {
+  buildCoreNutritionRows,
   buildNutritionRows,
   getDefaultMeasurement,
   getFoodMeasurements,
@@ -166,6 +167,17 @@ export default function Recipe() {
     return buildNutritionRows(selectedFood, selectedMeasurement, modalServings);
   }, [modalServings, selectedFood, selectedMeasurement]);
 
+  const coreNutritionRows = useMemo(() => {
+    if (!selectedFood) {
+      return [];
+    }
+    return buildCoreNutritionRows(
+      selectedFood,
+      selectedMeasurement,
+      modalServings,
+    );
+  }, [modalServings, selectedFood, selectedMeasurement]);
+
   const totalCalories = useMemo(
     () =>
       ingredients.reduce((total, entry) => {
@@ -246,6 +258,7 @@ export default function Recipe() {
         onSelectMeasurementId={setSelectedMeasurementId}
         servingInput={servingInput}
         onServingInputChange={setServingInput}
+        coreNutritionRows={coreNutritionRows}
         nutritionRows={nutritionRows}
         selectedEntry={selectedEntry}
         onRemove={() => {

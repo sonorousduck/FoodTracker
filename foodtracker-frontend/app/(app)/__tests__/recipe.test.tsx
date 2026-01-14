@@ -35,7 +35,7 @@ const createFoodFixture = (): Food => {
     sugar: 0,
     sodium: 0,
     saturatedFat: 0,
-    transFat: 0,
+    transFat: 1,
     cholesterol: 0,
     addedSugar: 0,
     netCarbs: 0,
@@ -155,6 +155,10 @@ describe('Recipe ingredient modal flow', () => {
     expect(getByTestId('ingredient-details-content')).toBeTruthy();
     expect(getByText('Protein')).toBeTruthy();
     expect(queryByText('Trans fat')).toBeNull();
+    expect(getByTestId('nutrition-expand-toggle')).toBeTruthy();
+
+    fireEvent.press(getByTestId('nutrition-expand-toggle'));
+    expect(getByText('Trans fat')).toBeTruthy();
 
     fireEvent.press(getByTestId('ingredient-add-button'));
 
