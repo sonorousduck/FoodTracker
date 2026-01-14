@@ -9050,7 +9050,7 @@ victory-zoom-container@37.3.6:
     lodash "^4.17.19"
     victory-core "37.3.6"
 
-victory@^41.20.2:
+victory@^37.3.6:
   version "37.3.6"
   resolved "https://registry.yarnpkg.com/victory/-/victory-37.3.6.tgz#9506632c1306f8d221e50e60259781e98a2a5c2f"
   integrity sha512-CZ1vjvra0R1U3T2dMI4EsjI8Ng+JmQ2ox/EweSzjkTnHfW/Vn5ylryadawDiYjDMcBvABjO3uODsIlSEm4d/Sw==
