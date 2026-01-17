@@ -6,7 +6,7 @@ import { Food } from "src/food/entities/food.entity";
 @Entity()
 export class RecipeFood {
   @PrimaryGeneratedColumn("uuid")
-  id: string;
+  id?: string;
 
   @ManyToOne(() => Recipe, (recipe) => recipe.ingredients, { nullable: false })
   recipe: Recipe;
