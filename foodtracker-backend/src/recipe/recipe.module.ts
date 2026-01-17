@@ -1,3 +1,4 @@
+import { Food } from "src/food/entities/food.entity";
 import { RecipeFood } from "src/recipefood/entities/recipefood.entity";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Module } from "@nestjs/common";
@@ -8,7 +9,7 @@ import { RecipeService } from "./recipe.service";
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Recipe, RecipeFood])],
+  imports: [TypeOrmModule.forFeature([Recipe, RecipeFood, Food])],
   providers: [RecipeService],
   controllers: [RecipeController],
 })

@@ -21,15 +21,6 @@ export class Recipe {
   @Column("decimal", { precision: 10, scale: 2, nullable: true })
   calories?: number;
 
-  @Column("decimal", { precision: 10, scale: 2, nullable: true })
-  fat?: number;
-
-  @Column("decimal", { precision: 10, scale: 2, nullable: true })
-  carbs?: number;
-
-  @Column("decimal", { precision: 10, scale: 2, nullable: true })
-  protein?: number;
-
   @OneToMany(() => RecipeFood, (recipeFood) => recipeFood.recipe, { cascade: true })
   ingredients: ReadonlyArray<RecipeFood>;
 }

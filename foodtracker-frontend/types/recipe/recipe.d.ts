@@ -1,5 +1,5 @@
 /**
- * Auto-generated from backend DTOs/Entities on 2026-01-14 07:48:19
+ * Auto-generated from backend DTOs/Entities on 2026-01-17 13:01:35
  * Do not edit manually.
  */
 
@@ -12,8 +12,5 @@ export interface Recipe {
     title: string;
     servings: number;
     calories?: number;
-    fat?: number;
-    carbs?: number;
-    protein?: number;
     ingredients: ReadonlyArray<RecipeFood>;
 }

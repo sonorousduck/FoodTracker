@@ -1,5 +1,7 @@
 import Recipe from '@/app/(app)/recipe';
+import { isAxiosError } from '@/lib/api';
 import { searchFoods } from '@/lib/api/food';
+import { createRecipe } from '@/lib/api/recipe';
 import { Food } from '@/types/food/food';
 import { FoodMeasurement } from '@/types/foodmeasurement/foodmeasurement';
 import { act, fireEvent, render, within } from '@testing-library/react-native';
@@ -7,8 +9,48 @@ import React from 'react';
 import { useColorScheme } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 
+let headerRightRenderer: (() => React.ReactNode) | null = null;
+const mockReplace = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({
+    setOptions: (options: { headerRight?: () => React.ReactNode }) => {
+      headerRightRenderer = options.headerRight ?? null;
+    },
+  }),
+}));
+
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useLocalSearchParams: () => ({}),
+  useRouter: () => ({ replace: mockReplace }),
+}));
+
+jest.mock('@/lib/api', () => ({
+  __esModule: true,
+  isAxiosError: jest.fn(() => false),
+}));
+
 jest.mock('@/lib/api/food', () => ({
   searchFoods: jest.fn(),
+}));
+
+jest.mock('@/lib/api/recipe', () => ({
+  __esModule: true,
+  createRecipe: jest.fn(),
+  updateRecipe: jest.fn(),
+  deleteRecipe: jest.fn(),
+  getRecipe: jest.fn(),
+}));
+
+jest.mock('@expo/vector-icons/AntDesign', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
+jest.mock('@expo/vector-icons/MaterialIcons', () => ({
+  __esModule: true,
+  default: () => null,
 }));
 
 jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
@@ -16,6 +58,8 @@ jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
   default: jest.fn(),
 }));
 
+const mockedCreateRecipe = createRecipe as jest.MockedFunction<typeof createRecipe>;
+const mockedIsAxiosError = isAxiosError as jest.MockedFunction<typeof isAxiosError>;
 const mockedSearchFoods = searchFoods as jest.MockedFunction<typeof searchFoods>;
 const mockedUseColorScheme = useColorScheme as jest.MockedFunction<
   typeof useColorScheme
@@ -118,6 +162,7 @@ describe('Recipe ingredient modal flow', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     mockedUseColorScheme.mockReturnValue('light');
+    mockedIsAxiosError.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -127,6 +172,10 @@ describe('Recipe ingredient modal flow', () => {
     jest.useRealTimers();
     mockedSearchFoods.mockReset();
     mockedUseColorScheme.mockReset();
+    mockedCreateRecipe.mockReset();
+    mockedIsAxiosError.mockReset();
+    mockReplace.mockReset();
+    headerRightRenderer = null;
   });
 
   it('adds an ingredient after confirming the modal', async () => {
@@ -172,5 +221,55 @@ describe('Recipe ingredient modal flow', () => {
     expect(getByTestId('recipe-calorie-sum-per-serving')).toHaveTextContent(
       '-',
     );
+  });
+
+  it('submits a new recipe', async () => {
+    const food = createFoodFixture();
+    mockedSearchFoods.mockResolvedValue([food]);
+    mockedCreateRecipe.mockResolvedValueOnce({} as never);
+
+    const { getByTestId, getByText } = render(
+      <PaperProvider>
+        <Recipe />
+      </PaperProvider>,
+    );
+
+    fireEvent.press(getByText('Add ingredient'));
+    fireEvent.changeText(getByTestId('ingredient-search-input'), 'almonds');
+
+    await act(async () => {
+      jest.advanceTimersByTime(350);
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.press(getByTestId('search-result-1'));
+    fireEvent.press(getByTestId('ingredient-add-button'));
+
+    fireEvent.changeText(getByTestId('recipe-title-input'), 'Almond bowl');
+    fireEvent.changeText(getByTestId('recipe-servings-input'), '2');
+
+    await act(async () => {});
+    const header = render(<>{headerRightRenderer?.()}</>);
+    await act(async () => {
+      fireEvent.press(header.getByTestId('recipe-submit'));
+    });
+
+    expect(mockedCreateRecipe).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Almond bowl',
+        servings: 2,
+        ingredients: [
+          expect.objectContaining({
+            foodId: 1,
+            servings: 1,
+            measurementId: 10,
+          }),
+        ],
+      }),
+    );
+    expect(mockReplace).toHaveBeenCalledWith('/recipes');
   });
 });

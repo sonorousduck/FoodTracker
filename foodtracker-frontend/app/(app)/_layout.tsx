@@ -22,6 +22,15 @@ export default function AppLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="recipes"
+        options={{
+          headerTitle: 'Recipes',
+          headerBackButtonDisplayMode: 'generic',
+          headerShadowVisible: false,
+          headerTransparent: true,
+        }}
+      />
     </Stack>
   );
 }
