@@ -44,4 +44,26 @@ export class UsersService {
 
     return user;
   }
+
+  async updateRefreshToken(
+    userId: number,
+    refreshTokenHash: string,
+    refreshTokenExpiresAt: Date
+  ) {
+    await this.userRepository.update(userId, {
+      refreshTokenHash,
+      refreshTokenExpiresAt,
+    });
+  }
+
+  async clearRefreshToken(userId: number) {
+    await this.userRepository.update(userId, {
+      refreshTokenHash: null,
+      refreshTokenExpiresAt: null,
+    });
+  }
+
+  async findByRefreshTokenHash(refreshTokenHash: string) {
+    return this.userRepository.findOne({ where: { refreshTokenHash } });
+  }
 }

@@ -1,7 +1,8 @@
-import apiService, { isAxiosError, updateToken } from "@/lib/api";
+import apiService, { isAxiosError, updateRefreshToken, updateToken } from "@/lib/api";
 import { AuthResult } from "@/types/auth/authResult";
 import { CreateUserDto } from "@/types/users/createuser";
-import { createContext, PropsWithChildren, useContext, useEffect } from "react";
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
+import { Platform } from "react-native";
 
 import { LoginDto } from "../types/auth/login";
 import { useStorageState } from "./useStorageState";
@@ -11,7 +12,7 @@ import { useStorageState } from "./useStorageState";
 const AuthContext = createContext<{
   signIn: (loginDto: LoginDto) => Promise<AuthResult>;
   createAccount: (createUserDto: CreateUserDto) => Promise<AuthResult>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   session?: string | null;
   isLoading: boolean;
 }>({
@@ -21,7 +22,7 @@ const AuthContext = createContext<{
   createAccount: async (createUserDto: CreateUserDto): Promise<AuthResult> => {
     throw new Error("Not implemented");
   },
-  signOut: () => {},
+  signOut: async () => {},
   session: null,
   isLoading: false,
 });
@@ -36,12 +37,32 @@ export function useSession() {
 
 export function SessionProvider({ children }: PropsWithChildren) {
   const [[isLoading, session], setSession] = useStorageState("session");
+  const [isWebSessionLoading, setIsWebSessionLoading] = useState(Platform.OS === "web");
 
   // Update API service token whenever session changes
   useEffect(() => {
-    // Update the centralized API service with the current session token
-    updateToken(session);
+    if (Platform.OS !== "web") {
+      updateToken(session);
+    }
   }, [session]);
+
+  const hydrateWebSession = useCallback(async () => {
+    if (Platform.OS !== "web") {
+      return;
+    }
+    try {
+      await apiService.get("/auth/user", { withCredentials: true });
+      setSession("cookie");
+    } catch (error) {
+      setSession(null);
+    } finally {
+      setIsWebSessionLoading(false);
+    }
+  }, [setSession]);
+
+  useEffect(() => {
+    hydrateWebSession();
+  }, [hydrateWebSession]);
 
   const signIn = async (loginDto: LoginDto): Promise<AuthResult> => {
     try {
@@ -50,8 +71,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
       const authResult = response.data;
 
       if (authResult?.accessToken) {
-        // Set session in storage (useStorageState)
-        setSession(authResult.accessToken);
+        if (Platform.OS === "web") {
+          setSession("cookie");
+        } else {
+          setSession(authResult.accessToken);
+          await updateRefreshToken(authResult.refreshToken ?? null);
+        }
       }
 
       return authResult;
@@ -83,10 +108,23 @@ export function SessionProvider({ children }: PropsWithChildren) {
     }
   };
 
-  const signOut = () => {
-    // Clear session from storage (useStorageState)
-    setSession(null);
-    // The useEffect above will automatically clear the API service token
+  const signOut = async () => {
+    try {
+      if (Platform.OS === "web") {
+        await apiService.post("/auth/logout");
+      } else {
+        const refreshToken = apiService.getRefreshToken();
+        await apiService.post("/auth/logout", { refreshToken });
+      }
+    } catch (error) {
+      if (!isAxiosError(error)) {
+        console.error("Failed to log out:", error);
+      }
+    } finally {
+      setSession(null);
+      await updateToken(null);
+      await updateRefreshToken(null);
+    }
   };
 
   return (
@@ -96,7 +134,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         createAccount,
         signOut,
         session,
-        isLoading,
+        isLoading: isLoading || isWebSessionLoading,
       }}
     >
       {children}

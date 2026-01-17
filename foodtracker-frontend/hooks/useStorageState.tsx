@@ -4,6 +4,8 @@ import { Platform } from "react-native";
 
 type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void];
 
+const webMemoryStorage = new Map<string, string | null>();
+
 function useAsyncState<T>(initialValue: [boolean, T | null] = [true, null]): UseStateHook<T> {
   return useReducer(
     (state: [boolean, T | null], action: T | null = null): [boolean, T | null] => [false, action],
@@ -13,15 +15,7 @@ function useAsyncState<T>(initialValue: [boolean, T | null] = [true, null]): Use
 
 export async function setStorageItemAsync(key: string, value: string | null) {
   if (Platform.OS === "web") {
-    try {
-      if (value === null) {
-        localStorage.removeItem(key);
-      } else {
-        localStorage.setItem(key, value);
-      }
-    } catch (e) {
-      console.error("Local storage is unavailable:", e);
-    }
+    webMemoryStorage.set(key, value);
   } else {
     if (value == null) {
       await SecureStore.deleteItemAsync(key);
@@ -38,13 +32,7 @@ export function useStorageState(key: string): UseStateHook<string> {
   // Get
   useEffect(() => {
     if (Platform.OS === "web") {
-      try {
-        if (typeof localStorage !== "undefined") {
-          setState(localStorage.getItem(key));
-        }
-      } catch (e) {
-        console.error("Local storage is unavailable:", e);
-      }
+      setState(webMemoryStorage.get(key) ?? null);
     } else {
       SecureStore.getItemAsync(key).then((value) => {
         setState(value);

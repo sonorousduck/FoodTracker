@@ -1,5 +1,5 @@
 /**
- * Auto-generated from backend DTOs/Entities on 2026-01-14 07:48:19
+ * Auto-generated from backend DTOs/Entities on 2026-01-17 13:24:01
  * Do not edit manually.
  */
 
@@ -16,6 +16,8 @@ export interface User {
     password: string;
     firstName: string;
     lastName: string;
+    refreshTokenHash?: string | null;
+    refreshTokenExpiresAt?: Date | null;
     foods: ReadonlyArray<Food>;
     foodEntries: ReadonlyArray<FoodEntry>;
     meals: ReadonlyArray<Meal>;

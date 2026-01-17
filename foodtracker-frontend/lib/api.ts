@@ -9,17 +9,26 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 interface ApiError extends AxiosError {
-	config: InternalAxiosRequestConfig & { _retry?: boolean };
+	config: InternalAxiosRequestConfig & { _retry?: boolean; skipAuthRefresh?: boolean };
 }
+
+type AxiosRequestConfigWithAuth = AxiosRequestConfig & {
+	skipAuthRefresh?: boolean;
+};
 
 class ApiService {
 	private api: AxiosInstance;
 	private tokenKey: string = "authToken";
+	private refreshTokenKey: string = "refreshToken";
 	private currentToken: string | null = null;
+	private currentRefreshToken: string | null = null;
 
 	constructor() {
 		// Create axios instance with base configuration
-		const ip = process.env.EXPO_PUBLIC_BACKEND_IP ?? "192.168.1.4";
+		const ip =
+			Platform.OS === "web" && typeof window !== "undefined"
+				? window.location.hostname
+				: process.env.EXPO_PUBLIC_BACKEND_IP ?? "192.168.1.4";
 		const port = process.env.EXPO_PUBLIC_PORT ?? "3001";
 		this.api = axios.create({
 			baseURL: `http://${ip}:${port}`,
@@ -27,6 +36,7 @@ class ApiService {
 			headers: {
 				"Content-Type": "application/json",
 			},
+			withCredentials: true,
 		});
 
 		// Initialize token and set up interceptors
@@ -45,36 +55,22 @@ class ApiService {
 
 	private async loadToken(): Promise<void> {
 		try {
-			if (Platform.OS === "web") {
-				// Web platform
-				if (typeof window !== "undefined" && window.localStorage) {
-					this.currentToken = localStorage.getItem(this.tokenKey);
+				if (Platform.OS !== "web") {
+					this.currentToken = await SecureStore.getItemAsync(this.tokenKey);
+					this.currentRefreshToken = await SecureStore.getItemAsync(this.refreshTokenKey);
 				}
-			} else {
-				// Native platforms (iOS/Android)
-				this.currentToken = await SecureStore.getItemAsync(this.tokenKey);
+			} catch (error) {
+				console.error("Failed to load token from storage:", error);
+				this.currentToken = null;
+				this.currentRefreshToken = null;
 			}
-		} catch (error) {
-			console.error("Failed to load token from storage:", error);
-			this.currentToken = null;
 		}
-	}
 
 	public async setToken(token: string | null): Promise<void> {
 		this.currentToken = token;
 
 		try {
-			if (Platform.OS === "web") {
-				// Web platform
-				if (typeof window !== "undefined" && window.localStorage) {
-					if (token === null) {
-						localStorage.removeItem(this.tokenKey);
-					} else {
-						localStorage.setItem(this.tokenKey, token);
-					}
-				}
-			} else {
-				// Native platforms (iOS/Android)
+			if (Platform.OS !== "web") {
 				if (token === null) {
 					await SecureStore.deleteItemAsync(this.tokenKey);
 				} else {
@@ -86,8 +82,24 @@ class ApiService {
 		}
 	}
 
+	public async setRefreshToken(token: string | null): Promise<void> {
+		this.currentRefreshToken = token;
+		if (Platform.OS === "web") {
+			return;
+		}
+		if (token === null) {
+			await SecureStore.deleteItemAsync(this.refreshTokenKey);
+		} else {
+			await SecureStore.setItemAsync(this.refreshTokenKey, token);
+		}
+	}
+
 	public async clearToken(): Promise<void> {
 		await this.setToken(null);
+	}
+
+	public async clearRefreshToken(): Promise<void> {
+		await this.setRefreshToken(null);
 	}
 
 	private setupInterceptors(): void {
@@ -116,23 +128,27 @@ class ApiService {
 
 				// Handle common errors globally
 				if (error.response?.status === 401) {
-					// Handle unauthorized - clear token and prevent retry loop
-					if (!originalRequest?._retry) {
+					if (!originalRequest?._retry && !originalRequest?.skipAuthRefresh) {
 						if (originalRequest) {
 							originalRequest._retry = true;
 						}
 
-						// Clear the invalid token
+						const refreshed = await this.tryRefreshToken();
+						if (refreshed) {
+							if (originalRequest.headers) {
+								originalRequest.headers.Authorization = `Bearer ${refreshed}`;
+							} else {
+								originalRequest.headers = {
+									Authorization: `Bearer ${refreshed}`,
+								} as InternalAxiosRequestConfig["headers"];
+							}
+							return this.api(originalRequest);
+						}
+
 						await this.clearToken();
-
-						// Handle unauthorized - maybe clear session and redirect to login
-						console.log("Unauthorized - redirecting to login");
-
-						// You can emit an event or use navigation service here
-						// Example: EventEmitter.emit('unauthorized');
-						// Example: navigationRef.navigate('Login');
+						await this.clearRefreshToken();
+						}
 					}
-				}
 
 				if (error.response?.status && error.response.status >= 500) {
 					// Handle server errors
@@ -144,14 +160,62 @@ class ApiService {
 		);
 	}
 
+	private async tryRefreshToken(): Promise<string | null> {
+		try {
+			if (Platform.OS === "web") {
+				const response = await this.api.post<{ accessToken: string }>(
+					"/auth/refresh",
+					undefined,
+					{
+						withCredentials: true,
+						skipAuthRefresh: true,
+					} as AxiosRequestConfigWithAuth
+				);
+				if (response?.data?.accessToken) {
+					await this.setToken(response.data.accessToken);
+					return response.data.accessToken;
+				}
+				return null;
+			}
+
+				if (!this.currentRefreshToken) {
+					return null;
+				}
+
+				const response = await this.api.post<{ accessToken: string; refreshToken?: string }>(
+					"/auth/refresh",
+					{ refreshToken: this.currentRefreshToken },
+					{ skipAuthRefresh: true } as AxiosRequestConfigWithAuth
+				);
+				if (response?.data?.accessToken) {
+					await this.setToken(response.data.accessToken);
+					if (response.data.refreshToken) {
+						await this.setRefreshToken(response.data.refreshToken);
+					}
+					return response.data.accessToken;
+				}
+				return null;
+			} catch (refreshError) {
+			return null;
+		}
+	}
+
 	// Method to update token from anywhere in your app
 	public async updateToken(newToken: string | null): Promise<void> {
 		await this.setToken(newToken);
 	}
 
+	public async updateRefreshToken(newToken: string | null): Promise<void> {
+		await this.setRefreshToken(newToken);
+	}
+
 	// Get current token
 	public getToken(): string | null {
 		return this.currentToken;
+	}
+
+	public getRefreshToken(): string | null {
+		return this.currentRefreshToken;
 	}
 
 	// Check if user is authenticated
@@ -221,6 +285,8 @@ export default apiService;
 // Export token management methods with proper binding to maintain 'this' context
 export const updateToken = (token: string | null) =>
 	apiService.updateToken(token);
+export const updateRefreshToken = (token: string | null) =>
+	apiService.updateRefreshToken(token);
 export const setToken = (token: string | null) => apiService.setToken(token);
 export const clearToken = () => apiService.clearToken();
 export const isAuthenticated = () => apiService.isAuthenticated();
