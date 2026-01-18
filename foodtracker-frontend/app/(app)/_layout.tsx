@@ -31,6 +31,15 @@ export default function AppLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="logfood"
+        options={{
+          headerTitle: 'Log food',
+          headerBackButtonDisplayMode: 'generic',
+          headerShadowVisible: false,
+          headerTransparent: true,
+        }}
+      />
     </Stack>
   );
 }

@@ -17,20 +17,23 @@ import { CreateBasicFoodDto } from './dto/createbasicfood.dto';
 import { CreateFoodDto } from './dto/createfood.dto';
 import { FoodService } from './food.service';
 
-import type { UserRequest } from "../common/user";
+import type { UserRequest } from '../common/user';
 
-@Controller("food")
+@Controller('food')
 export class FoodController {
   constructor(private readonly foodService: FoodService) {}
 
-  @Post("create")
+  @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(PassportJwtAuthGuard)
-  create(@Body() createBasicFood: CreateBasicFoodDto, @User() user: UserRequest) {
+  create(
+    @Body() createBasicFood: CreateBasicFoodDto,
+    @User() user: UserRequest,
+  ) {
     return this.foodService.createBasicFood(createBasicFood, user);
   }
 
-  @Post("csv-create")
+  @Post('csv-create')
   @HttpCode(HttpStatus.CREATED)
   createFromCsv(@Body() createFood: CreateFoodDto) {
     return this.foodService.createFood(createFood);
@@ -39,12 +42,12 @@ export class FoodController {
   @Get()
   @UseGuards(PassportJwtAuthGuard)
   get(
-    @Query("id", new ParseIntPipe({ optional: true })) id?: number,
-    @Query("name") foodName?: string,
-    @Query("limit", new ParseIntPipe({ optional: true })) limit?: number
+    @Query('id', new ParseIntPipe({ optional: true })) id?: number,
+    @Query('name') foodName?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    if (id == null && (foodName == null || foodName === "")) {
-      throw new BadRequestException("id and foodName cannot both not be null");
+    if (id == null && (foodName == null || foodName === '')) {
+      throw new BadRequestException('id and foodName cannot both not be null');
     }
 
     if (id) {
@@ -56,17 +59,17 @@ export class FoodController {
     throw new BadRequestException();
   }
 
-  @Post("reindex")
+  @Post('reindex')
   @UseGuards(PassportJwtAuthGuard)
   reindexFoods() {
     return this.foodService.reindexFoods();
   }
 
-  @Get("all")
+  @Get('all')
   @UseGuards(PassportJwtAuthGuard)
   getAll(
-    @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
-    @Query("page", new ParseIntPipe({ optional: true })) page?: number
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
   ) {
     return this.foodService.getAllFoods(limit, page);
   }

@@ -3,6 +3,7 @@ import { Recipe } from "src/recipe/entities/recipe.entity";
 import { User } from "src/users/entities/user.entity";
 import { Meal } from "src/meal/entities/meal.entity";
 import { Food } from "src/food/entities/food.entity";
+import { FoodMeasurement } from "src/foodmeasurement/entities/foodmeasurement.entity";
 
 
 @Entity()
@@ -15,6 +16,9 @@ export class FoodEntry {
 
   @ManyToOne(() => Food, { nullable: true })
   food?: Food;
+
+  @ManyToOne(() => FoodMeasurement, { nullable: true })
+  measurement?: FoodMeasurement;
 
   @ManyToOne(() => Recipe, { nullable: true })
   recipe?: Recipe;

@@ -350,7 +350,7 @@ export default function Recipe() {
         router.replace('/recipes');
       } else {
         await createRecipe(payload);
-        router.replace('/recipes');
+        router.replace('/diary');
       }
     } catch (error) {
       const message = isAxiosError(error)

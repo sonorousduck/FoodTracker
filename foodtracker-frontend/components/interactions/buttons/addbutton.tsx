@@ -36,6 +36,11 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
                 router.push("/trackweight");
         };
 
+        const handleLogFoodPress = () => {
+                closeModal();
+                router.push("/logfood");
+        };
+
         return (
                 <>
                         <IconButton
@@ -49,7 +54,10 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
 
                         <AddModal isVisible={modalVisible} onClose={closeModal}>
                                 <View style={styles.buttonContainer}>
-                                        <AddModalPrimaryAction style={[styles.modalButton]}>
+                                        <AddModalPrimaryAction
+                                                style={[styles.modalButton]}
+                                                onPress={handleLogFoodPress}
+                                        >
                                                 <MaterialDesignIcons
                                                         name="food-variant"
                                                         color={colors.icon}

@@ -24,6 +24,7 @@ describe('RecipeService', () => {
   };
   let foodRepository: {
     findBy: jest.Mock;
+    find: jest.Mock;
   };
   let queryBuilder: {
     leftJoin: jest.Mock;
@@ -63,6 +64,7 @@ describe('RecipeService', () => {
 
     foodRepository = {
       findBy: jest.fn(),
+      find: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -100,15 +102,30 @@ describe('RecipeService', () => {
         { foodId: 2, servings: 2, measurementId: null },
       ],
     };
+    const foods = [
+      {
+        id: 1,
+        calories: 100,
+        measurements: [
+          { id: 10, weightInGrams: 200, isDefault: true },
+        ],
+      },
+      {
+        id: 2,
+        calories: 200,
+        measurements: [{ id: 20, weightInGrams: 50, isDefault: true }],
+      },
+    ];
     const savedRecipe = {
       id: 5,
       title: dto.title,
       servings: dto.servings,
-      calories: dto.calories,
+      calories: 500,
       ingredients: [],
     } as unknown as Recipe;
 
     foodRepository.findBy.mockResolvedValue([{ id: 1 }, { id: 2 }]);
+    foodRepository.find.mockResolvedValue(foods);
     recipeRepository.create.mockImplementation((input: Recipe) => input);
     recipeRepository.save.mockResolvedValue({ id: 5 });
     recipeRepository.findOne.mockResolvedValue(savedRecipe);
@@ -119,7 +136,7 @@ describe('RecipeService', () => {
       expect.objectContaining({
         title: dto.title,
         servings: dto.servings,
-        calories: dto.calories,
+        calories: 500,
         user: { id: 11 },
         ingredients: [
           expect.objectContaining({
@@ -197,7 +214,7 @@ describe('RecipeService', () => {
       id: 9,
       title: 'Old',
       servings: 1,
-      ingredients: [],
+      ingredients: [{ food: { id: 1 }, servings: 1, measurementId: null }],
     } as Recipe;
     const updated = { ...existing, title: 'New' } as Recipe;
     const dto: UpdateRecipeDto = {
@@ -205,11 +222,19 @@ describe('RecipeService', () => {
       servings: 2,
       ingredients: [{ foodId: 1, servings: 1, measurementId: null }],
     };
+    const foods = [
+      {
+        id: 1,
+        calories: 100,
+        measurements: [{ id: 10, weightInGrams: 100, isDefault: true }],
+      },
+    ];
 
     recipeRepository.findOne
       .mockResolvedValueOnce(existing)
       .mockResolvedValueOnce(updated);
     foodRepository.findBy.mockResolvedValue([{ id: 1 }]);
+    foodRepository.find.mockResolvedValue(foods);
     recipeFoodRepository.create.mockReturnValue(dto.ingredients);
     recipeRepository.save.mockResolvedValue(existing);
 

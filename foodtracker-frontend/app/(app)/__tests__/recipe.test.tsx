@@ -270,6 +270,6 @@ describe('Recipe ingredient modal flow', () => {
         ],
       }),
     );
-    expect(mockReplace).toHaveBeenCalledWith('/recipes');
+    expect(mockReplace).toHaveBeenCalledWith('/diary');
   });
 });

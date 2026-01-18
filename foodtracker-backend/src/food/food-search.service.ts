@@ -63,15 +63,47 @@ export class FoodSearchService implements OnModuleInit {
     if (!sanitizedQuery) {
       return [];
     }
+    const normalizedQuery = sanitizedQuery.toLowerCase();
 
     const response = await this.client.search({
       index: this.indexName,
       size: limit,
       query: {
-        multi_match: {
-          query: sanitizedQuery,
-          fields: ['name^2', 'brand'],
-          fuzziness: 'AUTO',
+        bool: {
+          should: [
+            {
+              term: {
+                'name.keyword': {
+                  value: normalizedQuery,
+                  boost: 8,
+                },
+              },
+            },
+            {
+              match_phrase: {
+                name: {
+                  query: sanitizedQuery,
+                  boost: 4,
+                },
+              },
+            },
+            {
+              term: {
+                'brand.keyword': {
+                  value: normalizedQuery,
+                  boost: 1,
+                },
+              },
+            },
+            {
+              multi_match: {
+                query: sanitizedQuery,
+                fields: ['name^3', 'brand^0.5'],
+                fuzziness: 'AUTO',
+              },
+            },
+          ],
+          minimum_should_match: 1,
         },
       },
     });
@@ -97,10 +129,36 @@ export class FoodSearchService implements OnModuleInit {
     try {
       await this.client.indices.create({
         index: this.indexName,
+        settings: {
+          analysis: {
+            normalizer: {
+              lowercase_normalizer: {
+                type: 'custom',
+                filter: ['lowercase'],
+              },
+            },
+          },
+        },
         mappings: {
           properties: {
-            name: { type: 'text' },
-            brand: { type: 'text' },
+            name: {
+              type: 'text',
+              fields: {
+                keyword: {
+                  type: 'keyword',
+                  normalizer: 'lowercase_normalizer',
+                },
+              },
+            },
+            brand: {
+              type: 'text',
+              fields: {
+                keyword: {
+                  type: 'keyword',
+                  normalizer: 'lowercase_normalizer',
+                },
+              },
+            },
           },
         },
       });

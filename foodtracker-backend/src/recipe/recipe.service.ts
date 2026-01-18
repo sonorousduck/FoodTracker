@@ -21,11 +21,14 @@ export class RecipeService {
 
   async create(createRecipeDto: CreateRecipeDto, userId: number) {
     await this.ensureFoodsExist(createRecipeDto.ingredients);
+    const totalCalories = await this.calculateTotalCalories(
+      createRecipeDto.ingredients,
+    );
 
     const recipe = this.recipeRepository.create({
       title: createRecipeDto.title,
       servings: createRecipeDto.servings,
-      calories: createRecipeDto.calories,
+      calories: totalCalories,
       user: { id: userId },
       ingredients: createRecipeDto.ingredients.map((ingredient) => ({
         food: { id: ingredient.foodId },
@@ -88,7 +91,7 @@ export class RecipeService {
   async update(recipeId: number, updateRecipeDto: UpdateRecipeDto, userId: number) {
     const recipe = await this.recipeRepository.findOne({
       where: { id: recipeId, user: { id: userId } },
-      relations: ['ingredients'],
+      relations: ['ingredients', 'ingredients.food'],
     });
 
     if (!recipe) {
@@ -103,10 +106,6 @@ export class RecipeService {
       recipe.servings = updateRecipeDto.servings;
     }
 
-    if (updateRecipeDto.calories !== undefined) {
-      recipe.calories = updateRecipeDto.calories;
-    }
-
     if (updateRecipeDto.ingredients !== undefined) {
       await this.ensureFoodsExist(updateRecipeDto.ingredients);
       await this.recipeFoodRepository.delete({ recipe: { id: recipe.id } });
@@ -119,6 +118,15 @@ export class RecipeService {
         })),
       );
     }
+
+    const ingredientsForCalories =
+      updateRecipeDto.ingredients ??
+      recipe.ingredients.map((ingredient) => ({
+        foodId: ingredient.food.id,
+        servings: ingredient.servings,
+        measurementId: ingredient.measurementId ?? null,
+      }));
+    recipe.calories = await this.calculateTotalCalories(ingredientsForCalories);
 
     await this.recipeRepository.save(recipe);
     return this.getRecipe(recipe.id, userId);
@@ -152,5 +160,52 @@ export class RecipeService {
     if (foods.length !== foodIds.length) {
       throw new BadRequestException('One or more foods were not found.');
     }
+  }
+
+  private async calculateTotalCalories(
+    ingredients: ReadonlyArray<{
+      foodId: number;
+      servings: number;
+      measurementId?: number | null;
+    }>,
+  ): Promise<number> {
+    if (ingredients.length === 0) {
+      return 0;
+    }
+
+    const foodIds = Array.from(
+      new Set(ingredients.map((ingredient) => ingredient.foodId)),
+    );
+    const foods = await this.foodRepository.find({
+      where: { id: In(foodIds) },
+      relations: ['measurements'],
+    });
+    const foodMap = new Map(foods.map((food) => [food.id, food]));
+
+    const totalCalories = ingredients.reduce((total, ingredient) => {
+      const food = foodMap.get(ingredient.foodId);
+      if (!food) {
+        return total;
+      }
+      const caloriesPer100 = Number(food.calories);
+      const baseCalories = Number.isFinite(caloriesPer100)
+        ? caloriesPer100
+        : 0;
+      const measurement = ingredient.measurementId
+        ? food.measurements.find(
+            (entry) => entry.id === ingredient.measurementId,
+          )
+        : food.measurements.find((entry) => entry.isDefault) ??
+          food.measurements[0];
+      const weightInGrams = measurement
+        ? Number(measurement.weightInGrams)
+        : 100;
+      const grams = Number.isFinite(weightInGrams)
+        ? weightInGrams * ingredient.servings
+        : 100 * ingredient.servings;
+      return total + (baseCalories * grams) / 100;
+    }, 0);
+
+    return Number(totalCalories.toFixed(2));
   }
 }
