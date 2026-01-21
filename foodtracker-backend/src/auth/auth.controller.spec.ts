@@ -49,7 +49,11 @@ describe('AuthController', () => {
       json: jest.fn(),
     } as unknown as Response;
 
-    await controller.login({ email: 'test@example.com', password: 'pw' }, request, response);
+    await controller.login(
+      { email: 'test@example.com', password: 'pw' },
+      request,
+      response,
+    );
 
     expect(response.cookie).toHaveBeenCalled();
     expect(response.status).toHaveBeenCalledWith(200);
@@ -64,21 +68,32 @@ describe('AuthController', () => {
       username: 'test@example.com',
     };
     authService.authenticate.mockResolvedValue(authResult);
-    const request = { secure: false, headers: { origin: 'http://localhost:8081' } } as Request;
+    const request = {
+      secure: false,
+      headers: { origin: 'http://localhost:8081' },
+    } as Request;
     const response = {
       cookie: jest.fn(),
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
     } as unknown as Response;
 
-    await controller.login({ email: 'test@example.com', password: 'pw' }, request, response);
+    await controller.login(
+      { email: 'test@example.com', password: 'pw' },
+      request,
+      response,
+    );
 
     const payload = (response.json as jest.Mock).mock.calls[0][0];
     expect(payload.refreshToken).toBeUndefined();
   });
 
+
   it('refreshes access token from body for native clients', async () => {
-    const refreshed: RefreshResultDto = { accessToken: 'new-access', refreshToken: 'new-refresh' };
+    const refreshed: RefreshResultDto = {
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+    };
     authService.refresh.mockResolvedValue(refreshed);
     const request = { secure: false, headers: {}, cookies: {} } as Request;
     const response = {
@@ -96,7 +111,11 @@ describe('AuthController', () => {
   });
 
   it('clears cookies on logout', async () => {
-    const request = { secure: false, headers: {}, cookies: { refreshToken: 'refresh' } } as Request;
+    const request = {
+      secure: false,
+      headers: {},
+      cookies: { refreshToken: 'refresh' },
+    } as Request;
     const response = {
       clearCookie: jest.fn(),
       status: jest.fn().mockReturnThis(),

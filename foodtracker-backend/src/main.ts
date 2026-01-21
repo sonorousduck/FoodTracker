@@ -11,6 +11,7 @@ async function bootstrap() {
       'http://localhost:8081',
       'http://10.0.0.83:8081',
       'http://192.168.1.16:8081',
+      'http://192.168.1.47:8081',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

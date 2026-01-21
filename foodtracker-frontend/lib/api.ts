@@ -25,13 +25,14 @@ class ApiService {
 
 	constructor() {
 		// Create axios instance with base configuration
+		const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
 		const ip =
 			Platform.OS === "web" && typeof window !== "undefined"
 				? window.location.hostname
 				: process.env.EXPO_PUBLIC_BACKEND_IP ?? "192.168.1.4";
 		const port = process.env.EXPO_PUBLIC_PORT ?? "3001";
 		this.api = axios.create({
-			baseURL: `http://${ip}:${port}`,
+			baseURL: apiBaseUrl ?? `http://${ip}:${port}`,
 			timeout: 10000, // 10 seconds
 			headers: {
 				"Content-Type": "application/json",
