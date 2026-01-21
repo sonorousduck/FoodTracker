@@ -491,12 +491,12 @@ export default function Tab() {
                     <ThemedText
                       style={[styles.summaryLabel, { color: colors.icon }]}
                     >
-                      Diff
+                      Remaining
                     </ThemedText>
                     <ThemedText style={styles.summaryValue}>
                       {calorieDiff == null
                         ? '--'
-                        : `${calorieDiff > 0 ? '+' : ''}${Math.round(
+                        : `${calorieDiff > 0 ? '' : '-'}${Math.round(
                             calorieDiff,
                           )} cal`}
                     </ThemedText>
@@ -530,10 +530,11 @@ export default function Tab() {
               <View
                 style={[
                   styles.goalCard,
-                  { borderColor: colors.modalSecondary },
+                  { borderColor: colors.modalSecondary, marginBottom: 8 },
                 ]}
               >
                 <View style={styles.goalHeaderRow}>
+                  <View style={styles.goalHeaderLabel} />
                   <ThemedText
                     style={[styles.goalHeaderText, { color: colors.icon }]}
                   >
@@ -547,7 +548,7 @@ export default function Tab() {
                   <ThemedText
                     style={[styles.goalHeaderText, { color: colors.icon }]}
                   >
-                    Diff
+                    Remaining
                   </ThemedText>
                 </View>
                 {macroGoals.map((macro) => {
@@ -572,7 +573,7 @@ export default function Tab() {
                       <ThemedText style={styles.goalValue}>
                         {diffValue == null
                           ? '--'
-                          : `${diffValue > 0 ? '+' : ''}${diffValue} g`}
+                          : `${diffValue > 0 ? '' : '-'}${diffValue} g`}
                       </ThemedText>
                     </View>
                   );
@@ -816,6 +817,7 @@ const styles = StyleSheet.create({
   },
   goalToggleRow: {
     marginTop: 8,
+    marginBottom: 8,
   },
   goalToggleButton: {
     borderRadius: 10,
@@ -839,10 +841,16 @@ const styles = StyleSheet.create({
   },
   goalHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
+  goalHeaderLabel: {
+    flex: 1,
   },
   goalHeaderText: {
+    flexBasis: 0,
+    flexGrow: 1,
+    textAlign: 'right',
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -851,16 +859,17 @@ const styles = StyleSheet.create({
   goalRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     gap: 12,
   },
   goalLabel: {
     flex: 1,
     fontSize: 13,
     fontWeight: '600',
+    flexWrap: 'wrap',
   },
   goalValue: {
-    width: 70,
+    flexBasis: 0,
+    flexGrow: 1,
     textAlign: 'right',
     fontSize: 12,
     fontWeight: '600',
