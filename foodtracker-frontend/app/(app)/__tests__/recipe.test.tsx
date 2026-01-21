@@ -210,6 +210,7 @@ describe('Recipe ingredient modal flow', () => {
     expect(getByText('Trans fat')).toBeTruthy();
 
     fireEvent.press(getByTestId('ingredient-add-button'));
+    fireEvent.changeText(getByTestId('recipe-servings-input'), '2');
 
     const selectedIngredient = getByTestId('selected-ingredient-1');
     expect(selectedIngredient).toBeTruthy();
@@ -221,6 +222,15 @@ describe('Recipe ingredient modal flow', () => {
     expect(getByTestId('recipe-calorie-sum-per-serving')).toHaveTextContent(
       '-',
     );
+    expect(getByText('Nutrition totals')).toBeTruthy();
+    expect(getByText('Per serving')).toBeTruthy();
+    expect(getByText('Total recipe')).toBeTruthy();
+    expect(getByText('Protein')).toBeTruthy();
+    expect(getByText('1.4 g')).toBeTruthy();
+    expect(getByText('2.8 g')).toBeTruthy();
+    expect(queryByText('Trans fat')).toBeNull();
+    fireEvent.press(getByTestId('recipe-nutrition-toggle'));
+    expect(getByText('Trans fat')).toBeTruthy();
   });
 
   it('submits a new recipe', async () => {

@@ -1,16 +1,23 @@
 import {
+  buildEntryMacroRows,
+  buildEntryNutritionRows,
   formatEntryCalories,
   getEntryCalories,
   getEntryServingsText,
   getEntryTitle,
+  getEntriesNutritionTotals,
   getMealTypeFromName,
   mealOrder,
 } from "@/components/foodentry/foodentry-utils";
+import DayNutritionSection from "@/components/nutrition/dailynutritionsection";
+import MealNutritionSection from "@/components/nutrition/mealnutritionsection";
 import FoodEntryModal from "@/components/foodentry/foodentrymodal";
 import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
 import { deleteFoodEntry, getDiaryEntries, updateFoodEntry } from "@/lib/api/foodentry";
+import { getRecipe } from "@/lib/api/recipe";
 import { FoodEntry } from "@/types/foodentry/foodentry";
+import type { Recipe } from "@/types/recipe/recipe";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import type { ComponentProps } from "react";
@@ -56,6 +63,14 @@ export default function Tab() {
   const [selectedEntry, setSelectedEntry] = useState<FoodEntry | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMacroExpanded, setIsMacroExpanded] = useState(false);
+  const [showAllNutrients, setShowAllNutrients] = useState(false);
+  const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedMealNutrients, setExpandedMealNutrients] = useState<
+    Record<string, boolean>
+  >({});
 
   const loadEntries = useCallback(async (date: Date) => {
     setIsLoading(true);
@@ -66,7 +81,46 @@ export default function Tab() {
         date.getDate()
       );
       const response = await getDiaryEntries(startOfDay.toISOString());
-      setEntries(response);
+      const recipeIds = Array.from(
+        new Set(
+          response
+            .filter(
+              (entry) =>
+                entry.recipe &&
+                !Array.isArray(entry.recipe.ingredients)
+            )
+            .map((entry) => entry.recipe?.id)
+            .filter((id): id is number => typeof id === "number")
+        )
+      );
+
+      let recipesById = new Map<number, Recipe>();
+      if (recipeIds.length > 0) {
+        const recipeResults = await Promise.allSettled(
+          recipeIds.map((id) => getRecipe(id))
+        );
+        recipesById = new Map(
+          recipeResults
+            .filter(
+              (result): result is PromiseFulfilledResult<Recipe> =>
+                result.status === "fulfilled"
+            )
+            .map((result) => [result.value.id, result.value])
+        );
+      }
+
+      const hydratedEntries = response.map((entry) => {
+        if (!entry.recipe) {
+          return entry;
+        }
+        const hydratedRecipe = recipesById.get(entry.recipe.id);
+        if (!hydratedRecipe) {
+          return entry;
+        }
+        return { ...entry, recipe: hydratedRecipe };
+      });
+
+      setEntries(hydratedEntries);
     } catch (error) {
       setEntries([]);
     } finally {
@@ -98,6 +152,32 @@ export default function Tab() {
     [entries]
   );
 
+  const mealCaloriesByName = useMemo(() => {
+    const totals = new Map<string, number>();
+    groupedEntries.forEach((section) => {
+      const mealTotal = section.entries.reduce((total, entry) => {
+        const calories = getEntryCalories(entry);
+        return total + (calories ?? 0);
+      }, 0);
+      totals.set(section.mealName, mealTotal);
+    });
+    return totals;
+  }, [groupedEntries]);
+
+  const mealNutritionTotals = useMemo(
+    () =>
+      groupedEntries.map((section) => ({
+        mealName: section.mealName,
+        totals: getEntriesNutritionTotals(section.entries),
+      })),
+    [groupedEntries]
+  );
+
+  const dayNutritionTotals = useMemo(
+    () => getEntriesNutritionTotals(entries),
+    [entries]
+  );
+
   const formattedDate = useMemo(() => {
     return selectedDate.toLocaleDateString(undefined, {
       weekday: "short",
@@ -121,6 +201,29 @@ export default function Tab() {
     setSelectedDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + 1)
     );
+  };
+
+  const toggleMacros = () => {
+    setIsMacroExpanded((prev) => {
+      const next = !prev;
+      if (!next) {
+        setShowAllNutrients(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleMealMacros = (mealName: string) => {
+    setExpandedMeals((prev) => {
+      const next = !prev[mealName];
+      if (!next) {
+        setExpandedMealNutrients((current) => ({
+          ...current,
+          [mealName]: false,
+        }));
+      }
+      return { ...prev, [mealName]: next };
+    });
   };
 
   const openEditModal = (entry: FoodEntry) => {
@@ -248,12 +351,31 @@ export default function Tab() {
               },
             ]}
           >
-            <ThemedText style={[styles.totalLabel, { color: colors.icon }]}>
-              Total calories
-            </ThemedText>
-            <ThemedText style={styles.totalValue}>
-              {Math.round(totalCalories)} cal
-            </ThemedText>
+            <View style={styles.totalHeader}>
+              <View>
+                <ThemedText style={[styles.totalLabel, { color: colors.icon }]}>
+                  Total calories
+                </ThemedText>
+                <ThemedText style={styles.totalValue}>
+                  {Math.round(totalCalories)} cal
+                </ThemedText>
+              </View>
+            </View>
+            <DayNutritionSection
+              title="Day total"
+              rows={
+                showAllNutrients
+                  ? buildEntryNutritionRows(dayNutritionTotals)
+                  : buildEntryMacroRows(dayNutritionTotals)
+              }
+              alternateBackground={colors.modalSecondary}
+              isExpanded={isMacroExpanded}
+              showAll={showAllNutrients}
+              onToggleExpanded={toggleMacros}
+              onToggleShowAll={() => setShowAllNutrients((prev) => !prev)}
+              borderColor={colors.modalSecondary}
+              textColor={colors.text}
+            />
           </View>
         </View>
 
@@ -268,11 +390,16 @@ export default function Tab() {
                 <ThemedText style={styles.sectionTitle}>
                   {section.mealName}
                 </ThemedText>
-                <ThemedText
-                  style={[styles.sectionCount, { color: colors.icon }]}
-                >
-                  {section.entries.length}
-                </ThemedText>
+                <View style={styles.sectionActions}>
+                  <ThemedText
+                    style={[styles.sectionCount, { color: colors.icon }]}
+                  >
+                    {Math.round(
+                      mealCaloriesByName.get(section.mealName) ?? 0
+                    )}{" "}
+                    cal
+                  </ThemedText>
+                </View>
               </View>
               {section.entries.length === 0 ? (
                 <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
@@ -314,6 +441,37 @@ export default function Tab() {
                   </TouchableOpacity>
                 ))
               )}
+              {section.entries.length > 0 ? (
+                <MealNutritionSection
+                  title={undefined}
+                  rows={
+                    expandedMealNutrients[section.mealName]
+                      ? buildEntryNutritionRows(
+                          mealNutritionTotals.find(
+                            (meal) => meal.mealName === section.mealName
+                          )?.totals ?? {}
+                        )
+                      : buildEntryMacroRows(
+                          mealNutritionTotals.find(
+                            (meal) => meal.mealName === section.mealName
+                          )?.totals ?? {}
+                        )
+                  }
+                  alternateBackground={colors.modalSecondary}
+                  isExpanded={Boolean(expandedMeals[section.mealName])}
+                  showAll={Boolean(expandedMealNutrients[section.mealName])}
+                  onToggleExpanded={() => toggleMealMacros(section.mealName)}
+                  onToggleShowAll={() =>
+                    setExpandedMealNutrients((prev) => ({
+                      ...prev,
+                      [section.mealName]: !prev[section.mealName],
+                    }))
+                  }
+                  testIDPrefix={`diary-meal-${section.mealName.toLowerCase()}`}
+                  borderColor={colors.modalSecondary}
+                  textColor={colors.text}
+                />
+              ) : null}
             </View>
           ))
         )}
@@ -356,7 +514,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 12,
-    paddingBottom: 24,
+    paddingBottom: 160,
     gap: 16,
   },
   header: {
@@ -408,6 +566,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  totalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   totalLabel: {
     fontSize: 12,
     fontWeight: "600",
@@ -429,6 +593,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  sectionActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 16,

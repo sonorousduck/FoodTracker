@@ -6,15 +6,18 @@ import IngredientModal from '@/components/recipe/ingredientmodal';
 import IngredientSearch from '@/components/recipe/ingredientsearch';
 import SelectedIngredients from '@/components/recipe/selectedingredients';
 import ThemedText from '@/components/themedtext';
+import RecipeNutritionTotals from '@/components/nutrition/recipenutritiontotals';
 import {
   buildCoreNutritionRows,
   buildNutritionRows,
   getDefaultMeasurement,
   getFoodMeasurements,
   getCaloriesForMeasurement,
+  getIngredientNutritionTotals,
   getMeasurementById,
   IngredientEntry,
   normalizeAmount,
+  scaleNutritionTotals,
 } from '@/components/recipe/recipe-utils';
 import { Colors } from '@/constants/Colors';
 import { isAxiosError } from '@/lib/api';
@@ -62,6 +65,7 @@ export default function Recipe() {
     useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAllNutritionTotals, setShowAllNutritionTotals] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     servings?: string;
@@ -314,6 +318,20 @@ export default function Recipe() {
     [ingredients],
   );
 
+  const recipeNutritionTotals = useMemo(
+    () => getIngredientNutritionTotals(ingredients),
+    [ingredients],
+  );
+
+  const perServingNutritionTotals = useMemo(() => {
+    const parsed = Number(normalizeAmount(servings));
+    const servingCount = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    if (!servingCount) {
+      return null;
+    }
+    return scaleNutritionTotals(recipeNutritionTotals, 1 / servingCount);
+  }, [recipeNutritionTotals, servings]);
+
   const perServingCalories = useMemo(() => {
     const parsed = Number(normalizeAmount(servings));
     const servingCount = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
@@ -500,6 +518,15 @@ export default function Recipe() {
             />
           )}
         </View>
+        {ingredients.length > 0 && (
+          <RecipeNutritionTotals
+            totals={recipeNutritionTotals}
+            perServingTotals={perServingNutritionTotals}
+            showAll={showAllNutritionTotals}
+            onToggleShowAll={() => setShowAllNutritionTotals((prev) => !prev)}
+            colors={colors}
+          />
+        )}
       </ScrollView>
       <CalorieSum
         colors={colors}

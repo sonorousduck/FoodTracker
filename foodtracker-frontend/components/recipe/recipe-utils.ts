@@ -12,6 +12,8 @@ export type NutritionRow = {
   unit: string;
 };
 
+export type NutritionTotals = Partial<Record<keyof Food, number>>;
+
 export type IngredientEntry = Pick<
   RecipeFood,
   'food' | 'servings' | 'measurementId'
@@ -29,6 +31,10 @@ const coreNutritionFields: NutritionField[] = [
   { key: 'carbs', label: 'Carbs', unit: 'g' },
   { key: 'fat', label: 'Fat', unit: 'g' },
 ];
+
+const macroNutritionFields: NutritionField[] = coreNutritionFields.filter(
+  (field) => field.key !== 'calories',
+);
 
 const nutritionFields: NutritionField[] = [
   ...coreNutritionFields,
@@ -186,6 +192,98 @@ export const buildCoreNutritionRows = (
   });
 };
 
+export const getFoodNutritionTotals = (
+  food: Food,
+  measurement: FoodMeasurement | undefined,
+  servings: number,
+): NutritionTotals => {
+  const grams = getMeasurementGrams(measurement) * servings;
+  return buildNutritionTotalsFromFields(food, grams, nutritionFields);
+};
+
+export const getIngredientNutritionTotals = (
+  ingredients: IngredientEntry[],
+): NutritionTotals => {
+  const totals: NutritionTotals = {};
+  ingredients.forEach((ingredient) => {
+    const measurement =
+      getMeasurementById(ingredient.food, ingredient.measurementId ?? null) ??
+      getDefaultMeasurement(ingredient.food);
+    const servings = Number(ingredient.servings);
+    if (!Number.isFinite(servings) || servings <= 0) {
+      return;
+    }
+    const grams = getMeasurementGrams(measurement) * servings;
+    const entryTotals = buildNutritionTotalsFromFields(
+      ingredient.food,
+      grams,
+      nutritionFields,
+    );
+    addNutritionTotals(totals, entryTotals);
+  });
+  return totals;
+};
+
+export const addNutritionTotals = (
+  target: NutritionTotals,
+  addition: NutritionTotals,
+): void => {
+  nutritionFields.forEach((field) => {
+    const value = addition[field.key];
+    if (value == null || !Number.isFinite(value)) {
+      return;
+    }
+    target[field.key] = (target[field.key] ?? 0) + value;
+  });
+};
+
+export const scaleNutritionTotals = (
+  totals: NutritionTotals,
+  factor: number,
+): NutritionTotals => {
+  const scaled: NutritionTotals = {};
+  nutritionFields.forEach((field) => {
+    const value = totals[field.key];
+    if (value == null) {
+      return;
+    }
+    scaled[field.key] = value * factor;
+  });
+  return scaled;
+};
+
+export const buildMacroNutritionRowsFromTotals = (
+  totals: NutritionTotals,
+  includeZero: boolean = true,
+  includeCalories: boolean = false,
+): NutritionRow[] => {
+  const fields = includeCalories
+    ? coreNutritionFields
+    : macroNutritionFields;
+  return buildNutritionRowsFromTotalsAndFields(totals, fields, includeZero);
+};
+
+export const buildCoreNutritionRowsFromTotals = (
+  totals: NutritionTotals,
+  includeZero: boolean = true,
+): NutritionRow[] =>
+  buildNutritionRowsFromTotalsAndFields(
+    totals,
+    coreNutritionFields,
+    includeZero,
+  );
+
+export const buildNutritionRowsFromTotals = (
+  totals: NutritionTotals,
+  includeZero: boolean = true,
+  includeCalories: boolean = false,
+): NutritionRow[] => {
+  const fields = includeCalories
+    ? nutritionFields
+    : nutritionFields.filter((field) => field.key !== 'calories');
+  return buildNutritionRowsFromTotalsAndFields(totals, fields, includeZero);
+};
+
 const buildNutritionRowsFromFields = (
   food: Food,
   grams: number,
@@ -214,6 +312,57 @@ const buildNutritionRowsFromFields = (
       };
     })
     .filter((row): row is NonNullable<typeof row> => row !== null);
+};
+
+const buildNutritionRowsFromTotalsAndFields = (
+  totals: NutritionTotals,
+  fields: NutritionField[],
+  includeZero: boolean,
+): NutritionRow[] => {
+  return fields
+    .map((field) => {
+      const rawValue = totals[field.key];
+      if (rawValue == null) {
+        return includeZero
+          ? {
+              key: field.key,
+              label: field.label,
+              value: null,
+              unit: field.unit,
+            }
+          : null;
+      }
+      if (!includeZero && rawValue <= 0) {
+        return null;
+      }
+      const roundedValue =
+        field.key === 'calories'
+          ? Math.round(rawValue)
+          : Number(rawValue.toFixed(2));
+      return {
+        key: field.key,
+        label: field.label,
+        value: roundedValue,
+        unit: field.unit,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null);
+};
+
+const buildNutritionTotalsFromFields = (
+  food: Food,
+  grams: number,
+  fields: NutritionField[],
+): NutritionTotals => {
+  const totals: NutritionTotals = {};
+  fields.forEach((field) => {
+    const parsedValue = coerceNumber(food[field.key]);
+    if (parsedValue === null) {
+      return;
+    }
+    totals[field.key] = (parsedValue * grams) / 100;
+  });
+  return totals;
 };
 
 const coerceNumber = (value: Food[keyof Food]): number | null => {

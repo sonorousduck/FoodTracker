@@ -102,13 +102,17 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
     inputRef.current?.focus();
   };
 
-  const labelStyle: Animated.AnimatedProps<TextStyle> = {
+  const labelContainerStyle: Animated.AnimatedProps<ViewStyle> = {
     position: 'absolute',
     left: leftIcon ? 50 : 16,
     top: animatedIsFocused.interpolate({
       inputRange: [0, 1],
       outputRange: [multiline ? 20 : 18, 8],
     }),
+    zIndex: 1,
+  };
+
+  const labelStyle: Animated.AnimatedProps<TextStyle> = {
     fontSize: animatedIsFocused.interpolate({
       inputRange: [0, 1],
       outputRange: [16, 12],
@@ -122,7 +126,6 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
     }),
     backgroundColor: editable ? colors.modal : colors.modalSecondary,
     paddingHorizontal: 4,
-    zIndex: 1,
   };
 
   const getBorderColor = (): string => {
@@ -150,16 +153,14 @@ const DuckTextInput: React.FC<DuckTextInputProps> = ({
         ]}
       >
         {label && (
-          <TouchableOpacity
-            onPress={focusInput}
-            activeOpacity={1}
-            style={styles.labelContainer}
-          >
-            <Animated.Text style={labelStyle}>
-              {label}
-              {required && <ThemedText style={styles.required}> *</ThemedText>}
-            </Animated.Text>
-          </TouchableOpacity>
+          <Animated.View pointerEvents="box-none" style={labelContainerStyle}>
+            <TouchableOpacity onPress={focusInput} activeOpacity={1}>
+              <Animated.Text style={labelStyle}>
+                {label}
+                {required && <ThemedText style={styles.required}> *</ThemedText>}
+              </Animated.Text>
+            </TouchableOpacity>
+          </Animated.View>
         )}
 
         <View style={styles.inputRow}>
@@ -258,14 +259,6 @@ const styles = StyleSheet.create({
         elevation: 2,
       },
     }),
-  },
-  labelContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
   },
   inputRow: {
     flexDirection: 'row',
