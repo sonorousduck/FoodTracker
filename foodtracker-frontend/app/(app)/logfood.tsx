@@ -153,8 +153,33 @@ export default function LogFood() {
     loadRecipes();
   }, [activeTab, loadRecipes, searchQuery]);
 
+  const dedupedHistory = useMemo(() => {
+    const dedupedMap = new Map<string, FoodEntry>();
+    const nonFoodEntries: FoodEntry[] = [];
+
+    historyEntries.forEach((entry) => {
+      if (!entry.food) {
+        nonFoodEntries.push(entry);
+        return;
+      }
+      const key = `food:${entry.food.id}:${entry.servings}`;
+      const existing = dedupedMap.get(key);
+      if (!existing) {
+        dedupedMap.set(key, entry);
+        return;
+      }
+      const existingDate = new Date(existing.loggedAt).getTime();
+      const nextDate = new Date(entry.loggedAt).getTime();
+      if (nextDate > existingDate) {
+        dedupedMap.set(key, entry);
+      }
+    });
+
+    return [...dedupedMap.values(), ...nonFoodEntries];
+  }, [historyEntries]);
+
   const sortedHistory = useMemo(() => {
-    const next = [...historyEntries];
+    const next = [...dedupedHistory];
     if (sortOption === "alpha") {
       return next.sort((a, b) => getEntryTitle(a).localeCompare(getEntryTitle(b)));
     }
@@ -174,7 +199,19 @@ export default function LogFood() {
       (a, b) =>
         new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
     );
-  }, [historyEntries, sortOption]);
+  }, [dedupedHistory, sortOption]);
+
+  const filteredHistory = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return sortedHistory;
+    }
+    return sortedHistory.filter((entry) => {
+      const title = getEntryTitle(entry).toLowerCase();
+      const mealName = (entry.meal?.name ?? "").toLowerCase();
+      return title.includes(query) || mealName.includes(query);
+    });
+  }, [searchQuery, sortedHistory]);
 
   const openFoodModal = ({
     food,
@@ -280,8 +317,15 @@ export default function LogFood() {
   };
 
   const shouldShowSearchResults = searchQuery.trim().length >= minSearchLength;
+  const trimmedQuery = searchQuery.trim().toLowerCase();
   const recipeList =
     shouldShowSearchResults || activeTab === "all" ? recipeResults : allRecipes;
+  const filteredRecipes =
+    activeTab === "recipes" && trimmedQuery
+      ? recipeList.filter((recipe) =>
+          recipe.title.toLowerCase().includes(trimmedQuery)
+        )
+      : recipeList;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -296,6 +340,7 @@ export default function LogFood() {
             enterKeyHint="search"
             autoCapitalize="none"
             autoCorrect={false}
+            testID="logfood-search-input"
           />
           <View style={styles.tabs}>
             {(["all", "recipes"] as TabKey[]).map((tab) => {
@@ -372,12 +417,14 @@ export default function LogFood() {
                 <View style={styles.loading}>
                   <ActivityIndicator size="small" color={colors.tint} />
                 </View>
-              ) : sortedHistory.length === 0 ? (
+              ) : filteredHistory.length === 0 ? (
                 <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
-                  No history yet. Log something to get started.
+                  {searchQuery.trim()
+                    ? "No matching history items."
+                    : "No history yet. Log something to get started."}
                 </ThemedText>
               ) : (
-                sortedHistory.map((entry) => (
+                filteredHistory.map((entry) => (
                   <TouchableOpacity
                     key={entry.id}
                     style={[
@@ -539,12 +586,12 @@ export default function LogFood() {
               <View style={styles.loading}>
                 <ActivityIndicator size="small" color={colors.tint} />
               </View>
-            ) : recipeList.length === 0 ? (
+            ) : filteredRecipes.length === 0 ? (
               <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
-                No recipes yet.
+                {trimmedQuery ? "No matching recipes." : "No recipes yet."}
               </ThemedText>
             ) : (
-              recipeList.map((recipe) => (
+              filteredRecipes.map((recipe) => (
                 <TouchableOpacity
                   key={recipe.id}
                   style={[

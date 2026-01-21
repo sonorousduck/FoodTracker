@@ -234,7 +234,7 @@ describe("Diary", () => {
     expect(screen.getByText("Calories")).toBeTruthy();
     expect(screen.getByText("Goal")).toBeTruthy();
     expect(screen.getByText("Total")).toBeTruthy();
-    expect(screen.getByText("Diff")).toBeTruthy();
+    expect(screen.getByText("Remaining")).toBeTruthy();
     expect(screen.getAllByText("200 cal")).toHaveLength(3);
     expect(screen.getByText("Oatmeal")).toBeTruthy();
     expect(screen.getByText("1 serving · 1 cup")).toBeTruthy();

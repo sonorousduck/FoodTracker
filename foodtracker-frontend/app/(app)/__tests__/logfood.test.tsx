@@ -6,6 +6,7 @@ import { Food } from "@/types/food/food";
 import { FoodEntry } from "@/types/foodentry/foodentry";
 import { FoodMeasurement } from "@/types/foodmeasurement/foodmeasurement";
 import { Meal } from "@/types/meal/meal";
+import { Recipe } from "@/types/recipe/recipe";
 import { User } from "@/types/users/user";
 import { act, fireEvent, render } from "@testing-library/react-native";
 import React from "react";
@@ -174,6 +175,15 @@ const createUserFixture = (): User => ({
   goals: [],
 });
 
+const createRecipeFixture = (user: User, id: number, title: string): Recipe => ({
+  id,
+  user,
+  title,
+  servings: 2,
+  calories: 450,
+  ingredients: [],
+});
+
 describe("LogFood", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -232,5 +242,132 @@ describe("LogFood", () => {
       loggedAt: expect.any(Date),
     });
     expect(mockReplace).toHaveBeenCalledWith("/diary");
+  });
+
+  it("filters history based on the search query", async () => {
+    const user = createUserFixture();
+    const meal: Meal = {
+      id: "meal-1",
+      name: "Lunch",
+      user,
+      foodEntries: [],
+    };
+    const foodA = createFoodFixture();
+    const foodB = { ...createFoodFixture(), id: 2, name: "Chicken salad" };
+    const measurementA = createMeasurementFixture(foodA);
+    const measurementB = createMeasurementFixture(foodB);
+    foodA.measurements = [measurementA];
+    foodB.measurements = [measurementB];
+
+    const entryA: FoodEntry = {
+      id: 101,
+      user,
+      food: foodA,
+      measurement: measurementA,
+      servings: 1,
+      meal,
+      recipe: undefined,
+      loggedAt: new Date("2025-01-02T12:00:00.000Z"),
+    };
+    const entryB: FoodEntry = {
+      id: 102,
+      user,
+      food: foodB,
+      measurement: measurementB,
+      servings: 1,
+      meal,
+      recipe: undefined,
+      loggedAt: new Date("2025-01-03T12:00:00.000Z"),
+    };
+
+    mockedGetFoodEntryHistory.mockResolvedValue([entryA, entryB]);
+
+    const screen = render(
+      <PaperProvider>
+        <LogFood />
+      </PaperProvider>
+    );
+
+    await act(async () => {});
+
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId("logfood-search-input"), "yogurt");
+    });
+
+    expect(screen.getByTestId("history-item-101")).toBeTruthy();
+    expect(screen.queryByTestId("history-item-102")).toBeNull();
+  });
+
+  it("dedupes history items with the same food and servings", async () => {
+    const user = createUserFixture();
+    const meal: Meal = {
+      id: "meal-1",
+      name: "Lunch",
+      user,
+      foodEntries: [],
+    };
+    const food = createFoodFixture();
+    const measurement = createMeasurementFixture(food);
+    food.measurements = [measurement];
+
+    const newerEntry: FoodEntry = {
+      id: 201,
+      user,
+      food,
+      measurement,
+      servings: 2,
+      meal,
+      recipe: undefined,
+      loggedAt: new Date("2025-01-05T12:00:00.000Z"),
+    };
+    const olderEntry: FoodEntry = {
+      id: 200,
+      user,
+      food,
+      measurement,
+      servings: 2,
+      meal,
+      recipe: undefined,
+      loggedAt: new Date("2025-01-02T12:00:00.000Z"),
+    };
+
+    mockedGetFoodEntryHistory.mockResolvedValue([olderEntry, newerEntry]);
+
+    const screen = render(
+      <PaperProvider>
+        <LogFood />
+      </PaperProvider>
+    );
+
+    await act(async () => {});
+
+    expect(screen.getByTestId("history-item-201")).toBeTruthy();
+    expect(screen.queryByTestId("history-item-200")).toBeNull();
+  });
+
+  it("filters the recipes tab list based on the search query", async () => {
+    const user = createUserFixture();
+    const recipeA = createRecipeFixture(user, 201, "Chili");
+    const recipeB = createRecipeFixture(user, 202, "Pasta");
+
+    mockedGetRecipes.mockResolvedValue([recipeA, recipeB]);
+
+    const screen = render(
+      <PaperProvider>
+        <LogFood />
+      </PaperProvider>
+    );
+
+    await act(async () => {});
+
+    await act(async () => {
+      fireEvent.press(screen.getByTestId("logfood-tab-recipes"));
+    });
+    await act(async () => {
+      fireEvent.changeText(screen.getByTestId("logfood-search-input"), "c");
+    });
+
+    expect(screen.getByTestId("recipes-tab-item-201")).toBeTruthy();
+    expect(screen.queryByTestId("recipes-tab-item-202")).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
-import ThemedText from '@/components/themedtext';
 import NutritionRows from '@/components/nutrition/nutritionrows';
 import { NutritionRow } from '@/components/recipe/recipe-utils';
+import ThemedText from '@/components/themedtext';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 type DayNutritionSectionProps = {
@@ -31,6 +31,18 @@ export default function DayNutritionSection({
       <View style={styles.headerRow}>
         <ThemedText style={styles.title}>{title}</ThemedText>
         <View style={styles.toggleRow}>
+          {isExpanded ? (
+            <TouchableOpacity
+              style={[styles.toggleButton, { borderColor }]}
+              onPress={onToggleShowAll}
+              activeOpacity={0.7}
+              testID="day-nutrients-toggle"
+            >
+              <ThemedText style={[styles.toggleText, { color: textColor }]}>
+                {showAll ? 'All nutrients' : 'Macros only'}
+              </ThemedText>
+            </TouchableOpacity>
+          ) : null}
           <View style={styles.primaryToggleSlot}>
             <TouchableOpacity
               style={[styles.toggleButton, { borderColor }]}
@@ -46,18 +58,6 @@ export default function DayNutritionSection({
               </ThemedText>
             </TouchableOpacity>
           </View>
-          {isExpanded ? (
-            <TouchableOpacity
-              style={[styles.toggleButton, { borderColor }]}
-              onPress={onToggleShowAll}
-              activeOpacity={0.7}
-              testID="day-nutrients-toggle"
-            >
-              <ThemedText style={[styles.toggleText, { color: textColor }]}>
-                {showAll ? 'All nutrients' : 'Macros only'}
-              </ThemedText>
-            </TouchableOpacity>
-          ) : null}
         </View>
       </View>
       {isExpanded ? (
