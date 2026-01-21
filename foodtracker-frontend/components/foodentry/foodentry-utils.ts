@@ -14,18 +14,19 @@ import {
   type NutritionTotals,
 } from '@/components/recipe/recipe-utils';
 import { FoodEntry } from '@/types/foodentry/foodentry';
+import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
 
 export const mealOrder = ['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const;
 
 export type MealName = (typeof mealOrder)[number];
 
-export const getMealTypeFromName = (mealName?: string) => {
+export const getMealTypeFromName = (mealName?: string): MealType => {
   if (!mealName) {
     return 0;
   }
   const index = mealOrder.indexOf(mealName as MealName);
-  return index >= 0 ? index : 0;
+  return index >= 0 ? (index as MealType) : 0;
 };
 
 export const getEntryTitle = (entry: FoodEntry) =>

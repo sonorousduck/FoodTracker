@@ -17,6 +17,7 @@ import { User } from 'src/common/user.decorator';
 
 import { CreateGoalDto } from './dto/creategoal.dto';
 import { GoalType } from './dto/goaltype';
+import { SetNutritionGoalsDto } from './dto/setnutritiongoals.dto';
 import { GoalService } from './goal.service';
 
 import type { UserRequest } from "src/common/user";
@@ -35,11 +36,30 @@ export class GoalController {
     return this.goalService.getGoalEntries({ userId: user.userId, goalType, limit });
   }
 
+  @Get("current")
+  @UseGuards(PassportJwtAuthGuard)
+  getCurrent(@User() user: UserRequest) {
+    return this.goalService.getCurrentGoals(user.userId);
+  }
+
   @Post("create")
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(PassportJwtAuthGuard)
   create(@Body() createGoalDto: CreateGoalDto, @User() user: UserRequest) {
     return this.goalService.createGoalEntry({ userId: user.userId, createGoalDto });
+  }
+
+  @Post("nutrition")
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(PassportJwtAuthGuard)
+  setNutritionGoals(
+    @Body() setNutritionGoalsDto: SetNutritionGoalsDto,
+    @User() user: UserRequest
+  ) {
+    return this.goalService.setNutritionGoals({
+      userId: user.userId,
+      setNutritionGoalsDto,
+    });
   }
 
   @Delete("delete")

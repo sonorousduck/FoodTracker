@@ -24,6 +24,7 @@ import {
 import { getRecipes } from "@/lib/api/recipe";
 import { Food } from "@/types/food/food";
 import { FoodEntry } from "@/types/foodentry/foodentry";
+import { MealType } from "@/types/foodentry/updatefoodentry";
 import { Recipe } from "@/types/recipe/recipe";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -64,7 +65,7 @@ export default function LogFood() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [selectedMealType, setSelectedMealType] = useState(0);
+  const [selectedMealType, setSelectedMealType] = useState<MealType>(0);
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<number | null>(null);
   const [selectedServings, setSelectedServings] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);

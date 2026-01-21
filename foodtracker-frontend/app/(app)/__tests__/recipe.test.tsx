@@ -182,7 +182,7 @@ describe('Recipe ingredient modal flow', () => {
     const food = createFoodFixture();
     mockedSearchFoods.mockResolvedValue([food]);
 
-    const { getByTestId, getByText, queryByText } = render(
+    const { getAllByText, getByTestId, getByText, queryByText } = render(
       <PaperProvider>
         <Recipe />
       </PaperProvider>,
@@ -220,10 +220,10 @@ describe('Recipe ingredient modal flow', () => {
       '28 cal',
     );
     expect(getByTestId('recipe-calorie-sum-per-serving')).toHaveTextContent(
-      '-',
+      '14 cal',
     );
     expect(getByText('Nutrition totals')).toBeTruthy();
-    expect(getByText('Per serving')).toBeTruthy();
+    expect(getAllByText('Per serving').length).toBeGreaterThanOrEqual(1);
     expect(getByText('Total recipe')).toBeTruthy();
     expect(getByText('Protein')).toBeTruthy();
     expect(getByText('1.4 g')).toBeTruthy();

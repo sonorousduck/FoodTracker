@@ -2,25 +2,33 @@ import {
   buildEntryMacroRows,
   buildEntryNutritionRows,
   formatEntryCalories,
+  getEntriesNutritionTotals,
   getEntryCalories,
   getEntryServingsText,
   getEntryTitle,
-  getEntriesNutritionTotals,
   getMealTypeFromName,
   mealOrder,
-} from "@/components/foodentry/foodentry-utils";
-import DayNutritionSection from "@/components/nutrition/dailynutritionsection";
-import MealNutritionSection from "@/components/nutrition/mealnutritionsection";
-import FoodEntryModal from "@/components/foodentry/foodentrymodal";
-import ThemedText from "@/components/themedtext";
-import { Colors } from "@/constants/Colors";
-import { deleteFoodEntry, getDiaryEntries, updateFoodEntry } from "@/lib/api/foodentry";
-import { getRecipe } from "@/lib/api/recipe";
-import { FoodEntry } from "@/types/foodentry/foodentry";
-import type { Recipe } from "@/types/recipe/recipe";
-import { useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
-import type { ComponentProps } from "react";
+} from '@/components/foodentry/foodentry-utils';
+import FoodEntryModal from '@/components/foodentry/foodentrymodal';
+import DayNutritionSection from '@/components/nutrition/dailynutritionsection';
+import MealNutritionSection from '@/components/nutrition/mealnutritionsection';
+import ThemedText from '@/components/themedtext';
+import { Colors } from '@/constants/Colors';
+import { DefaultCalorieGoal } from '@/constants/goals';
+import {
+  deleteFoodEntry,
+  getDiaryEntries,
+  updateFoodEntry,
+} from '@/lib/api/foodentry';
+import { CurrentGoalsResponse, getCurrentGoals } from '@/lib/api/goal';
+import { getRecipe } from '@/lib/api/recipe';
+import { FoodEntry } from '@/types/foodentry/foodentry';
+import { UpdateFoodEntryDto } from '@/types/foodentry/updatefoodentry';
+import { GoalType } from '@/types/goal/goaltype';
+import type { Recipe } from '@/types/recipe/recipe';
+import { useFocusEffect } from 'expo-router';
+import type { ComponentProps } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -30,9 +38,9 @@ import {
   TouchableOpacity,
   View,
   useColorScheme,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePickerModal from "react-native-modal-datetime-picker";
+} from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const WebDateInput = TextInput as unknown as React.ComponentType<
   ComponentProps<typeof TextInput> & { type?: string }
@@ -40,13 +48,13 @@ const WebDateInput = TextInput as unknown as React.ComponentType<
 
 const formatDateInput = (date: Date) => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
 const parseDateInput = (value: string) => {
-  const [year, month, day] = value.split("-").map(Number);
+  const [year, month, day] = value.split('-').map(Number);
   if (!year || !month || !day) {
     return null;
   }
@@ -55,7 +63,7 @@ const parseDateInput = (value: string) => {
 
 export default function Tab() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const colors = Colors[colorScheme ?? 'light'];
   const [entries, setEntries] = useState<FoodEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -65,8 +73,11 @@ export default function Tab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMacroExpanded, setIsMacroExpanded] = useState(false);
   const [showAllNutrients, setShowAllNutrients] = useState(false);
+  const [isGoalsExpanded, setIsGoalsExpanded] = useState(false);
+  const [goals, setGoals] = useState<CurrentGoalsResponse>({});
+  const [isGoalsLoading, setIsGoalsLoading] = useState(false);
   const [expandedMeals, setExpandedMeals] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
   const [expandedMealNutrients, setExpandedMealNutrients] = useState<
     Record<string, boolean>
@@ -78,7 +89,7 @@ export default function Tab() {
       const startOfDay = new Date(
         date.getFullYear(),
         date.getMonth(),
-        date.getDate()
+        date.getDate(),
       );
       const response = await getDiaryEntries(startOfDay.toISOString());
       const recipeIds = Array.from(
@@ -86,26 +97,25 @@ export default function Tab() {
           response
             .filter(
               (entry) =>
-                entry.recipe &&
-                !Array.isArray(entry.recipe.ingredients)
+                entry.recipe && !Array.isArray(entry.recipe.ingredients),
             )
             .map((entry) => entry.recipe?.id)
-            .filter((id): id is number => typeof id === "number")
-        )
+            .filter((id): id is number => typeof id === 'number'),
+        ),
       );
 
       let recipesById = new Map<number, Recipe>();
       if (recipeIds.length > 0) {
         const recipeResults = await Promise.allSettled(
-          recipeIds.map((id) => getRecipe(id))
+          recipeIds.map((id) => getRecipe(id)),
         );
         recipesById = new Map(
           recipeResults
             .filter(
               (result): result is PromiseFulfilledResult<Recipe> =>
-                result.status === "fulfilled"
+                result.status === 'fulfilled',
             )
-            .map((result) => [result.value.id, result.value])
+            .map((result) => [result.value.id, result.value]),
         );
       }
 
@@ -128,10 +138,23 @@ export default function Tab() {
     }
   }, []);
 
+  const loadGoals = useCallback(async () => {
+    setIsGoalsLoading(true);
+    try {
+      const response = await getCurrentGoals();
+      setGoals(response);
+    } catch (error) {
+      setGoals({});
+    } finally {
+      setIsGoalsLoading(false);
+    }
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadEntries(selectedDate);
-    }, [loadEntries, selectedDate])
+      loadGoals();
+    }, [loadEntries, loadGoals, selectedDate]),
   );
 
   const totalCalories = useMemo(
@@ -140,7 +163,7 @@ export default function Tab() {
         const calories = getEntryCalories(entry);
         return total + (calories ?? 0);
       }, 0),
-    [entries]
+    [entries],
   );
 
   const groupedEntries = useMemo(
@@ -149,7 +172,7 @@ export default function Tab() {
         mealName,
         entries: entries.filter((entry) => entry.meal?.name === mealName),
       })),
-    [entries]
+    [entries],
   );
 
   const mealCaloriesByName = useMemo(() => {
@@ -170,36 +193,108 @@ export default function Tab() {
         mealName: section.mealName,
         totals: getEntriesNutritionTotals(section.entries),
       })),
-    [groupedEntries]
+    [groupedEntries],
   );
 
   const dayNutritionTotals = useMemo(
     () => getEntriesNutritionTotals(entries),
-    [entries]
+    [entries],
+  );
+
+  const hasPercentGoals = Boolean(
+    goals[GoalType.ProteinPercent] ||
+    goals[GoalType.CarbohydratesPercent] ||
+    goals[GoalType.FatPercent],
+  );
+
+  const calorieGoal = goals[GoalType.Calorie]?.value;
+  const calorieGoalValue =
+    calorieGoal ?? (hasPercentGoals ? DefaultCalorieGoal : undefined);
+  const calorieDiff =
+    calorieGoalValue != null ? calorieGoalValue - totalCalories : null;
+
+  const getMacroGoalValue = useCallback(
+    ({
+      gramGoal,
+      percentGoal,
+      caloriesPerGram,
+    }: {
+      gramGoal?: number;
+      percentGoal?: number;
+      caloriesPerGram: number;
+    }) => {
+      if (gramGoal != null) {
+        return gramGoal;
+      }
+      if (percentGoal == null) {
+        return null;
+      }
+      const baseCalories = calorieGoalValue ?? DefaultCalorieGoal;
+      return (baseCalories * (percentGoal / 100)) / caloriesPerGram;
+    },
+    [calorieGoalValue],
+  );
+
+  const macroGoals = useMemo(
+    () => [
+      {
+        label: 'Protein',
+        percent: goals[GoalType.ProteinPercent]?.value,
+        goal: getMacroGoalValue({
+          gramGoal: goals[GoalType.Protein]?.value,
+          percentGoal: goals[GoalType.ProteinPercent]?.value,
+          caloriesPerGram: 4,
+        }),
+        total: dayNutritionTotals.protein ?? 0,
+      },
+      {
+        label: 'Carbs',
+        percent: goals[GoalType.CarbohydratesPercent]?.value,
+        goal: getMacroGoalValue({
+          gramGoal: goals[GoalType.Carbohydrates]?.value,
+          percentGoal: goals[GoalType.CarbohydratesPercent]?.value,
+          caloriesPerGram: 4,
+        }),
+        total: dayNutritionTotals.carbs ?? 0,
+      },
+      {
+        label: 'Fat',
+        percent: goals[GoalType.FatPercent]?.value,
+        goal: getMacroGoalValue({
+          gramGoal: goals[GoalType.Fat]?.value,
+          percentGoal: goals[GoalType.FatPercent]?.value,
+          caloriesPerGram: 9,
+        }),
+        total: dayNutritionTotals.fat ?? 0,
+      },
+    ],
+    [dayNutritionTotals, getMacroGoalValue, goals],
   );
 
   const formattedDate = useMemo(() => {
     return selectedDate.toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
     });
   }, [selectedDate]);
 
   const webDateValue = useMemo(
     () => formatDateInput(selectedDate),
-    [selectedDate]
+    [selectedDate],
   );
 
   const goToPreviousDay = () => {
     setSelectedDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() - 1)
+      (prev) =>
+        new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() - 1),
     );
   };
 
   const goToNextDay = () => {
     setSelectedDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + 1)
+      (prev) =>
+        new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() + 1),
     );
   };
 
@@ -211,6 +306,10 @@ export default function Tab() {
       }
       return next;
     });
+  };
+
+  const toggleGoals = () => {
+    setIsGoalsExpanded((prev) => !prev);
   };
 
   const toggleMealMacros = (mealName: string) => {
@@ -237,7 +336,7 @@ export default function Tab() {
     measurementId,
   }: {
     servings: number;
-    mealType: number;
+    mealType: UpdateFoodEntryDto['mealType'];
     measurementId?: number;
     loggedAt?: Date;
   }) => {
@@ -281,7 +380,10 @@ export default function Tab() {
           <ThemedText style={styles.title}>Diary</ThemedText>
           <View style={styles.dateRow}>
             <TouchableOpacity
-              style={[styles.dateButton, { borderColor: colors.modalSecondary }]}
+              style={[
+                styles.dateButton,
+                { borderColor: colors.modalSecondary },
+              ]}
               onPress={goToPreviousDay}
               activeOpacity={0.7}
             >
@@ -290,7 +392,10 @@ export default function Tab() {
             <TouchableOpacity
               style={[
                 styles.dateDisplay,
-                { borderColor: colors.modalSecondary, backgroundColor: colors.modal },
+                {
+                  borderColor: colors.modalSecondary,
+                  backgroundColor: colors.modal,
+                },
               ]}
               onPress={() => setIsDatePickerVisible(true)}
               activeOpacity={0.7}
@@ -298,14 +403,17 @@ export default function Tab() {
               <ThemedText style={styles.dateText}>{formattedDate}</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.dateButton, { borderColor: colors.modalSecondary }]}
+              style={[
+                styles.dateButton,
+                { borderColor: colors.modalSecondary },
+              ]}
               onPress={goToNextDay}
               activeOpacity={0.7}
             >
               <ThemedText style={styles.dateButtonText}>▶</ThemedText>
             </TouchableOpacity>
           </View>
-          {Platform.OS === "web" && isDatePickerVisible ? (
+          {Platform.OS === 'web' && isDatePickerVisible ? (
             <View style={styles.webDatePicker}>
               <WebDateInput
                 value={webDateValue}
@@ -319,8 +427,8 @@ export default function Tab() {
                 }}
                 onChange={(event) => {
                   const nextValue =
-                    (event as unknown as { target?: { value?: string } })
-                      .target?.value ??
+                    (event as unknown as { target?: { value?: string } }).target
+                      ?.value ??
                     (event as unknown as { nativeEvent?: { text?: string } })
                       .nativeEvent?.text;
                   if (nextValue) {
@@ -354,13 +462,128 @@ export default function Tab() {
             <View style={styles.totalHeader}>
               <View>
                 <ThemedText style={[styles.totalLabel, { color: colors.icon }]}>
-                  Total calories
+                  Calories
                 </ThemedText>
-                <ThemedText style={styles.totalValue}>
-                  {Math.round(totalCalories)} cal
-                </ThemedText>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryItem}>
+                    <ThemedText
+                      style={[styles.summaryLabel, { color: colors.icon }]}
+                    >
+                      Goal
+                    </ThemedText>
+                    <ThemedText style={styles.summaryValue}>
+                      {calorieGoalValue == null
+                        ? 2000
+                        : `${Math.round(calorieGoalValue)} cal`}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <ThemedText
+                      style={[styles.summaryLabel, { color: colors.icon }]}
+                    >
+                      Total
+                    </ThemedText>
+                    <ThemedText style={styles.summaryValue}>
+                      {Math.round(totalCalories)} cal
+                    </ThemedText>
+                  </View>
+                  <View style={styles.summaryItem}>
+                    <ThemedText
+                      style={[styles.summaryLabel, { color: colors.icon }]}
+                    >
+                      Diff
+                    </ThemedText>
+                    <ThemedText style={styles.summaryValue}>
+                      {calorieDiff == null
+                        ? '--'
+                        : `${calorieDiff > 0 ? '+' : ''}${Math.round(
+                            calorieDiff,
+                          )} cal`}
+                    </ThemedText>
+                  </View>
+                </View>
               </View>
             </View>
+            <View style={styles.goalToggleRow}>
+              <TouchableOpacity
+                style={[
+                  styles.goalToggleButton,
+                  { borderColor: colors.modalSecondary },
+                ]}
+                onPress={toggleGoals}
+                activeOpacity={0.7}
+                testID="macro-goals-toggle"
+              >
+                <ThemedText
+                  style={[styles.goalToggleText, { color: colors.text }]}
+                >
+                  {isGoalsExpanded ? 'Hide macro goals' : 'Show macro goals'}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.goalToggleText, { color: colors.text }]}
+                >
+                  {isGoalsExpanded ? '▲' : '▼'}
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+            {isGoalsExpanded ? (
+              <View
+                style={[
+                  styles.goalCard,
+                  { borderColor: colors.modalSecondary },
+                ]}
+              >
+                <View style={styles.goalHeaderRow}>
+                  <ThemedText
+                    style={[styles.goalHeaderText, { color: colors.icon }]}
+                  >
+                    Goal
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.goalHeaderText, { color: colors.icon }]}
+                  >
+                    Total
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.goalHeaderText, { color: colors.icon }]}
+                  >
+                    Diff
+                  </ThemedText>
+                </View>
+                {macroGoals.map((macro) => {
+                  const goalValue =
+                    macro.goal == null ? null : Math.round(macro.goal);
+                  const totalValue = Math.round(macro.total);
+                  const diffValue =
+                    goalValue == null ? null : goalValue - totalValue;
+                  const label =
+                    macro.percent != null
+                      ? `${macro.label} (${Math.round(macro.percent)}%)`
+                      : macro.label;
+                  return (
+                    <View key={macro.label} style={styles.goalRow}>
+                      <ThemedText style={styles.goalLabel}>{label}</ThemedText>
+                      <ThemedText style={styles.goalValue}>
+                        {goalValue == null ? '--' : `${goalValue} g`}
+                      </ThemedText>
+                      <ThemedText style={styles.goalValue}>
+                        {totalValue} g
+                      </ThemedText>
+                      <ThemedText style={styles.goalValue}>
+                        {diffValue == null
+                          ? '--'
+                          : `${diffValue > 0 ? '+' : ''}${diffValue} g`}
+                      </ThemedText>
+                    </View>
+                  );
+                })}
+                {isGoalsLoading ? (
+                  <View style={styles.goalLoading}>
+                    <ActivityIndicator size="small" color={colors.tint} />
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
             <DayNutritionSection
               title="Day total"
               rows={
@@ -394,9 +617,7 @@ export default function Tab() {
                   <ThemedText
                     style={[styles.sectionCount, { color: colors.icon }]}
                   >
-                    {Math.round(
-                      mealCaloriesByName.get(section.mealName) ?? 0
-                    )}{" "}
+                    {Math.round(mealCaloriesByName.get(section.mealName) ?? 0)}{' '}
                     cal
                   </ThemedText>
                 </View>
@@ -426,10 +647,7 @@ export default function Tab() {
                           {getEntryTitle(entry)}
                         </ThemedText>
                         <ThemedText
-                          style={[
-                            styles.entrySubtitle,
-                            { color: colors.icon },
-                          ]}
+                          style={[styles.entrySubtitle, { color: colors.icon }]}
                         >
                           {getEntryServingsText(entry)}
                         </ThemedText>
@@ -448,13 +666,13 @@ export default function Tab() {
                     expandedMealNutrients[section.mealName]
                       ? buildEntryNutritionRows(
                           mealNutritionTotals.find(
-                            (meal) => meal.mealName === section.mealName
-                          )?.totals ?? {}
+                            (meal) => meal.mealName === section.mealName,
+                          )?.totals ?? {},
                         )
                       : buildEntryMacroRows(
                           mealNutritionTotals.find(
-                            (meal) => meal.mealName === section.mealName
-                          )?.totals ?? {}
+                            (meal) => meal.mealName === section.mealName,
+                          )?.totals ?? {},
                         )
                   }
                   alternateBackground={colors.modalSecondary}
@@ -491,7 +709,7 @@ export default function Tab() {
         isSubmitting={isSubmitting}
         colors={colors}
       />
-      {Platform.OS !== "web" ? (
+      {Platform.OS !== 'web' ? (
         <DateTimePickerModal
           isVisible={isDatePickerVisible}
           mode="date"
@@ -521,8 +739,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   dateRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   dateButton: {
@@ -533,21 +751,21 @@ const styles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   dateDisplay: {
     flex: 1,
     borderRadius: 12,
     borderWidth: 1,
     paddingVertical: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   dateText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   webDatePicker: {
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
   },
   webDateInput: {
     borderWidth: 1,
@@ -558,7 +776,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   totalCard: {
     borderWidth: 1,
@@ -567,45 +785,114 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   totalHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 6,
+  },
+  summaryItem: {
+    gap: 2,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   totalLabel: {
     fontSize: 12,
-    fontWeight: "600",
-    textTransform: "uppercase",
+    fontWeight: '600',
+    textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  totalValue: {
-    fontSize: 28,
-    fontWeight: "700",
+  goalToggleRow: {
+    marginTop: 8,
+  },
+  goalToggleButton: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  goalToggleText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  goalCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 8,
+    gap: 8,
+  },
+  goalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 24,
+  },
+  goalHeaderText: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  goalLabel: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  goalValue: {
+    width: 70,
+    textAlign: 'right',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  goalLoading: {
+    paddingTop: 4,
+    alignItems: 'center',
   },
   loading: {
     paddingVertical: 24,
-    alignItems: "center",
+    alignItems: 'center',
   },
   section: {
     gap: 8,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sectionActions: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   sectionCount: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   emptyText: {
     fontSize: 12,
@@ -617,9 +904,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   entryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   entryInfo: {
     flex: 1,
@@ -628,13 +915,13 @@ const styles = StyleSheet.create({
   },
   entryTitle: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   entrySubtitle: {
     fontSize: 12,
   },
   entryCalories: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });

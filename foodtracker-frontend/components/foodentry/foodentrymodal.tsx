@@ -11,6 +11,7 @@ import {
 import ThemedText from '@/components/themedtext';
 import { Colors } from '@/constants/Colors';
 import { Food } from '@/types/food/food';
+import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
@@ -36,7 +37,7 @@ type FoodEntryModalProps = {
   onDismiss: () => void;
   onSubmit: (payload: {
     servings: number;
-    mealType: number;
+    mealType: MealType;
     measurementId?: number;
     loggedAt?: Date;
   }) => void;
@@ -46,7 +47,7 @@ type FoodEntryModalProps = {
   initialDate?: Date;
   food?: Food | null;
   recipe?: Recipe | null;
-  initialMealType?: number;
+  initialMealType?: MealType;
   initialServings?: number;
   initialMeasurementId?: number | null;
   submitLabel?: string;
@@ -91,7 +92,7 @@ export default function FoodEntryModal({
   colors,
 }: FoodEntryModalProps) {
   const [selectedMealType, setSelectedMealType] =
-    useState(initialMealType);
+    useState<MealType>(initialMealType);
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<
     number | null
   >(initialMeasurementId);

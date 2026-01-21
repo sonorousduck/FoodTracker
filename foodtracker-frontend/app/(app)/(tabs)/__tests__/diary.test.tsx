@@ -1,9 +1,12 @@
 import Diary from "@/app/(app)/(tabs)/diary";
 import { getDiaryEntries } from "@/lib/api/foodentry";
+import { getCurrentGoals } from "@/lib/api/goal";
 import { getRecipe } from "@/lib/api/recipe";
 import { Food } from "@/types/food/food";
 import { FoodEntry } from "@/types/foodentry/foodentry";
 import { FoodMeasurement } from "@/types/foodmeasurement/foodmeasurement";
+import { Goal } from "@/types/goal/goal";
+import { GoalType } from "@/types/goal/goaltype";
 import { Meal } from "@/types/meal/meal";
 import { Recipe } from "@/types/recipe/recipe";
 import { User } from "@/types/users/user";
@@ -24,6 +27,11 @@ jest.mock("expo-router", () => {
 jest.mock("@/lib/api/foodentry", () => ({
   __esModule: true,
   getDiaryEntries: jest.fn(),
+}));
+
+jest.mock("@/lib/api/goal", () => ({
+  __esModule: true,
+  getCurrentGoals: jest.fn(),
 }));
 
 jest.mock("@/lib/api/recipe", () => ({
@@ -48,6 +56,9 @@ const mockedGetDiaryEntries = getDiaryEntries as jest.MockedFunction<
   typeof getDiaryEntries
 >;
 const mockedGetRecipe = getRecipe as jest.MockedFunction<typeof getRecipe>;
+const mockedGetCurrentGoals = getCurrentGoals as jest.MockedFunction<
+  typeof getCurrentGoals
+>;
 const mockedUseColorScheme = useColorScheme as jest.MockedFunction<
   typeof useColorScheme
 >;
@@ -156,13 +167,28 @@ const createMeasurementFixture = (food: Food): FoodMeasurement => ({
   isFromSource: false,
 });
 
+const createGoalFixture = (
+  user: User,
+  goalType: GoalType,
+  value: number
+): Goal => ({
+  id: Math.round(value),
+  name: "Goal",
+  value,
+  goalType,
+  user,
+  startDate: new Date("2025-01-01T00:00:00.000Z"),
+  endDate: new Date("2025-01-02T00:00:00.000Z"),
+  createdDate: new Date("2025-01-02T00:00:00.000Z"),
+});
+
 describe("Diary", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedUseColorScheme.mockReturnValue("light");
   });
 
-  it("renders total calories and meal entries", async () => {
+  it("renders calorie goals and meal entries", async () => {
     const user = createUserFixture();
     const food = createFoodFixture();
     const measurement = createMeasurementFixture(food);
@@ -187,6 +213,16 @@ describe("Diary", () => {
     };
 
     mockedGetDiaryEntries.mockResolvedValue([entry]);
+    mockedGetCurrentGoals.mockResolvedValue({
+      [GoalType.Calorie]: createGoalFixture(user, GoalType.Calorie, 1800),
+      [GoalType.Protein]: createGoalFixture(user, GoalType.Protein, 120),
+      [GoalType.Carbohydrates]: createGoalFixture(
+        user,
+        GoalType.Carbohydrates,
+        200
+      ),
+      [GoalType.Fat]: createGoalFixture(user, GoalType.Fat, 60),
+    });
 
     const screen = render(
       <PaperProvider>
@@ -195,25 +231,33 @@ describe("Diary", () => {
     );
     await act(async () => {});
 
-    expect(screen.getByText("Total calories")).toBeTruthy();
-    expect(screen.getAllByText("200 cal")).toHaveLength(2);
+    expect(screen.getByText("Calories")).toBeTruthy();
+    expect(screen.getByText("Goal")).toBeTruthy();
+    expect(screen.getByText("Total")).toBeTruthy();
+    expect(screen.getByText("Diff")).toBeTruthy();
+    expect(screen.getAllByText("200 cal")).toHaveLength(3);
     expect(screen.getByText("Oatmeal")).toBeTruthy();
     expect(screen.getByText("1 serving · 1 cup")).toBeTruthy();
 
+    fireEvent.press(screen.getByTestId("macro-goals-toggle"));
+    expect(screen.getByText("Protein")).toBeTruthy();
+    expect(screen.getByText("Carbs")).toBeTruthy();
+    expect(screen.getByText("Fat")).toBeTruthy();
+
     fireEvent.press(screen.getByTestId("day-macro-toggle"));
     expect(screen.getByText("Day total")).toBeTruthy();
-    expect(screen.getByText("Protein")).toBeTruthy();
-    expect(screen.getByText("10 g")).toBeTruthy();
-    expect(screen.getByText("Carbs")).toBeTruthy();
-    expect(screen.getByText("20 g")).toBeTruthy();
-    expect(screen.getByText("Fat")).toBeTruthy();
-    expect(screen.getByText("4 g")).toBeTruthy();
+    expect(screen.getAllByText("Protein").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("10 g").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Carbs").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("20 g").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Fat").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("4 g").length).toBeGreaterThanOrEqual(1);
 
     fireEvent.press(
       screen.getByTestId("diary-meal-breakfast-macro-toggle")
     );
-    expect(screen.getAllByText("Protein")).toHaveLength(2);
-    expect(screen.getAllByText("10 g")).toHaveLength(2);
+    expect(screen.getAllByText("Protein").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("10 g").length).toBeGreaterThanOrEqual(2);
 
     fireEvent.press(screen.getByTestId("day-nutrients-toggle"));
     expect(screen.getByText("Fiber")).toBeTruthy();
@@ -271,6 +315,7 @@ describe("Diary", () => {
     };
 
     mockedGetDiaryEntries.mockResolvedValue([entry]);
+    mockedGetCurrentGoals.mockResolvedValue({});
     mockedGetRecipe.mockResolvedValueOnce(hydratedRecipe);
 
     const screen = render(
