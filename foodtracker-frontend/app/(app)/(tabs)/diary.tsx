@@ -16,8 +16,10 @@ import ThemedText from '@/components/themedtext';
 import { Colors } from '@/constants/Colors';
 import { DefaultCalorieGoal } from '@/constants/goals';
 import {
+  createFoodEntry,
   deleteFoodEntry,
   getDiaryEntries,
+  getLastMealEntries,
   updateFoodEntry,
 } from '@/lib/api/foodentry';
 import { CurrentGoalsResponse, getCurrentGoals } from '@/lib/api/goal';
@@ -31,6 +33,7 @@ import type { ComponentProps } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -82,61 +85,69 @@ export default function Tab() {
   const [expandedMealNutrients, setExpandedMealNutrients] = useState<
     Record<string, boolean>
   >({});
+  const [lastMealEntriesByName, setLastMealEntriesByName] = useState<
+    Record<string, FoodEntry[]>
+  >({});
 
-  const loadEntries = useCallback(async (date: Date) => {
-    setIsLoading(true);
-    try {
-      const startOfDay = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
+  const hydrateEntries = useCallback(async (response: FoodEntry[]) => {
+    const recipeIds = Array.from(
+      new Set(
+        response
+          .filter(
+            (entry) => entry.recipe && !Array.isArray(entry.recipe.ingredients),
+          )
+          .map((entry) => entry.recipe?.id)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    );
+
+    let recipesById = new Map<number, Recipe>();
+    if (recipeIds.length > 0) {
+      const recipeResults = await Promise.allSettled(
+        recipeIds.map((id) => getRecipe(id)),
       );
-      const response = await getDiaryEntries(startOfDay.toISOString());
-      const recipeIds = Array.from(
-        new Set(
-          response
-            .filter(
-              (entry) =>
-                entry.recipe && !Array.isArray(entry.recipe.ingredients),
-            )
-            .map((entry) => entry.recipe?.id)
-            .filter((id): id is number => typeof id === 'number'),
-        ),
+      recipesById = new Map(
+        recipeResults
+          .filter(
+            (result): result is PromiseFulfilledResult<Recipe> =>
+              result.status === 'fulfilled',
+          )
+          .map((result) => [result.value.id, result.value]),
       );
-
-      let recipesById = new Map<number, Recipe>();
-      if (recipeIds.length > 0) {
-        const recipeResults = await Promise.allSettled(
-          recipeIds.map((id) => getRecipe(id)),
-        );
-        recipesById = new Map(
-          recipeResults
-            .filter(
-              (result): result is PromiseFulfilledResult<Recipe> =>
-                result.status === 'fulfilled',
-            )
-            .map((result) => [result.value.id, result.value]),
-        );
-      }
-
-      const hydratedEntries = response.map((entry) => {
-        if (!entry.recipe) {
-          return entry;
-        }
-        const hydratedRecipe = recipesById.get(entry.recipe.id);
-        if (!hydratedRecipe) {
-          return entry;
-        }
-        return { ...entry, recipe: hydratedRecipe };
-      });
-
-      setEntries(hydratedEntries);
-    } catch (error) {
-      setEntries([]);
-    } finally {
-      setIsLoading(false);
     }
+
+    return response.map((entry) => {
+      if (!entry.recipe) {
+        return entry;
+      }
+      const hydratedRecipe = recipesById.get(entry.recipe.id);
+      if (!hydratedRecipe) {
+        return entry;
+      }
+      return { ...entry, recipe: hydratedRecipe };
+    });
   }, []);
+
+  const loadEntries = useCallback(
+    async (date: Date) => {
+      setIsLoading(true);
+      try {
+        const startOfDay = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate(),
+        );
+        const response = await getDiaryEntries(startOfDay.toISOString());
+        const hydratedEntries = await hydrateEntries(response);
+        setEntries(hydratedEntries);
+      } catch (error) {
+        setEntries([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [hydrateEntries],
+  );
 
   const loadGoals = useCallback(async () => {
     setIsGoalsLoading(true);
@@ -373,6 +384,110 @@ export default function Tab() {
     }
   };
 
+  const loadLastMeals = useCallback(
+    async (date: Date, sections: { mealName: string; entries: FoodEntry[] }[]) => {
+      const startOfDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+      );
+      const results = await Promise.all(
+        sections.map(async (section) => {
+          if (section.entries.length > 0) {
+            return [section.mealName, []] as const;
+          }
+          try {
+            const response = await getLastMealEntries({
+              date: startOfDay.toISOString(),
+              mealType: getMealTypeFromName(section.mealName),
+            });
+            if (response.length === 0) {
+              return [section.mealName, []] as const;
+            }
+            const hydrated = await hydrateEntries(response);
+            return [section.mealName, hydrated] as const;
+          } catch (error) {
+            return [section.mealName, []] as const;
+          }
+        }),
+      );
+      setLastMealEntriesByName(Object.fromEntries(results));
+    },
+    [hydrateEntries],
+  );
+
+  const handleAddLastMeal = async (mealName: string) => {
+    const entriesToLog = lastMealEntriesByName[mealName] ?? [];
+    if (entriesToLog.length === 0) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const logDate = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+      );
+      const mealType = getMealTypeFromName(mealName);
+      await Promise.all(
+        entriesToLog.map((entry) =>
+          createFoodEntry({
+            servings: entry.servings,
+            mealType,
+            foodId: entry.food?.id,
+            recipeId: entry.recipe?.id,
+            measurementId: entry.food ? entry.measurement?.id : undefined,
+            loggedAt: logDate,
+          }),
+        ),
+      );
+      await loadEntries(selectedDate);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log last meal.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getLastMealMetadata = useCallback(
+    (mealName: string) => {
+      const lastEntries = lastMealEntriesByName[mealName] ?? [];
+      if (lastEntries.length === 0) {
+        return null;
+      }
+      const latestLoggedAt = lastEntries[0]?.loggedAt
+        ? new Date(lastEntries[0].loggedAt)
+        : null;
+      if (!latestLoggedAt) {
+        return null;
+      }
+      const lastStart = new Date(
+        latestLoggedAt.getFullYear(),
+        latestLoggedAt.getMonth(),
+        latestLoggedAt.getDate(),
+      );
+      const selectedStart = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+      );
+      const diffMs = selectedStart.getTime() - lastStart.getTime();
+      const daysAgo = Math.max(1, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
+      const calories = lastEntries.reduce((total, entry) => {
+        const entryCalories = getEntryCalories(entry);
+        return total + (entryCalories ?? 0);
+      }, 0);
+      return { daysAgo, calories, entries: lastEntries };
+    },
+    [lastMealEntriesByName, selectedDate],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadLastMeals(selectedDate, groupedEntries);
+    }, [groupedEntries, loadLastMeals, selectedDate]),
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -608,8 +723,10 @@ export default function Tab() {
             <ActivityIndicator size="small" color={colors.tint} />
           </View>
         ) : (
-          groupedEntries.map((section) => (
-            <View key={section.mealName} style={styles.section}>
+          groupedEntries.map((section) => {
+            const lastMealMeta = getLastMealMetadata(section.mealName);
+            return (
+              <View key={section.mealName} style={styles.section}>
               <View style={styles.sectionHeader}>
                 <ThemedText style={styles.sectionTitle}>
                   {section.mealName}
@@ -624,9 +741,30 @@ export default function Tab() {
                 </View>
               </View>
               {section.entries.length === 0 ? (
-                <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
-                  Nothing logged yet.
-                </ThemedText>
+                <>
+                  <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
+                    Nothing logged yet.
+                  </ThemedText>
+                  {lastMealMeta ? (
+                    <TouchableOpacity
+                      style={styles.lastMealButton}
+                      activeOpacity={0.7}
+                      onPress={() => handleAddLastMeal(section.mealName)}
+                      disabled={isSubmitting}
+                      testID={`last-meal-${section.mealName.toLowerCase()}`}
+                    >
+                      <ThemedText
+                        style={[
+                          styles.lastMealButtonTitle,
+                          { color: colors.icon },
+                        ]}
+                      >
+                        + Add {section.mealName} from {lastMealMeta.daysAgo}{' '}
+                        days ago, {Math.round(lastMealMeta.calories)} cal
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ) : null}
+                </>
               ) : (
                 section.entries.map((entry) => (
                   <TouchableOpacity
@@ -692,7 +830,8 @@ export default function Tab() {
                 />
               ) : null}
             </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
       <FoodEntryModal
@@ -905,6 +1044,15 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 12,
+  },
+  lastMealButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  lastMealButtonTitle: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   entryCard: {
     borderWidth: 1,

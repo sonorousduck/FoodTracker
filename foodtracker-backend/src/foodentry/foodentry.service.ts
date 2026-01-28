@@ -1,11 +1,19 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Food } from 'src/food/entities/food.entity';
 import { FoodMeasurement } from 'src/foodmeasurement/entities/foodmeasurement.entity';
 import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
-import { CreateFoodEntryDto, MealType } from './dto/createfoodentry.dto';
+import { Repository } from 'typeorm';
+import {
+  CreateFoodEntryDto,
+  MEAL_TYPES,
+  MealType,
+} from './dto/createfoodentry.dto';
 import { UpdateFoodEntryDto } from './dto/updatefoodentry.dto';
 import { FoodEntry } from './entities/foodentry.entity';
 
@@ -25,8 +33,7 @@ export class FoodentryService {
   ) {}
 
   async getHistory({ userId, limit }: { userId: number; limit?: number }) {
-    const queryBuilder =
-      this.foodEntryRepository.createQueryBuilder('entry');
+    const queryBuilder = this.foodEntryRepository.createQueryBuilder('entry');
     queryBuilder.where('entry.user.id = :userId', { userId });
     queryBuilder
       .leftJoinAndSelect('entry.food', 'food')
@@ -51,8 +58,7 @@ export class FoodentryService {
     start: Date;
     end: Date;
   }) {
-    const queryBuilder =
-      this.foodEntryRepository.createQueryBuilder('entry');
+    const queryBuilder = this.foodEntryRepository.createQueryBuilder('entry');
     queryBuilder.where('entry.user.id = :userId', { userId });
     queryBuilder.andWhere('entry.loggedAt >= :start', { start });
     queryBuilder.andWhere('entry.loggedAt < :end', { end });
@@ -64,6 +70,63 @@ export class FoodentryService {
       .orderBy('entry.loggedAt', 'DESC');
 
     return queryBuilder.getMany();
+  }
+
+  async getLastMealEntries({
+    userId,
+    date,
+    mealType,
+  }: {
+    userId: number;
+    date?: string;
+    mealType: number;
+  }) {
+    if (!MEAL_TYPES.includes(mealType as MealType)) {
+      throw new BadRequestException('Invalid mealType.');
+    }
+    const targetDate = date ? new Date(date) : new Date();
+    if (Number.isNaN(targetDate.getTime())) {
+      throw new BadRequestException('Invalid date.');
+    }
+    const startOfDay = new Date(
+      targetDate.getFullYear(),
+      targetDate.getMonth(),
+      targetDate.getDate(),
+    );
+    const mealName = this.getMealName(mealType as MealType);
+
+    const latestEntry = await this.foodEntryRepository
+      .createQueryBuilder('entry')
+      .leftJoin('entry.meal', 'meal')
+      .where('entry.user.id = :userId', { userId })
+      .andWhere('meal.name = :mealName', { mealName })
+      .andWhere('entry.loggedAt < :startOfDay', { startOfDay })
+      .orderBy('entry.loggedAt', 'DESC')
+      .getOne();
+
+    if (!latestEntry) {
+      return [];
+    }
+
+    const latestStart = new Date(
+      latestEntry.loggedAt.getFullYear(),
+      latestEntry.loggedAt.getMonth(),
+      latestEntry.loggedAt.getDate(),
+    );
+    const latestEnd = new Date(latestStart.getTime() + 24 * 60 * 60 * 1000);
+
+    return this.foodEntryRepository
+      .createQueryBuilder('entry')
+      .where('entry.user.id = :userId', { userId })
+      .andWhere('entry.loggedAt >= :start', { start: latestStart })
+      .andWhere('entry.loggedAt < :end', { end: latestEnd })
+      .leftJoinAndSelect('entry.food', 'food')
+      .leftJoinAndSelect('entry.recipe', 'recipe')
+      .leftJoinAndSelect('entry.measurement', 'measurement')
+      .leftJoinAndSelect('entry.meal', 'meal')
+      .andWhere('meal.name = :mealName', { mealName })
+      .orderBy('entry.loggedAt', 'DESC')
+      .getMany();
   }
 
   async create(createFoodEntryDto: CreateFoodEntryDto, userId: number) {
@@ -152,7 +215,9 @@ export class FoodentryService {
     });
 
     if (!entry) {
-      throw new NotFoundException(`Food entry was not found with id: ${entryId}`);
+      throw new NotFoundException(
+        `Food entry was not found with id: ${entryId}`,
+      );
     }
 
     if (updateFoodEntryDto.mealType !== undefined) {
@@ -194,7 +259,9 @@ export class FoodentryService {
     });
 
     if (!entry) {
-      throw new NotFoundException(`Food entry was not found with id: ${entryId}`);
+      throw new NotFoundException(
+        `Food entry was not found with id: ${entryId}`,
+      );
     }
 
     await this.foodEntryRepository.remove(entry);

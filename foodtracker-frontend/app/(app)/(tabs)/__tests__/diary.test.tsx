@@ -1,5 +1,9 @@
 import Diary from "@/app/(app)/(tabs)/diary";
-import { getDiaryEntries } from "@/lib/api/foodentry";
+import {
+  createFoodEntry,
+  getDiaryEntries,
+  getLastMealEntries,
+} from "@/lib/api/foodentry";
 import { getCurrentGoals } from "@/lib/api/goal";
 import { getRecipe } from "@/lib/api/recipe";
 import { Food } from "@/types/food/food";
@@ -27,6 +31,8 @@ jest.mock("expo-router", () => {
 jest.mock("@/lib/api/foodentry", () => ({
   __esModule: true,
   getDiaryEntries: jest.fn(),
+  getLastMealEntries: jest.fn(),
+  createFoodEntry: jest.fn(),
 }));
 
 jest.mock("@/lib/api/goal", () => ({
@@ -54,6 +60,12 @@ jest.mock("@react-native-community/datetimepicker", () => {
 
 const mockedGetDiaryEntries = getDiaryEntries as jest.MockedFunction<
   typeof getDiaryEntries
+>;
+const mockedGetLastMealEntries = getLastMealEntries as jest.MockedFunction<
+  typeof getLastMealEntries
+>;
+const mockedCreateFoodEntry = createFoodEntry as jest.MockedFunction<
+  typeof createFoodEntry
 >;
 const mockedGetRecipe = getRecipe as jest.MockedFunction<typeof getRecipe>;
 const mockedGetCurrentGoals = getCurrentGoals as jest.MockedFunction<
@@ -213,6 +225,7 @@ describe("Diary", () => {
     };
 
     mockedGetDiaryEntries.mockResolvedValue([entry]);
+    mockedGetLastMealEntries.mockResolvedValue([]);
     mockedGetCurrentGoals.mockResolvedValue({
       [GoalType.Calorie]: createGoalFixture(user, GoalType.Calorie, 1800),
       [GoalType.Protein]: createGoalFixture(user, GoalType.Protein, 120),
@@ -315,6 +328,7 @@ describe("Diary", () => {
     };
 
     mockedGetDiaryEntries.mockResolvedValue([entry]);
+    mockedGetLastMealEntries.mockResolvedValue([]);
     mockedGetCurrentGoals.mockResolvedValue({});
     mockedGetRecipe.mockResolvedValueOnce(hydratedRecipe);
 
@@ -330,5 +344,59 @@ describe("Diary", () => {
     );
     expect(screen.getByText("Protein")).toBeTruthy();
     expect(screen.getByText("10 g")).toBeTruthy();
+  });
+
+  it("shows last meal button and logs the same entries", async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2025-01-10T12:00:00.000Z"));
+
+    const user = createUserFixture();
+    const food = createFoodFixture();
+    const measurement = createMeasurementFixture(food);
+    food.measurements = [measurement];
+
+    const meal: Meal = {
+      id: "meal-3",
+      name: "Breakfast",
+      user,
+      foodEntries: [],
+    };
+
+    const lastEntry: FoodEntry = {
+      id: 9,
+      user,
+      food,
+      measurement,
+      servings: 1,
+      meal,
+      recipe: undefined,
+      loggedAt: new Date("2025-01-02T08:00:00.000Z"),
+    };
+
+    mockedGetDiaryEntries.mockResolvedValue([]);
+    mockedGetLastMealEntries.mockImplementation(async ({ mealType }) => {
+      return mealType === 0 ? [lastEntry] : [];
+    });
+    mockedGetCurrentGoals.mockResolvedValue({});
+    mockedCreateFoodEntry.mockResolvedValue(lastEntry);
+
+    const screen = render(
+      <PaperProvider>
+        <Diary />
+      </PaperProvider>
+    );
+    await act(async () => {});
+
+    expect(screen.getByText("Add Breakfast from 8 days ago")).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId("last-meal-breakfast"));
+
+    const payload = mockedCreateFoodEntry.mock.calls[0]?.[0];
+    expect(payload?.mealType).toBe(0);
+    expect(payload?.loggedAt?.toISOString()).toBe(
+      "2025-01-10T00:00:00.000Z"
+    );
+
+    jest.useRealTimers();
   });
 });
