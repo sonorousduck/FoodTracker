@@ -387,14 +387,16 @@ describe("Diary", () => {
     );
     await act(async () => {});
 
-    expect(screen.getByText("Add Breakfast from 8 days ago")).toBeTruthy();
+    expect(screen.getByTestId("last-meal-breakfast")).toHaveTextContent(
+      /Add Breakfast from 8 days ago/
+    );
 
     fireEvent.press(screen.getByTestId("last-meal-breakfast"));
 
     const payload = mockedCreateFoodEntry.mock.calls[0]?.[0];
     expect(payload?.mealType).toBe(0);
     expect(payload?.loggedAt?.toISOString()).toBe(
-      "2025-01-10T00:00:00.000Z"
+      new Date(2025, 0, 10).toISOString()
     );
 
     jest.useRealTimers();
