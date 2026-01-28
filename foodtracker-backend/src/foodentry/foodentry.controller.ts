@@ -55,6 +55,23 @@ export class FoodentryController {
     });
   }
 
+  @Get('lastMeal')
+  @UseGuards(PassportJwtAuthGuard)
+  getLastMeal(
+    @User() user: UserRequest,
+    @Query('date') date?: string,
+    @Query('mealType', new ParseIntPipe()) mealType?: number,
+  ) {
+    if (mealType === undefined) {
+      throw new BadRequestException('mealType is required.');
+    }
+    return this.foodentryService.getLastMealEntries({
+      userId: user.userId,
+      date,
+      mealType,
+    });
+  }
+
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(PassportJwtAuthGuard)
