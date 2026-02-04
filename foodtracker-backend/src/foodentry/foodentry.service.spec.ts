@@ -15,10 +15,12 @@ describe('FoodentryService', () => {
   let queryBuilder: {
     where: jest.Mock;
     andWhere: jest.Mock;
+    leftJoin: jest.Mock;
     leftJoinAndSelect: jest.Mock;
     orderBy: jest.Mock;
     limit: jest.Mock;
     getMany: jest.Mock;
+    getOne: jest.Mock;
   };
   let foodEntryRepository: {
     createQueryBuilder: jest.Mock;
@@ -46,10 +48,12 @@ describe('FoodentryService', () => {
     queryBuilder = {
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       limit: jest.fn().mockReturnThis(),
       getMany: jest.fn(),
+      getOne: jest.fn(),
     };
 
     foodEntryRepository = {
@@ -295,5 +299,79 @@ describe('FoodentryService', () => {
     foodEntryRepository.findOne.mockResolvedValue(null);
 
     await expect(service.delete(9, 2)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('getLastMealEntries rejects invalid mealType', async () => {
+    await expect(
+      service.getLastMealEntries({ userId: 1, mealType: 9, date: undefined }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('getLastMealEntries rejects invalid date', async () => {
+    await expect(
+      service.getLastMealEntries({ userId: 1, mealType: 0, date: 'nope' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('getLastMealEntries returns empty when no previous entries', async () => {
+    const latestQueryBuilder = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(null),
+    };
+    foodEntryRepository.createQueryBuilder.mockReturnValueOnce(
+      latestQueryBuilder,
+    );
+
+    await expect(
+      service.getLastMealEntries({
+        userId: 1,
+        mealType: 0,
+        date: '2025-01-20T00:00:00.000Z',
+      }),
+    ).resolves.toEqual([]);
+
+    expect(foodEntryRepository.createQueryBuilder).toHaveBeenCalledTimes(1);
+  });
+
+  it('getLastMealEntries returns latest day entries', async () => {
+    const latestEntry = {
+      loggedAt: new Date('2025-01-15T08:00:00.000Z'),
+    } as FoodEntry;
+    const latestQueryBuilder = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      leftJoin: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(latestEntry),
+    };
+    const entriesQueryBuilder = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([latestEntry]),
+    };
+    foodEntryRepository.createQueryBuilder
+      .mockReturnValueOnce(latestQueryBuilder)
+      .mockReturnValueOnce(entriesQueryBuilder);
+
+    const result = await service.getLastMealEntries({
+      userId: 1,
+      mealType: 0,
+      date: '2025-01-20T00:00:00.000Z',
+    });
+
+    expect(result).toEqual([latestEntry]);
+    expect(latestQueryBuilder.andWhere).toHaveBeenCalledWith(
+      'meal.name = :mealName',
+      { mealName: 'Breakfast' },
+    );
+    expect(entriesQueryBuilder.andWhere).toHaveBeenCalledWith(
+      'meal.name = :mealName',
+      { mealName: 'Breakfast' },
+    );
   });
 });
