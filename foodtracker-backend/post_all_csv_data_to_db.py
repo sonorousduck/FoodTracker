@@ -1,9 +1,11 @@
 import json
+import sys
 import time
 from typing import Dict, List, Optional
 
 import pandas as pd
 import requests
+from tqdm import tqdm
 
 
 class FoodImporter:
@@ -235,6 +237,7 @@ class FoodImporter:
 
         try:
             # Read CSV file
+            print("📥 Loading CSV file...")
             df = pd.read_csv(self.csv_file_path)
             total_rows = len(df)
 
@@ -243,32 +246,51 @@ class FoodImporter:
             print("-" * 50)
 
             # Process in batches to be nice to your API
-            for batch_start in range(3, total_rows, batch_size):
-                batch_end = min(batch_start + batch_size, total_rows)
-                batch_number = (batch_start // batch_size) + 1
+            total_to_process = total_rows - 3 if total_rows > 3 else 0
+            if total_to_process <= 0:
+                print("⚠️  No rows to process after skipping the first 3 rows.")
+            progress = tqdm(
+                total=total_to_process,
+                unit="foods",
+                desc="Importing foods",
+                leave=True,
+                dynamic_ncols=True,
+                file=sys.stdout,
+                disable=False,
+            )
+            print("🧭 Progress bar initialized.")
 
-                print(f"\n📦 Processing batch {batch_number} (rows {batch_start+1}-{batch_end})")
+            try:
+                for batch_start in range(3, total_rows, batch_size):
+                    batch_end = min(batch_start + batch_size, total_rows)
+                    batch_number = (batch_start // batch_size) + 1
 
-                # Process each row in the batch
-                for index in range(batch_start, batch_end):
-                    row = df.iloc[index]
+                    print(f"\n📦 Processing batch {batch_number} (rows {batch_start+1}-{batch_end})")
 
-                    # Skip rows without name
-                    if pd.isna(row.get('Name')) or row.get('Name') == '':
-                        print(f"⏭️  Skipping row {index+1}: No name")
-                        continue
+                    # Process each row in the batch
+                    for index in range(batch_start, batch_end):
+                        row = df.iloc[index]
 
-                    # Convert to DTO and post
-                    food_dto = self.convert_csv_row_to_food_dto(row)
-                    self.post_food_to_api(food_dto)
+                        # Skip rows without name
+                        if pd.isna(row.get('Name')) or row.get('Name') == '':
+                            print(f"⏭️  Skipping row {index+1}: No name")
+                            progress.update(1)
+                            continue
 
-                    # Small delay between requests to be nice to your server
-                    time.sleep(0.05)
+                        # Convert to DTO and post
+                        food_dto = self.convert_csv_row_to_food_dto(row)
+                        self.post_food_to_api(food_dto)
+                        progress.update(1)
 
-                # Delay between batches
-                if batch_end < total_rows:
-                    print(f"⏳ Waiting {delay_between_batches}s before next batch...")
-                    time.sleep(delay_between_batches)
+                        # Small delay between requests to be nice to your server
+                        time.sleep(0.05)
+
+                    # Delay between batches
+                    if batch_end < total_rows:
+                        print(f"⏳ Waiting {delay_between_batches}s before next batch...")
+                        time.sleep(delay_between_batches)
+            finally:
+                progress.close()
 
         except FileNotFoundError:
             print(f"❌ ERROR: CSV file not found: {self.csv_file_path}")

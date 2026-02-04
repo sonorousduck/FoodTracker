@@ -12,5 +12,6 @@ import { FoodService } from "./food.service";
   imports: [TypeOrmModule.forFeature([Food])],
   providers: [FoodSearchService, FoodService],
   controllers: [FoodController],
+  exports: [FoodService],
 })
 export class FoodModule {}
