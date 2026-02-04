@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { FoodModule } from './food/food.module';
 import { FoodentryModule } from './foodentry/foodentry.module';
 import { FoodmeasurementModule } from './foodmeasurement/foodmeasurement.module';
+import { FoodBarcodeModule } from './foodbarcode/foodbarcode.module';
 import { MealModule } from './meal/meal.module';
 import { RecipeModule } from './recipe/recipe.module';
 import { RecipefoodModule } from './recipefood/recipefood.module';
@@ -32,6 +33,7 @@ import { GoalModule } from './goal/goal.module';
       synchronize: true, // TODO: Remove! This isn't safe for production code
     }),
     FoodModule,
+    FoodBarcodeModule,
     FoodentryModule,
     MealModule,
     RecipeModule,
