@@ -29,6 +29,22 @@ export const getDiaryEntries = async (date: string): Promise<FoodEntry[]> => {
   return apiMethods.get<FoodEntry[]>(`/foodentry/diary?${params.toString()}`);
 };
 
+export const getLastMealEntries = async ({
+  date,
+  mealType,
+}: {
+  date: string;
+  mealType: number;
+}): Promise<FoodEntry[]> => {
+  const params = new URLSearchParams({
+    date,
+    mealType: mealType.toString(),
+  });
+  return apiMethods.get<FoodEntry[]>(
+    `/foodentry/lastMeal?${params.toString()}`,
+  );
+};
+
 export const updateFoodEntry = async (
   id: number,
   payload: UpdateFoodEntryDto,
