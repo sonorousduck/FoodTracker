@@ -6,6 +6,18 @@ jest.mock("expo-haptics", () => ({
   ImpactFeedbackStyle: { Light: "Light" },
 }));
 
+jest.mock("expo-secure-store", () => ({
+  __esModule: true,
+  default: {
+    getItemAsync: jest.fn(),
+    setItemAsync: jest.fn(),
+    deleteItemAsync: jest.fn(),
+  },
+  getItemAsync: jest.fn(),
+  setItemAsync: jest.fn(),
+  deleteItemAsync: jest.fn(),
+}));
+
 jest.mock(
   "react-native/Libraries/Animated/NativeAnimatedHelper",
   () => ({}),
