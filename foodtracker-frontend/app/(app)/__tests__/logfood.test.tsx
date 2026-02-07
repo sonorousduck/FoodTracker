@@ -2,26 +2,32 @@ import LogFood from "@/app/(app)/logfood";
 import { createFoodEntry, getFoodEntryHistory } from "@/lib/api/foodentry";
 import { getRecipes } from "@/lib/api/recipe";
 import { searchFoods } from "@/lib/api/food";
+import { getFoodByBarcode } from "@/lib/api/foodbarcode";
 import { Food } from "@/types/food/food";
 import { FoodEntry } from "@/types/foodentry/foodentry";
 import { FoodMeasurement } from "@/types/foodmeasurement/foodmeasurement";
 import { Meal } from "@/types/meal/meal";
 import { Recipe } from "@/types/recipe/recipe";
 import { User } from "@/types/users/user";
-import { act, fireEvent, render } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import React from "react";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
 
-const mockReplace = jest.fn();
+const mockLocalSearchParams = jest.fn();
+let mockRouter: { replace: jest.Mock };
 
 jest.mock("expo-router", () => {
   const React = require("react");
+  const router = { replace: jest.fn() };
   return {
+    __esModule: true,
+    __router: router,
     useFocusEffect: (cb: () => void | (() => void)) => {
       React.useEffect(() => cb(), [cb]);
     },
-    useRouter: () => ({ replace: mockReplace }),
+    useRouter: () => router,
+    useLocalSearchParams: () => mockLocalSearchParams(),
   };
 });
 
@@ -39,6 +45,11 @@ jest.mock("@/lib/api/foodentry", () => ({
 jest.mock("@/lib/api/food", () => ({
   __esModule: true,
   searchFoods: jest.fn(),
+}));
+
+jest.mock("@/lib/api/foodbarcode", () => ({
+  __esModule: true,
+  getFoodByBarcode: jest.fn(),
 }));
 
 jest.mock("@/lib/api/recipe", () => ({
@@ -63,6 +74,9 @@ const mockedGetFoodEntryHistory = getFoodEntryHistory as jest.MockedFunction<
 >;
 const mockedGetRecipes = getRecipes as jest.MockedFunction<typeof getRecipes>;
 const mockedSearchFoods = searchFoods as jest.MockedFunction<typeof searchFoods>;
+const mockedGetFoodByBarcode = getFoodByBarcode as jest.MockedFunction<
+  typeof getFoodByBarcode
+>;
 const mockedUseColorScheme = useColorScheme as jest.MockedFunction<
   typeof useColorScheme
 >;
@@ -187,9 +201,13 @@ const createRecipeFixture = (user: User, id: number, title: string): Recipe => (
 describe("LogFood", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRouter = (jest.requireMock("expo-router") as { __router: { replace: jest.Mock } })
+      .__router;
+    mockRouter.replace.mockClear();
     mockedUseColorScheme.mockReturnValue("light");
     mockedSearchFoods.mockResolvedValue([]);
     mockedGetRecipes.mockResolvedValue([]);
+    mockLocalSearchParams.mockReturnValue({});
   });
 
   it("logs a history item again", async () => {
@@ -241,7 +259,43 @@ describe("LogFood", () => {
       measurementId: measurement.id,
       loggedAt: expect.any(Date),
     });
-    expect(mockReplace).toHaveBeenCalledWith("/diary");
+    expect(mockRouter.replace).toHaveBeenCalledWith("/diary");
+  });
+
+  it("opens the food modal after scanning a barcode", async () => {
+    const food = createFoodFixture();
+    mockLocalSearchParams.mockReturnValue({ barcode: "012345" });
+    mockedGetFoodByBarcode.mockResolvedValue(food);
+
+    const { getAllByText } = render(
+      <PaperProvider>
+        <LogFood />
+      </PaperProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockedGetFoodByBarcode).toHaveBeenCalledWith("012345");
+      expect(getAllByText(food.name).length).toBeGreaterThan(0);
+    });
+  });
+
+  it("routes to create food when a barcode is not found", async () => {
+    mockLocalSearchParams.mockReturnValue({ barcode: "999999" });
+    mockedGetFoodByBarcode.mockResolvedValue(null);
+
+    render(
+      <PaperProvider>
+        <LogFood />
+      </PaperProvider>
+    );
+
+    await waitFor(() => {
+      expect(mockedGetFoodByBarcode).toHaveBeenCalledWith("999999");
+      expect(mockRouter.replace).toHaveBeenCalledWith({
+        pathname: "/createfood",
+        params: { barcode: "999999" },
+      });
+    });
   });
 
   it("filters history based on the search query", async () => {

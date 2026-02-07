@@ -1,4 +1,5 @@
 import { apiMethods } from '@/lib/api';
+import { CreateFoodDto } from '@/types/food/createfood';
 import { Food } from '@/types/food/food';
 
 export const searchFoods = async (
@@ -11,4 +12,8 @@ export const searchFoods = async (
   });
 
   return apiMethods.get<Food[]>(`/food?${params.toString()}`);
+};
+
+export const createFood = async (payload: CreateFoodDto): Promise<Food> => {
+  return apiMethods.post<Food>('/food/create', payload);
 };

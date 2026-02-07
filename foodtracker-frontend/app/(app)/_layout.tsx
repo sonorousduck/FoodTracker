@@ -40,6 +40,24 @@ export default function AppLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="createfood"
+        options={{
+          headerTitle: 'Create food',
+          headerBackButtonDisplayMode: 'generic',
+          headerShadowVisible: false,
+          headerTransparent: true,
+        }}
+      />
+      <Stack.Screen
+        name="scanbarcode"
+        options={{
+          headerTitle: 'Scan barcode',
+          headerBackButtonDisplayMode: 'generic',
+          headerShadowVisible: false,
+          headerTransparent: true,
+        }}
+      />
     </Stack>
   );
 }

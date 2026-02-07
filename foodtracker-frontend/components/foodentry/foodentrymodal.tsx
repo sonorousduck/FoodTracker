@@ -13,19 +13,19 @@ import { Colors } from '@/constants/Colors';
 import { Food } from '@/types/food/food';
 import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
 } from 'react-native';
-import { Modal, Portal } from 'react-native-paper';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { Modal, Portal } from 'react-native-paper';
 import {
   formatServings,
   getRecipeCaloriesPerServing,
@@ -96,12 +96,8 @@ export default function FoodEntryModal({
   const [selectedMeasurementId, setSelectedMeasurementId] = useState<
     number | null
   >(initialMeasurementId);
-  const [servingInput, setServingInput] = useState(
-    String(initialServings),
-  );
-  const [selectedDate, setSelectedDate] = useState(
-    initialDate ?? new Date(),
-  );
+  const [servingInput, setServingInput] = useState(String(initialServings));
+  const [selectedDate, setSelectedDate] = useState(initialDate ?? new Date());
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const wasVisibleRef = useRef(false);
 
@@ -110,7 +106,7 @@ export default function FoodEntryModal({
       setSelectedMealType(initialMealType);
       const fallbackMeasurementId =
         initialMeasurementId ??
-        (food ? getDefaultMeasurement(food)?.id ?? null : null);
+        (food ? (getDefaultMeasurement(food)?.id ?? null) : null);
       setSelectedMeasurementId(fallbackMeasurementId);
       setServingInput(formatServings(initialServings));
       setSelectedDate(initialDate ?? new Date());
@@ -163,7 +159,7 @@ export default function FoodEntryModal({
     onSubmit({
       servings,
       mealType: selectedMealType,
-      measurementId: food ? selectedMeasurementId ?? undefined : undefined,
+      measurementId: food ? (selectedMeasurementId ?? undefined) : undefined,
       loggedAt: showDatePicker ? selectedDate : undefined,
     });
   };
@@ -236,8 +232,7 @@ export default function FoodEntryModal({
                   contentContainerStyle={styles.measurementList}
                 >
                   {measurements.map((measurement) => {
-                    const isSelected =
-                      measurement.id === selectedMeasurementId;
+                    const isSelected = measurement.id === selectedMeasurementId;
                     return (
                       <TouchableOpacity
                         key={measurement.id}
@@ -249,9 +244,7 @@ export default function FoodEntryModal({
                               : colors.modalSecondary,
                           },
                         ]}
-                        onPress={() =>
-                          setSelectedMeasurementId(measurement.id)
-                        }
+                        onPress={() => setSelectedMeasurementId(measurement.id)}
                         activeOpacity={0.8}
                       >
                         <ThemedText

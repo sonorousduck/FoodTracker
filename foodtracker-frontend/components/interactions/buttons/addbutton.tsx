@@ -41,6 +41,16 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
                 router.push("/logfood");
         };
 
+        const handleCreateFoodPress = () => {
+                closeModal();
+                router.push("/createfood");
+        };
+
+        const handleScanBarcodePress = () => {
+                closeModal();
+                router.push("/scanbarcode");
+        };
+
         return (
                 <>
                         <IconButton
@@ -69,7 +79,25 @@ export default function AddButton({ onPress }: { onPress?: () => void }) {
                                                         {localization.logFood}
                                                 </ThemedText>
                                         </AddModalPrimaryAction>
-                                        <AddModalPrimaryAction style={[styles.modalButton]}>
+                                        <AddModalPrimaryAction
+                                                style={[styles.modalButton]}
+                                                onPress={handleCreateFoodPress}
+                                        >
+                                                <MaterialDesignIcons
+                                                        name="food-apple"
+                                                        color={colors.icon}
+                                                        size={36}
+                                                />
+                                                <ThemedText
+                                                        style={[styles.modalPrimaryActionButton, { color: colors.text }]}
+                                                >
+                                                        {localization.createFood}
+                                                </ThemedText>
+                                        </AddModalPrimaryAction>
+                                        <AddModalPrimaryAction
+                                                style={[styles.modalButton]}
+                                                onPress={handleScanBarcodePress}
+                                        >
                                                 <FontAwesome
                                                         name="barcode"
                                                         color={colors.icon}

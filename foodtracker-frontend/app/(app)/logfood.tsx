@@ -4,30 +4,36 @@ import {
   getEntryTitle,
   getMealTypeFromName,
   getRecipeCaloriesPerServing,
-} from "@/components/foodentry/foodentry-utils";
-import FoodEntryModal from "@/components/foodentry/foodentrymodal";
-import DuckTextInput from "@/components/interactions/inputs/textinput";
+} from '@/components/foodentry/foodentry-utils';
+import FoodEntryModal from '@/components/foodentry/foodentrymodal';
+import DuckTextInput from '@/components/interactions/inputs/textinput';
 import {
   formatCalories,
   formatMeasurementText,
   getCaloriesForMeasurement,
   getDefaultMeasurement,
-} from "@/components/recipe/recipe-utils";
-import ThemedText from "@/components/themedtext";
-import { Colors } from "@/constants/Colors";
-import { isAxiosError } from "@/lib/api";
-import { searchFoods } from "@/lib/api/food";
+} from '@/components/recipe/recipe-utils';
+import ThemedText from '@/components/themedtext';
+import { Colors } from '@/constants/Colors';
+import { isAxiosError } from '@/lib/api';
+import { searchFoods } from '@/lib/api/food';
+import { getFoodByBarcode } from '@/lib/api/foodbarcode';
+import { createFoodEntry, getFoodEntryHistory } from '@/lib/api/foodentry';
+import { getRecipes } from '@/lib/api/recipe';
+import { Food } from '@/types/food/food';
+import { FoodEntry } from '@/types/foodentry/foodentry';
+import { MealType } from '@/types/foodentry/updatefoodentry';
+import { Recipe } from '@/types/recipe/recipe';
+import { HeaderHeightContext } from '@react-navigation/elements';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
-  createFoodEntry,
-  getFoodEntryHistory,
-} from "@/lib/api/foodentry";
-import { getRecipes } from "@/lib/api/recipe";
-import { Food } from "@/types/food/food";
-import { FoodEntry } from "@/types/foodentry/foodentry";
-import { MealType } from "@/types/foodentry/updatefoodentry";
-import { Recipe } from "@/types/recipe/recipe";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -36,23 +42,26 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const searchDelayMs = 350;
 const minSearchLength = 2;
 const historyLimit = 20;
 
-type TabKey = "all" | "recipes";
-type SortOption = "recent" | "alpha" | "meal";
+type TabKey = 'all' | 'recipes';
+type SortOption = 'recent' | 'alpha' | 'meal';
 
 export default function LogFood() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const colors = Colors[colorScheme ?? 'light'];
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const processedBarcodeRef = useRef<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [foodResults, setFoodResults] = useState<Food[]>([]);
   const [recipeResults, setRecipeResults] = useState<Recipe[]>([]);
@@ -60,13 +69,15 @@ export default function LogFood() {
   const [isRecipeLoading, setIsRecipeLoading] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<FoodEntry[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [sortOption, setSortOption] = useState<SortOption>("recent");
+  const [sortOption, setSortOption] = useState<SortOption>('recent');
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [selectedMealType, setSelectedMealType] = useState<MealType>(0);
-  const [selectedMeasurementId, setSelectedMeasurementId] = useState<number | null>(null);
+  const [selectedMeasurementId, setSelectedMeasurementId] = useState<
+    number | null
+  >(null);
   const [selectedServings, setSelectedServings] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,10 +108,13 @@ export default function LogFood() {
   useFocusEffect(
     useCallback(() => {
       loadHistory();
-      if (activeTab === "recipes" && searchQuery.trim().length < minSearchLength) {
+      if (
+        activeTab === 'recipes' &&
+        searchQuery.trim().length < minSearchLength
+      ) {
         loadRecipes();
       }
-    }, [activeTab, loadHistory, loadRecipes, searchQuery])
+    }, [activeTab, loadHistory, loadRecipes, searchQuery]),
   );
 
   useEffect(() => {
@@ -115,7 +129,10 @@ export default function LogFood() {
     let isActive = true;
     setIsSearching(true);
     const timeoutId = setTimeout(() => {
-      Promise.all([searchFoods(query, 20), getRecipes({ search: query, limit: 20 })])
+      Promise.all([
+        searchFoods(query, 20),
+        getRecipes({ search: query, limit: 20 }),
+      ])
         .then(([foods, recipes]) => {
           if (!isActive) {
             return;
@@ -144,7 +161,7 @@ export default function LogFood() {
   }, [searchQuery]);
 
   useEffect(() => {
-    if (activeTab !== "recipes") {
+    if (activeTab !== 'recipes') {
       return;
     }
     if (searchQuery.trim().length >= minSearchLength) {
@@ -180,13 +197,15 @@ export default function LogFood() {
 
   const sortedHistory = useMemo(() => {
     const next = [...dedupedHistory];
-    if (sortOption === "alpha") {
-      return next.sort((a, b) => getEntryTitle(a).localeCompare(getEntryTitle(b)));
+    if (sortOption === 'alpha') {
+      return next.sort((a, b) =>
+        getEntryTitle(a).localeCompare(getEntryTitle(b)),
+      );
     }
-    if (sortOption === "meal") {
+    if (sortOption === 'meal') {
       return next.sort((a, b) => {
-        const mealA = a.meal?.name ?? "";
-        const mealB = b.meal?.name ?? "";
+        const mealA = a.meal?.name ?? '';
+        const mealB = b.meal?.name ?? '';
         const indexA = getMealTypeFromName(mealA);
         const indexB = getMealTypeFromName(mealB);
         if (indexA !== indexB) {
@@ -196,8 +215,7 @@ export default function LogFood() {
       });
     }
     return next.sort(
-      (a, b) =>
-        new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
+      (a, b) => new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime(),
     );
   }, [dedupedHistory, sortOption]);
 
@@ -208,52 +226,56 @@ export default function LogFood() {
     }
     return sortedHistory.filter((entry) => {
       const title = getEntryTitle(entry).toLowerCase();
-      const mealName = (entry.meal?.name ?? "").toLowerCase();
+      const mealName = (entry.meal?.name ?? '').toLowerCase();
       return title.includes(query) || mealName.includes(query);
     });
   }, [searchQuery, sortedHistory]);
 
-  const openFoodModal = ({
-    food,
-    mealName,
-    servings,
-    measurementId,
-  }: {
-    food: Food;
-    mealName?: string;
-    servings?: number;
-    measurementId?: number | null;
-  }) => {
-    setSelectedRecipe(null);
-    setSelectedFood(food);
-    const defaultMeasurement = getDefaultMeasurement(food);
-    setSelectedMeasurementId(
-      measurementId ?? defaultMeasurement?.id ?? null
-    );
-    setSelectedServings(servings ?? 1);
-    setSelectedMealType(getMealTypeFromName(mealName));
-    setIsModalVisible(true);
-  };
+  const openFoodModal = useCallback(
+    ({
+      food,
+      mealName,
+      servings,
+      measurementId,
+    }: {
+      food: Food;
+      mealName?: string;
+      servings?: number;
+      measurementId?: number | null;
+    }) => {
+      setSelectedRecipe(null);
+      setSelectedFood(food);
+      const defaultMeasurement = getDefaultMeasurement(food);
+      setSelectedMeasurementId(measurementId ?? defaultMeasurement?.id ?? null);
+      setSelectedServings(servings ?? 1);
+      setSelectedMealType(getMealTypeFromName(mealName));
+      setIsModalVisible(true);
+    },
+    [],
+  );
 
-  const openRecipeModal = ({
-    recipe,
-    mealName,
-    servings,
-  }: {
-    recipe: Recipe;
-    mealName?: string;
-    servings?: number;
-  }) => {
-    setSelectedFood(null);
-    setSelectedRecipe(recipe);
-    setSelectedMeasurementId(null);
-    setSelectedServings(servings ?? 1);
-    setSelectedMealType(getMealTypeFromName(mealName));
-    setIsModalVisible(true);
-  };
+  const openRecipeModal = useCallback(
+    ({
+      recipe,
+      mealName,
+      servings,
+    }: {
+      recipe: Recipe;
+      mealName?: string;
+      servings?: number;
+    }) => {
+      setSelectedFood(null);
+      setSelectedRecipe(recipe);
+      setSelectedMeasurementId(null);
+      setSelectedServings(servings ?? 1);
+      setSelectedMealType(getMealTypeFromName(mealName));
+      setIsModalVisible(true);
+    },
+    [],
+  );
 
   const handleHistoryPress = (entry: FoodEntry) => {
-    const mealName = entry.meal?.name ?? "Breakfast";
+    const mealName = entry.meal?.name ?? 'Breakfast';
     if (entry.food) {
       openFoodModal({
         food: entry.food,
@@ -270,6 +292,64 @@ export default function LogFood() {
     }
   };
 
+  const barcodeParam = params.barcode;
+  const normalizedBarcode = useMemo(() => {
+    if (Array.isArray(barcodeParam)) {
+      return barcodeParam[0] ?? '';
+    }
+    if (typeof barcodeParam === 'string') {
+      return barcodeParam;
+    }
+    return '';
+  }, [barcodeParam]);
+
+  useEffect(() => {
+    if (!normalizedBarcode) {
+      return;
+    }
+    if (processedBarcodeRef.current === normalizedBarcode) {
+      return;
+    }
+    processedBarcodeRef.current = normalizedBarcode;
+
+    let isActive = true;
+    let shouldResetRoute = true;
+    const lookupBarcode = async () => {
+      try {
+        const food = await getFoodByBarcode(normalizedBarcode);
+        if (!isActive) {
+          return;
+        }
+        if (food) {
+          openFoodModal({ food });
+        } else {
+          shouldResetRoute = false;
+          router.replace({
+            pathname: '/createfood',
+            params: { barcode: normalizedBarcode },
+          });
+          return;
+        }
+      } catch (error) {
+        if (isAxiosError(error)) {
+          Alert.alert('Error', 'Failed to look up the barcode.');
+        }
+      } finally {
+        if (isActive) {
+          if (shouldResetRoute) {
+            router.replace('/logfood');
+          }
+        }
+      }
+    };
+
+    lookupBarcode();
+
+    return () => {
+      isActive = false;
+    };
+  }, [normalizedBarcode, openFoodModal, router]);
+
   const handleConfirmLog = async ({
     servings,
     mealType,
@@ -277,7 +357,7 @@ export default function LogFood() {
     loggedAt,
   }: {
     servings: number;
-    mealType: number;
+    mealType: MealType;
     measurementId?: number;
     loggedAt?: Date;
   }) => {
@@ -290,14 +370,14 @@ export default function LogFood() {
       const logDate = new Date(
         targetDate.getFullYear(),
         targetDate.getMonth(),
-        targetDate.getDate()
+        targetDate.getDate(),
       );
       await createFoodEntry({
         servings,
         mealType,
         foodId: selectedFood?.id,
         recipeId: selectedRecipe?.id,
-        measurementId: selectedFood ? measurementId ?? undefined : undefined,
+        measurementId: selectedFood ? (measurementId ?? undefined) : undefined,
         loggedAt: logDate,
       });
       setIsModalVisible(false);
@@ -305,12 +385,12 @@ export default function LogFood() {
       setSelectedRecipe(null);
       setSelectedMeasurementId(null);
       setSelectedServings(1);
-      router.replace("/diary");
+      router.replace('/diary');
     } catch (error) {
       const message = isAxiosError(error)
         ? error.response?.data?.message || error.message
-        : "Failed to log food.";
-      Alert.alert("Error", message);
+        : 'Failed to log food.';
+      Alert.alert('Error', message);
     } finally {
       setIsSubmitting(false);
     }
@@ -319,17 +399,22 @@ export default function LogFood() {
   const shouldShowSearchResults = searchQuery.trim().length >= minSearchLength;
   const trimmedQuery = searchQuery.trim().toLowerCase();
   const recipeList =
-    shouldShowSearchResults || activeTab === "all" ? recipeResults : allRecipes;
+    shouldShowSearchResults || activeTab === 'all' ? recipeResults : allRecipes;
   const filteredRecipes =
-    activeTab === "recipes" && trimmedQuery
+    activeTab === 'recipes' && trimmedQuery
       ? recipeList.filter((recipe) =>
-          recipe.title.toLowerCase().includes(trimmedQuery)
+          recipe.title.toLowerCase().includes(trimmedQuery),
         )
       : recipeList;
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: headerHeight + 8 },
+        ]}
+      >
         <View style={styles.header}>
           <ThemedText style={styles.title}>Log food</ThemedText>
           <DuckTextInput
@@ -343,7 +428,7 @@ export default function LogFood() {
             testID="logfood-search-input"
           />
           <View style={styles.tabs}>
-            {(["all", "recipes"] as TabKey[]).map((tab) => {
+            {(['all', 'recipes'] as TabKey[]).map((tab) => {
               const isActive = tab === activeTab;
               return (
                 <TouchableOpacity
@@ -363,10 +448,10 @@ export default function LogFood() {
                   <ThemedText
                     style={[
                       styles.tabText,
-                      { color: isActive ? "#FFFFFF" : colors.text },
+                      { color: isActive ? '#FFFFFF' : colors.text },
                     ]}
                   >
-                    {tab === "all" ? "All" : "My Recipes"}
+                    {tab === 'all' ? 'All' : 'My Recipes'}
                   </ThemedText>
                 </TouchableOpacity>
               );
@@ -374,17 +459,19 @@ export default function LogFood() {
           </View>
         </View>
 
-        {activeTab === "all" ? (
+        {activeTab === 'all' ? (
           <>
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <ThemedText style={styles.sectionTitle}>History</ThemedText>
                 <View style={styles.sortRow}>
-                  {([
-                    { key: "recent", label: "Recent" },
-                    { key: "alpha", label: "A-Z" },
-                    { key: "meal", label: "Meal" },
-                  ] as const).map((option) => {
+                  {(
+                    [
+                      { key: 'recent', label: 'Recent' },
+                      { key: 'alpha', label: 'A-Z' },
+                      { key: 'meal', label: 'Meal' },
+                    ] as const
+                  ).map((option) => {
                     const isActive = sortOption === option.key;
                     return (
                       <TouchableOpacity
@@ -403,7 +490,7 @@ export default function LogFood() {
                         <ThemedText
                           style={[
                             styles.sortText,
-                            { color: isActive ? "#FFFFFF" : colors.text },
+                            { color: isActive ? '#FFFFFF' : colors.text },
                           ]}
                         >
                           {option.label}
@@ -420,8 +507,8 @@ export default function LogFood() {
               ) : filteredHistory.length === 0 ? (
                 <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
                   {searchQuery.trim()
-                    ? "No matching history items."
-                    : "No history yet. Log something to get started."}
+                    ? 'No matching history items.'
+                    : 'No history yet. Log something to get started.'}
                 </ThemedText>
               ) : (
                 filteredHistory.map((entry) => (
@@ -446,8 +533,8 @@ export default function LogFood() {
                         <ThemedText
                           style={[styles.cardSubtitle, { color: colors.icon }]}
                         >
-                          {getEntryServingsText(entry)} ·{" "}
-                          {entry.meal?.name ?? "Meal"}
+                          {getEntryServingsText(entry)} ·{' '}
+                          {entry.meal?.name ?? 'Meal'}
                         </ThemedText>
                       </View>
                       <ThemedText style={styles.cardCalories}>
@@ -471,7 +558,9 @@ export default function LogFood() {
                     <ActivityIndicator size="small" color={colors.tint} />
                   </View>
                 ) : foodResults.length === 0 ? (
-                  <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
+                  <ThemedText
+                    style={[styles.emptyText, { color: colors.icon }]}
+                  >
                     No foods found.
                   </ThemedText>
                 ) : (
@@ -507,7 +596,7 @@ export default function LogFood() {
                           </View>
                           <ThemedText style={styles.cardCalories}>
                             {formatCalories(
-                              getCaloriesForMeasurement(food, measurement, 1)
+                              getCaloriesForMeasurement(food, measurement, 1),
                             )}
                           </ThemedText>
                         </View>
@@ -530,7 +619,9 @@ export default function LogFood() {
                     <ActivityIndicator size="small" color={colors.tint} />
                   </View>
                 ) : recipeResults.length === 0 ? (
-                  <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
+                  <ThemedText
+                    style={[styles.emptyText, { color: colors.icon }]}
+                  >
                     No recipes found.
                   </ThemedText>
                 ) : (
@@ -559,15 +650,15 @@ export default function LogFood() {
                               { color: colors.icon },
                             ]}
                           >
-                            {recipe.servings}{" "}
-                            {recipe.servings === 1 ? "serving" : "servings"}
+                            {recipe.servings}{' '}
+                            {recipe.servings === 1 ? 'serving' : 'servings'}
                           </ThemedText>
                         </View>
                         <ThemedText style={styles.cardCalories}>
                           {getRecipeCaloriesPerServing(recipe) == null
-                            ? ""
+                            ? ''
                             : formatCalories(
-                                getRecipeCaloriesPerServing(recipe) as number
+                                getRecipeCaloriesPerServing(recipe) as number,
                               )}
                         </ThemedText>
                       </View>
@@ -588,7 +679,7 @@ export default function LogFood() {
               </View>
             ) : filteredRecipes.length === 0 ? (
               <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
-                {trimmedQuery ? "No matching recipes." : "No recipes yet."}
+                {trimmedQuery ? 'No matching recipes.' : 'No recipes yet.'}
               </ThemedText>
             ) : (
               filteredRecipes.map((recipe) => (
@@ -613,15 +704,15 @@ export default function LogFood() {
                       <ThemedText
                         style={[styles.cardSubtitle, { color: colors.icon }]}
                       >
-                        {recipe.servings}{" "}
-                        {recipe.servings === 1 ? "serving" : "servings"}
+                        {recipe.servings}{' '}
+                        {recipe.servings === 1 ? 'serving' : 'servings'}
                       </ThemedText>
                     </View>
                     <ThemedText style={styles.cardCalories}>
                       {getRecipeCaloriesPerServing(recipe) == null
-                        ? ""
+                        ? ''
                         : formatCalories(
-                            getRecipeCaloriesPerServing(recipe) as number
+                            getRecipeCaloriesPerServing(recipe) as number,
                           )}
                     </ThemedText>
                   </View>
@@ -654,7 +745,6 @@ export default function LogFood() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 8,
   },
   content: {
     paddingHorizontal: 12,
@@ -666,36 +756,36 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   tabs: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
   },
   tabButton: {
     flex: 1,
     paddingVertical: 10,
     borderRadius: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
   tabText: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   section: {
     gap: 8,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   sortRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 6,
   },
   sortChip: {
@@ -705,7 +795,7 @@ const styles = StyleSheet.create({
   },
   sortText: {
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   emptyText: {
     fontSize: 12,
@@ -720,9 +810,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   cardRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   cardText: {
     flex: 1,
@@ -731,13 +821,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   cardSubtitle: {
     fontSize: 12,
   },
   cardCalories: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });

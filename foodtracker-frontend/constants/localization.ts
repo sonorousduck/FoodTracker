@@ -4,4 +4,5 @@ export const localization = {
   logWeight: "Log weight",
   scanBarcode: "Scan barcode",
   createRecipe: "Create recipe",
+  createFood: "Create food",
 };

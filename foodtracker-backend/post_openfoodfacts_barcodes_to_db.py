@@ -164,6 +164,10 @@ class OpenFoodFactsImporter:
                 headers=self._headers(),
                 timeout=60,
             )
+            if response.status_code in (401, 403):
+                message = f"Unauthorized response ({response.status_code}). Aborting import."
+                print(f"🚫 {message}")
+                raise RuntimeError(message)
             if response.status_code in (200, 201):
                 self.success_count += len(batch)
                 return True
@@ -176,7 +180,7 @@ class OpenFoodFactsImporter:
             self.errors.append(str(exc))
             return False
 
-    def import_barcodes(self, batch_size: int = 100, delay_between_batches: float = 0.25):
+    def import_barcodes(self, batch_size: int = 500, delay_between_batches: float = 0.25):
         print(f"🚀 Starting OpenFoodFacts import from {self.csv_file_path}")
         print(f"📡 Target API: {self.api_base_url}/food-barcodes/bulk")
 
@@ -309,4 +313,4 @@ if __name__ == "__main__":
     AUTH_TOKEN = None
 
     importer = OpenFoodFactsImporter(CSV_FILE_PATH, API_BASE_URL, AUTH_TOKEN)
-    importer.import_barcodes(batch_size=100, delay_between_batches=0.1)
+    importer.import_barcodes(batch_size=50, delay_between_batches=0.1)
