@@ -15,7 +15,6 @@ class OpenFoodFactsImporter:
         "sourceId",
         "name",
         "brand",
-        "foodGroup",
         "calories",
         "protein",
         "carbs",
@@ -287,6 +286,21 @@ class OpenFoodFactsImporter:
         cursor.execute(sql, values)
         return int(cursor.lastrowid)
 
+    def _validate_food_columns(self, conn: mysql.connector.MySQLConnection) -> None:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SHOW COLUMNS FROM food")
+            existing_columns = {str(row[0]) for row in cursor.fetchall()}
+        finally:
+            cursor.close()
+
+        missing_columns = [column for column in self.FOOD_COLUMNS if column not in existing_columns]
+        if missing_columns:
+            raise RuntimeError(
+                "Food table is missing required columns for this importer: "
+                + ", ".join(missing_columns)
+            )
+
     def _ensure_measurements(
         self,
         cursor: mysql.connector.cursor.MySQLCursor,
@@ -471,6 +485,7 @@ class OpenFoodFactsImporter:
         )
 
         conn = mysql.connector.connect(**self.db_config)
+        self._validate_food_columns(conn)
 
         def flush_batch(force: bool = False) -> None:
             nonlocal batch, submitted_batches, total_latency_s
