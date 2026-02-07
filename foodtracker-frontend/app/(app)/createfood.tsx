@@ -21,7 +21,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { AdvancedNumberKey, AdvancedNumberState } from './createfood.types';
+import { AdvancedNumberKey, AdvancedNumberState } from '@/types/createfood.types';
 
 const advancedFieldList: Array<{
   key: AdvancedNumberKey;
