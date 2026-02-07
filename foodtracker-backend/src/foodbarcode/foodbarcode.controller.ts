@@ -9,7 +9,6 @@ export class FoodBarcodeController {
   constructor(private readonly foodBarcodeService: FoodBarcodeService) {}
 
   @Post("bulk")
-  @UseGuards(PassportJwtAuthGuard)
   upsertBulk(@Body() items: CreateFoodBarcodeDto[]) {
     return this.foodBarcodeService.upsertBarcodeMappings(items);
   }
