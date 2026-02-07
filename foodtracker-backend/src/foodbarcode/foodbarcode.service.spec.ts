@@ -12,9 +12,6 @@ describe("FoodBarcodeService", () => {
     findOne: jest.fn(),
     save: jest.fn(),
   };
-  const foodRepository = {
-    createQueryBuilder: jest.fn(),
-  };
   const foodService = {
     createFood: jest.fn(),
   };
@@ -24,7 +21,6 @@ describe("FoodBarcodeService", () => {
       providers: [
         FoodBarcodeService,
         { provide: getRepositoryToken(FoodBarcode), useValue: foodBarcodeRepository },
-        { provide: getRepositoryToken(Food), useValue: foodRepository },
         { provide: FoodService, useValue: foodService },
       ],
     }).compile();
@@ -36,15 +32,9 @@ describe("FoodBarcodeService", () => {
     jest.clearAllMocks();
   });
 
-  it("creates a barcode mapping using a matched food", async () => {
+  it("creates a barcode mapping with a newly created food", async () => {
     const food = { id: 10, name: "Granola" } as Food;
-    const queryBuilder = {
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getOne: jest.fn().mockResolvedValue(food),
-    };
-
-    foodRepository.createQueryBuilder.mockReturnValue(queryBuilder);
+    foodService.createFood.mockResolvedValue(food);
     foodBarcodeRepository.findOne.mockResolvedValue(null);
 
     const result = await service.upsertBarcodeMappings([
@@ -63,22 +53,17 @@ describe("FoodBarcodeService", () => {
       },
     ]);
 
-    expect(foodService.createFood).not.toHaveBeenCalled();
+    expect(foodService.createFood).toHaveBeenCalled();
     expect(foodBarcodeRepository.save).toHaveBeenCalledWith({ barcode: "00012345", food });
-    expect(result.matchedFoods).toBe(1);
+    expect(result.createdFoods).toBe(1);
+    expect(result.matchedFoods).toBe(0);
     expect(result.barcodesCreated).toBe(1);
   });
 
   it("creates a new food and updates an existing barcode mapping", async () => {
     const createdFood = { id: 99, name: "Protein Shake" } as Food;
-    const queryBuilder = {
-      where: jest.fn().mockReturnThis(),
-      andWhere: jest.fn().mockReturnThis(),
-      getOne: jest.fn().mockResolvedValue(null),
-    };
     const existingMapping = { barcode: "987654", food: { id: 1 } };
 
-    foodRepository.createQueryBuilder.mockReturnValue(queryBuilder);
     foodService.createFood.mockResolvedValue(createdFood);
     foodBarcodeRepository.findOne.mockResolvedValue(existingMapping);
 

@@ -16,84 +16,13 @@ type UpsertSummary = {
   errors: Array<{ barcode: string; reason: string }>;
 };
 
-const NUMERIC_FIELDS = [
-  'calories',
-  'protein',
-  'carbs',
-  'fat',
-  'fiber',
-  'sugar',
-  'sodium',
-  'saturatedFat',
-  'transFat',
-  'cholesterol',
-  'addedSugar',
-  'netCarbs',
-  'solubleFiber',
-  'insolubleFiber',
-  'water',
-  'pralScore',
-  'omega3',
-  'omega6',
-  'calcium',
-  'iron',
-  'potassium',
-  'magnesium',
-  'vitaminAiu',
-  'vitaminArae',
-  'vitaminC',
-  'vitaminB12',
-  'vitaminD',
-  'vitaminE',
-  'phosphorus',
-  'zinc',
-  'copper',
-  'manganese',
-  'selenium',
-  'fluoride',
-  'molybdenum',
-  'chlorine',
-  'vitaminB1',
-  'vitaminB2',
-  'vitaminB3',
-  'vitaminB5',
-  'vitaminB6',
-  'biotin',
-  'folate',
-  'folicAcid',
-  'foodFolate',
-  'folateDfe',
-  'choline',
-  'betaine',
-  'retinol',
-  'caroteneBeta',
-  'caroteneAlpha',
-  'lycopene',
-  'luteinZeaxanthin',
-  'vitaminD2',
-  'vitaminD3',
-  'vitaminDiu',
-  'vitaminK',
-  'dihydrophylloquinone',
-  'menaquinone4',
-  'monoFat',
-  'polyFat',
-  'ala',
-  'epa',
-  'dpa',
-  'dha',
-] as const;
-
-type NumericField = (typeof NUMERIC_FIELDS)[number];
-type NormalizedFood = CreateFoodDto & Record<NumericField, number>;
+type NormalizedFood = CreateFoodDto;
 
 @Injectable()
 export class FoodBarcodeService {
   constructor(
     @InjectRepository(FoodBarcode)
     private readonly foodBarcodeRepository: Repository<FoodBarcode>,
-    @InjectRepository(Food)
-    private readonly foodRepository: Repository<Food>,
     private readonly foodService: FoodService,
   ) {}
 
@@ -124,16 +53,8 @@ export class FoodBarcodeService {
         continue;
       }
 
-      let food = await this.findMatchingFood(
-        normalizedFood.name,
-        normalizedFood,
-      );
-      if (food) {
-        summary.matchedFoods += 1;
-      } else {
-        food = await this.foodService.createFood(normalizedFood);
-        summary.createdFoods += 1;
-      }
+      const food = await this.foodService.createFood(normalizedFood);
+      summary.createdFoods += 1;
 
       const existingMapping = await this.foodBarcodeRepository.findOne({
         where: { barcode },
@@ -174,7 +95,7 @@ export class FoodBarcodeService {
   }
 
   private normalizeFoodDto(food: CreateFoodDto): NormalizedFood {
-    const numeric: Record<NumericField, number> = {
+    const numeric = {
       calories: this.normalizeNumber(food.calories, 0),
       protein: this.normalizeNumber(food.protein, 2),
       carbs: this.normalizeNumber(food.carbs, 2),
@@ -262,22 +183,5 @@ export class FoodBarcodeService {
     }
     const factor = 10 ** scale;
     return Math.round(numeric * factor) / factor;
-  }
-
-  private async findMatchingFood(
-    name: string,
-    normalizedFood: NormalizedFood,
-  ): Promise<Food | null> {
-    const query = this.foodRepository
-      .createQueryBuilder('food')
-      .where('food.name = :name', { name });
-
-    for (const field of NUMERIC_FIELDS) {
-      query.andWhere(`food.${field} = :${field}`, {
-        [field]: normalizedFood[field],
-      });
-    }
-
-    return query.getOne();
   }
 }
