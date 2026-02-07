@@ -1,26 +1,78 @@
 import argparse
-import concurrent.futures as cf
+import os
 import sys
-import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional
 
+import mysql.connector
 import pandas as pd
-import requests
-from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 
 
 class OpenFoodFactsImporter:
+    FOOD_COLUMNS = [
+        "sourceId",
+        "name",
+        "brand",
+        "foodGroup",
+        "calories",
+        "protein",
+        "carbs",
+        "fat",
+        "fiber",
+        "sugar",
+        "sodium",
+        "saturatedFat",
+        "transFat",
+        "cholesterol",
+        "addedSugar",
+        "solubleFiber",
+        "insolubleFiber",
+        "water",
+        "omega3",
+        "omega6",
+        "monoFat",
+        "polyFat",
+        "ala",
+        "epa",
+        "dha",
+        "calcium",
+        "iron",
+        "potassium",
+        "magnesium",
+        "phosphorus",
+        "zinc",
+        "copper",
+        "manganese",
+        "selenium",
+        "fluoride",
+        "molybdenum",
+        "chlorine",
+        "vitaminArae",
+        "vitaminC",
+        "vitaminB1",
+        "vitaminB2",
+        "vitaminB3",
+        "vitaminB6",
+        "vitaminB12",
+        "folate",
+        "vitaminD",
+        "vitaminE",
+        "vitaminK",
+        "betaine",
+        "choline",
+        "caroteneBeta",
+    ]
+
     def __init__(
         self,
         csv_file_path: str,
-        api_base_url: str = "http://localhost:3001",
-        auth_token: Optional[str] = None,
+        env_file_path: Optional[str] = None,
     ):
         self.csv_file_path = csv_file_path
-        self.api_base_url = api_base_url
-        self.auth_token = auth_token
+        self.env_file_path = env_file_path
+
         self.success_count = 0
         self.error_count = 0
         self.skipped_count = 0
@@ -28,13 +80,69 @@ class OpenFoodFactsImporter:
         self.batch_success_count = 0
         self.batch_fail_count = 0
         self.errors: List[str] = []
-        self._thread_local = threading.local()
 
-    def _headers(self) -> Dict[str, str]:
-        headers = {"Content-Type": "application/json"}
-        if self.auth_token:
-            headers["Authorization"] = f"Bearer {self.auth_token}"
-        return headers
+        self.db_config = self._load_db_config(env_file_path)
+
+    def _load_db_config(self, env_file_path: Optional[str]) -> Dict[str, object]:
+        if env_file_path:
+            env_path = Path(env_file_path)
+        else:
+            env_path = Path(__file__).with_name(".env")
+
+        if env_path.exists():
+            self._load_env_file(env_path)
+
+        host = os.getenv("DB_HOST")
+        port = os.getenv("DB_PORT", "3306")
+        user = os.getenv("DB_USER")
+        password = os.getenv("DB_PASSWORD")
+        database = os.getenv("DB_NAME")
+
+        missing = [
+            key
+            for key, value in {
+                "DB_HOST": host,
+                "DB_USER": user,
+                "DB_PASSWORD": password,
+                "DB_NAME": database,
+            }.items()
+            if not value
+        ]
+
+        if missing:
+            raise ValueError(
+                f"Missing required DB settings: {', '.join(missing)}. "
+                f"Set them in environment or {env_path}."
+            )
+
+        try:
+            parsed_port = int(port)
+        except ValueError as exc:
+            raise ValueError(f"Invalid DB_PORT value: {port}") from exc
+
+        return {
+            "host": host,
+            "port": parsed_port,
+            "user": user,
+            "password": password,
+            "database": database,
+            "autocommit": False,
+        }
+
+    def _load_env_file(self, env_path: Path) -> None:
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or "=" not in stripped:
+                continue
+
+            key, raw_value = stripped.split("=", 1)
+            key = key.strip()
+            value = raw_value.strip()
+
+            if value.startswith(("'", '"')) and value.endswith(("'", '"')) and len(value) >= 2:
+                value = value[1:-1]
+
+            os.environ.setdefault(key, value)
 
     def _clean_string(self, value) -> Optional[str]:
         if pd.isna(value) or value == "" or value == "N/A":
@@ -53,7 +161,6 @@ class OpenFoodFactsImporter:
         return value * 1000.0
 
     def _maybe_g_to_mg(self, value: float) -> float:
-        # Heuristic: values <= 10 likely represent grams, otherwise assume already in mg.
         if value <= 10:
             return self._grams_to_mg(value)
         return value
@@ -65,7 +172,6 @@ class OpenFoodFactsImporter:
 
         salt_g = self._clean_numeric(row.get("salt_100g", 0))
         if salt_g > 0:
-            # Sodium is roughly 40% of salt by weight.
             return self._grams_to_mg(salt_g) * 0.4
 
         return 0.0
@@ -75,7 +181,9 @@ class OpenFoodFactsImporter:
         if kcal > 0:
             return int(round(kcal))
 
-        kj = self._clean_numeric(row.get("energy-kj_100g", 0)) or self._clean_numeric(row.get("energy_100g", 0))
+        kj = self._clean_numeric(row.get("energy-kj_100g", 0)) or self._clean_numeric(
+            row.get("energy_100g", 0)
+        )
         if kj > 0:
             return int(round(kj / 4.184))
 
@@ -160,132 +268,115 @@ class OpenFoodFactsImporter:
             "betaine": self._clean_numeric(row.get("betaine_100g", 0)),
             "choline": self._clean_numeric(row.get("choline_100g", 0)),
             "caroteneBeta": self._clean_numeric(row.get("beta-carotene_100g", 0)),
-            "measurements": self._build_measurements(),
         }
 
-        return {"barcode": barcode, "food": food}
+        return {"barcode": barcode, "food": food, "measurements": self._build_measurements()}
 
-    def _get_session(self) -> requests.Session:
-        if not hasattr(self._thread_local, "session"):
-            session = requests.Session()
-            adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100)
-            session.mount("http://", adapter)
-            session.mount("https://", adapter)
-            self._thread_local.session = session
-        return self._thread_local.session
+    def _insert_or_update_food(self, cursor: mysql.connector.cursor.MySQLCursor, food: Dict) -> int:
+        placeholders = ", ".join(["%s"] * len(self.FOOD_COLUMNS))
+        columns_sql = ", ".join(self.FOOD_COLUMNS)
+        update_columns = [column for column in self.FOOD_COLUMNS if column != "sourceId"]
+        update_sql = ", ".join([f"{column}=VALUES({column})" for column in update_columns])
 
-    def _post_batch(
+        sql = (
+            f"INSERT INTO food ({columns_sql}) VALUES ({placeholders}) "
+            f"ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id), {update_sql}"
+        )
+
+        values = [food.get(column) for column in self.FOOD_COLUMNS]
+        cursor.execute(sql, values)
+        return int(cursor.lastrowid)
+
+    def _ensure_measurements(
         self,
-        batch: List[Dict],
-        batch_id: int,
-        request_timeout: float,
-        max_retries: int,
-        retry_backoff: float,
-    ) -> Dict:
-        url = f"{self.api_base_url}/food-barcodes/bulk"
-        session = self._get_session()
+        cursor: mysql.connector.cursor.MySQLCursor,
+        food_id: int,
+        measurements: List[Dict],
+    ) -> None:
+        sql = (
+            "INSERT INTO food_measurement "
+            "(foodId, unit, name, abbreviation, weightInGrams, isDefault, isActive, isFromSource) "
+            "SELECT %s, %s, %s, %s, %s, %s, %s, %s "
+            "FROM DUAL WHERE NOT EXISTS ("
+            "SELECT 1 FROM food_measurement WHERE foodId = %s AND abbreviation = %s"
+            ")"
+        )
 
-        for attempt in range(max_retries + 1):
-            started = time.perf_counter()
-            try:
-                response = session.post(
-                    url,
-                    json=batch,
-                    headers=self._headers(),
-                    timeout=request_timeout,
-                )
-                latency = time.perf_counter() - started
+        for measurement in measurements:
+            abbreviation = measurement["abbreviation"]
+            cursor.execute(
+                sql,
+                (
+                    food_id,
+                    measurement["unit"],
+                    measurement["name"],
+                    abbreviation,
+                    measurement["weightInGrams"],
+                    1 if measurement.get("isDefault") else 0,
+                    1,
+                    1 if measurement.get("isFromSource") else 0,
+                    food_id,
+                    abbreviation,
+                ),
+            )
 
-                if response.status_code in (200, 201):
-                    return {
-                        "ok": True,
-                        "rows": len(batch),
-                        "batch_id": batch_id,
-                        "status_code": response.status_code,
-                        "latency_s": latency,
-                        "attempts": attempt + 1,
-                        "fatal_auth": False,
-                        "error": "",
-                    }
+    def _insert_or_update_barcode(
+        self,
+        cursor: mysql.connector.cursor.MySQLCursor,
+        barcode: str,
+        food_id: int,
+    ) -> None:
+        sql = (
+            "INSERT INTO food_barcode (barcode, foodId) VALUES (%s, %s) "
+            "ON DUPLICATE KEY UPDATE foodId=VALUES(foodId)"
+        )
+        cursor.execute(sql, (barcode, food_id))
 
-                if response.status_code in (401, 403):
-                    return {
-                        "ok": False,
-                        "rows": len(batch),
-                        "batch_id": batch_id,
-                        "status_code": response.status_code,
-                        "latency_s": latency,
-                        "attempts": attempt + 1,
-                        "fatal_auth": True,
-                        "error": f"Unauthorized response ({response.status_code}).",
-                    }
+    def _write_batch(self, conn: mysql.connector.MySQLConnection, batch: List[Dict], batch_id: int) -> Dict:
+        started = time.perf_counter()
+        cursor = conn.cursor()
 
-                can_retry = response.status_code == 429 or 500 <= response.status_code < 600
-                if can_retry and attempt < max_retries:
-                    sleep_s = retry_backoff * (2 ** attempt)
-                    time.sleep(sleep_s)
-                    continue
+        try:
+            for item in batch:
+                food_id = self._insert_or_update_food(cursor, item["food"])
+                self._ensure_measurements(cursor, food_id, item["measurements"])
+                self._insert_or_update_barcode(cursor, item["barcode"], food_id)
 
-                body = response.text.strip()
-                if len(body) > 300:
-                    body = body[:300] + "... (truncated)"
-                return {
-                    "ok": False,
-                    "rows": len(batch),
-                    "batch_id": batch_id,
-                    "status_code": response.status_code,
-                    "latency_s": latency,
-                    "attempts": attempt + 1,
-                    "fatal_auth": False,
-                    "error": f"HTTP {response.status_code}: {body}",
-                }
-            except requests.exceptions.RequestException as exc:
-                latency = time.perf_counter() - started
-                if attempt < max_retries:
-                    sleep_s = retry_backoff * (2 ** attempt)
-                    time.sleep(sleep_s)
-                    continue
-                return {
-                    "ok": False,
-                    "rows": len(batch),
-                    "batch_id": batch_id,
-                    "status_code": None,
-                    "latency_s": latency,
-                    "attempts": attempt + 1,
-                    "fatal_auth": False,
-                    "error": str(exc),
-                }
-
-        return {
-            "ok": False,
-            "rows": len(batch),
-            "batch_id": batch_id,
-            "status_code": None,
-            "latency_s": 0.0,
-            "attempts": max_retries + 1,
-            "fatal_auth": False,
-            "error": "Unknown failure",
-        }
+            conn.commit()
+            latency = time.perf_counter() - started
+            return {
+                "ok": True,
+                "rows": len(batch),
+                "batch_id": batch_id,
+                "latency_s": latency,
+                "error": "",
+            }
+        except mysql.connector.Error as exc:
+            conn.rollback()
+            latency = time.perf_counter() - started
+            return {
+                "ok": False,
+                "rows": len(batch),
+                "batch_id": batch_id,
+                "latency_s": latency,
+                "error": str(exc),
+            }
+        finally:
+            cursor.close()
 
     def import_barcodes(
         self,
         batch_size: int = 100,
-        workers: int = 4,
-        max_inflight_batches: int = 16,
-        request_timeout: float = 60.0,
-        max_retries: int = 3,
-        retry_backoff: float = 0.5,
         max_error_examples: int = 10,
     ):
-        print(f"🚀 Starting OpenFoodFacts import from {self.csv_file_path}")
-        print(f"📡 Target API: {self.api_base_url}/food-barcodes/bulk")
+        print(f"Starting OpenFoodFacts import from {self.csv_file_path}")
         print(
-            "⚙️ Settings:"
-            f" batch_size={batch_size}, workers={workers}, max_inflight={max_inflight_batches},"
-            f" timeout={request_timeout}s, retries={max_retries}"
+            "Target DB: "
+            f"{self.db_config['user']}@{self.db_config['host']}:{self.db_config['port']}/{self.db_config['database']}"
         )
+        print(f"Settings: batch_size={batch_size}")
 
-        print("📥 Reading header to determine available columns...")
+        print("Reading header to determine available columns...")
         header = pd.read_csv(self.csv_file_path, sep="\t", nrows=0)
         available_columns = set(header.columns)
         desired_columns = {
@@ -350,13 +441,11 @@ class OpenFoodFactsImporter:
         usecols = sorted(desired_columns.intersection(available_columns))
         if "code" not in usecols:
             raise ValueError("CSV is missing required 'code' column.")
-        print(f"✅ Using {len(usecols)} columns from CSV.")
+        print(f"Using {len(usecols)} columns from CSV.")
 
         batch: List[Dict] = []
         processed_rows = 0
-        posted_batches = 0
-        next_batch_id = 1
-        auth_failed = False
+        submitted_batches = 0
         total_latency_s = 0.0
         started_at = time.perf_counter()
 
@@ -373,110 +462,47 @@ class OpenFoodFactsImporter:
         batches_progress = tqdm(
             total=None,
             unit="batch",
-            desc="Requests completed",
+            desc="Batches written",
             leave=True,
             dynamic_ncols=True,
             file=sys.stdout,
             disable=False,
             position=1,
         )
-        print("🧭 Progress bars initialized.")
 
-        executor = cf.ThreadPoolExecutor(max_workers=workers)
-        futures: Dict[cf.Future, Tuple[int, int]] = {}
+        conn = mysql.connector.connect(**self.db_config)
 
-        def update_postfix() -> None:
-            elapsed = max(time.perf_counter() - started_at, 0.0001)
-            batches_done = self.batch_success_count + self.batch_fail_count
-            batches_per_s = batches_done / elapsed
-            rows_per_s = self.success_count / elapsed
-            batches_progress.set_postfix(
-                {
-                    "ok_rows": self.success_count,
-                    "failed_rows": self.error_count,
-                    "skipped_rows": self.skipped_count,
-                    "inflight": len(futures),
-                    "batch/s": f"{batches_per_s:.2f}",
-                    "ok_rows/s": f"{rows_per_s:.1f}",
-                },
-                refresh=False,
-            )
+        def flush_batch(force: bool = False) -> None:
+            nonlocal batch, submitted_batches, total_latency_s
+            if not batch:
+                return
+            if not force and len(batch) < batch_size:
+                return
 
-        def apply_result(result: Dict) -> None:
-            nonlocal auth_failed, total_latency_s
-            rows = result["rows"]
+            submitted_batches += 1
+            self.submitted_count += len(batch)
+            result = self._write_batch(conn, batch, submitted_batches)
             total_latency_s += result["latency_s"]
             batches_progress.update(1)
 
             if result["ok"]:
-                self.success_count += rows
+                self.success_count += result["rows"]
                 self.batch_success_count += 1
                 tqdm.write(
-                    f"OK    batch={result['batch_id']} rows={rows} "
-                    f"status={result['status_code']} attempts={result['attempts']} "
-                    f"latency={result['latency_s']:.2f}s"
+                    f"OK    batch={result['batch_id']} rows={result['rows']} latency={result['latency_s']:.2f}s"
                 )
             else:
-                self.error_count += rows
+                self.error_count += result["rows"]
                 self.batch_fail_count += 1
                 if len(self.errors) < max_error_examples:
                     self.errors.append(
-                        f"batch={result['batch_id']} rows={rows} "
-                        f"status={result['status_code']} attempts={result['attempts']} "
-                        f"error={result['error']}"
+                        f"batch={result['batch_id']} rows={result['rows']} error={result['error']}"
                     )
                 tqdm.write(
-                    f"FAIL  batch={result['batch_id']} rows={rows} "
-                    f"status={result['status_code']} attempts={result['attempts']} "
-                    f"error={result['error']}"
+                    f"FAIL  batch={result['batch_id']} rows={result['rows']} error={result['error']}"
                 )
-                if result["fatal_auth"]:
-                    auth_failed = True
 
-            update_postfix()
-
-        def drain_completed(block_until_one: bool) -> None:
-            if not futures:
-                return
-            pending = list(futures.keys())
-            timeout = None if block_until_one else 0
-            return_when = cf.FIRST_COMPLETED if block_until_one else cf.ALL_COMPLETED
-            done, _ = cf.wait(pending, timeout=timeout, return_when=return_when)
-            for future in done:
-                batch_id, rows = futures.pop(future)
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    result = {
-                        "ok": False,
-                        "rows": rows,
-                        "batch_id": batch_id,
-                        "status_code": None,
-                        "latency_s": 0.0,
-                        "attempts": 1,
-                        "fatal_auth": False,
-                        "error": f"Unexpected worker error: {exc}",
-                    }
-                apply_result(result)
-
-        def submit_batch(batch_items: List[Dict]) -> None:
-            nonlocal posted_batches, next_batch_id
-            if not batch_items:
-                return
-            batch_id = next_batch_id
-            next_batch_id += 1
-            posted_batches += 1
-            self.submitted_count += len(batch_items)
-            future = executor.submit(
-                self._post_batch,
-                batch_items,
-                batch_id,
-                request_timeout,
-                max_retries,
-                retry_backoff,
-            )
-            futures[future] = (batch_id, len(batch_items))
-            update_postfix()
+            batch = []
 
         try:
             for chunk in pd.read_csv(
@@ -488,9 +514,6 @@ class OpenFoodFactsImporter:
                 low_memory=False,
             ):
                 for row in chunk.to_dict(orient="records"):
-                    if auth_failed:
-                        break
-
                     processed_rows += 1
                     payload = self._row_to_payload(row)
                     if payload is None:
@@ -502,116 +525,59 @@ class OpenFoodFactsImporter:
                     rows_progress.update(1)
 
                     if len(batch) >= batch_size:
-                        submit_batch(batch)
-                        batch = []
-                        while len(futures) >= max_inflight_batches:
-                            drain_completed(block_until_one=True)
-                            if auth_failed:
-                                break
+                        flush_batch(force=True)
 
-                    if futures and processed_rows % 250 == 0:
-                        drain_completed(block_until_one=False)
-
-                if auth_failed:
-                    break
-
-                if futures:
-                    drain_completed(block_until_one=False)
-
-            if not auth_failed and batch:
-                submit_batch(batch)
-                batch = []
-
-            while futures:
-                drain_completed(block_until_one=True)
+            flush_batch(force=True)
         finally:
-            for future in futures:
-                future.cancel()
-            executor.shutdown(wait=True, cancel_futures=True)
+            conn.close()
             rows_progress.close()
             batches_progress.close()
 
         elapsed_s = max(time.perf_counter() - started_at, 0.0001)
         avg_latency_s = total_latency_s / max(self.batch_success_count + self.batch_fail_count, 1)
-        print(f"📦 Batches posted: {posted_batches}")
-        print(f"🧾 Rows processed: {processed_rows}")
-        print(f"⏭️ Rows skipped (missing barcode/name): {self.skipped_count}")
-        print(f"📤 Rows submitted: {self.submitted_count}")
-        print(f"✅ Successful rows sent: {self.success_count}")
-        print(f"❌ Failed rows sent: {self.error_count}")
-        print(f"✅ Successful requests: {self.batch_success_count}")
-        print(f"❌ Failed requests: {self.batch_fail_count}")
-        print(f"⏱️ Avg request latency: {avg_latency_s:.2f}s")
-        print(f"🚄 Throughput: {self.success_count / elapsed_s:.1f} successful rows/sec")
 
-        if auth_failed:
-            print("🚫 Import aborted due to unauthorized response (401/403).")
+        print(f"Batches written: {submitted_batches}")
+        print(f"Rows processed: {processed_rows}")
+        print(f"Rows skipped (missing barcode/name): {self.skipped_count}")
+        print(f"Rows submitted: {self.submitted_count}")
+        print(f"Successful rows written: {self.success_count}")
+        print(f"Failed rows written: {self.error_count}")
+        print(f"Successful batches: {self.batch_success_count}")
+        print(f"Failed batches: {self.batch_fail_count}")
+        print(f"Avg batch latency: {avg_latency_s:.2f}s")
+        print(f"Throughput: {self.success_count / elapsed_s:.1f} successful rows/sec")
 
         print("\n" + "=" * 50)
-        print("📊 IMPORT SUMMARY")
+        print("IMPORT SUMMARY")
         print("=" * 50)
         if self.errors:
-            print(f"🚨 First {len(self.errors)} errors: {self.errors}")
+            print(f"First {len(self.errors)} errors: {self.errors}")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Import OpenFoodFacts barcodes into FoodTracker backend.")
+    parser = argparse.ArgumentParser(description="Import OpenFoodFacts barcodes directly into MySQL.")
     parser.add_argument(
         "--csv-file",
         default="/home/telesto/en.openfoodfacts.org.products.csv",
         help="Path to OpenFoodFacts TSV file.",
     )
     parser.add_argument(
-        "--api-base-url",
-        default="http://localhost:3001",
-        help="Backend API base URL.",
-    )
-    parser.add_argument(
-        "--auth-token",
+        "--env-file",
         default=None,
-        help="Bearer token for authenticated backend calls.",
+        help="Optional path to .env file containing DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/DB_NAME.",
     )
-    parser.add_argument("--batch-size", type=int, default=100, help="Rows per API request.")
-    parser.add_argument("--workers", type=int, default=4, help="Concurrent request workers.")
-    parser.add_argument(
-        "--max-inflight-batches",
-        type=int,
-        default=16,
-        help="Maximum queued/in-flight batches before pausing producer.",
-    )
-    parser.add_argument(
-        "--request-timeout",
-        type=float,
-        default=60.0,
-        help="HTTP timeout per request in seconds.",
-    )
-    parser.add_argument(
-        "--max-retries",
-        type=int,
-        default=3,
-        help="Retries for transient network/server failures.",
-    )
-    parser.add_argument(
-        "--retry-backoff",
-        type=float,
-        default=0.5,
-        help="Base backoff seconds for retries (exponential).",
-    )
+    parser.add_argument("--batch-size", type=int, default=100, help="Rows per DB transaction.")
     parser.add_argument(
         "--max-error-examples",
         type=int,
         default=10,
         help="Maximum number of detailed errors to keep in summary.",
     )
+
     args = parser.parse_args()
 
-    importer = OpenFoodFactsImporter(args.csv_file, args.api_base_url, args.auth_token)
+    importer = OpenFoodFactsImporter(args.csv_file, args.env_file)
     importer.import_barcodes(
         batch_size=args.batch_size,
-        workers=args.workers,
-        max_inflight_batches=args.max_inflight_batches,
-        request_timeout=args.request_timeout,
-        max_retries=args.max_retries,
-        retry_backoff=args.retry_backoff,
         max_error_examples=args.max_error_examples,
     )
