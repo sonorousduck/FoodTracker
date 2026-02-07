@@ -308,7 +308,7 @@ class OpenFoodFactsImporter:
 
 
 if __name__ == "__main__":
-    CSV_FILE_PATH = "/home/sonorousduck/Downloads/en.openfoodfacts.org.products.csv"
+    CSV_FILE_PATH = "/home/telesto/en.openfoodfacts.org.products.csv"
     API_BASE_URL = "http://localhost:3001"
     AUTH_TOKEN = None
 
