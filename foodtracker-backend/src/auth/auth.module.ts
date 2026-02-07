@@ -9,7 +9,7 @@ import { LocalStrategy } from "./strategies/local.strategy";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { JWT_SECRET } from "./jwt-secret";
+import { getJwtSecret } from "./jwt-secret";
 
 
 @Module({
@@ -17,7 +17,7 @@ import { JWT_SECRET } from "./jwt-secret";
     TypeOrmModule.forFeature([User]),
     JwtModule.register({
       global: true,
-      secret: JWT_SECRET,
+      secret: getJwtSecret(),
       signOptions: { expiresIn: "100d" },
     }),
     PassportModule,

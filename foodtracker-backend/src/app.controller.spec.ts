@@ -19,4 +19,14 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe('Hello World!');
     });
   });
+
+  describe('health', () => {
+    it('should return ok status with timestamp', () => {
+      const result = appController.getHealth();
+
+      expect(result.status).toBe('ok');
+      expect(typeof result.timestamp).toBe('string');
+      expect(Number.isNaN(Date.parse(result.timestamp))).toBe(false);
+    });
+  });
 });
