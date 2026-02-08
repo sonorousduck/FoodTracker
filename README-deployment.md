@@ -5,12 +5,12 @@ This document is the deployment runbook for moving the backend to another comput
 - Web app (hosted website)
 
 Current user decision:
-- Use `food.sonorousduck.com` for both web and API, separated by port.
-- Web served on port `7775`.
-- API served on port `7774`.
+- Use `food.sonorousduck.com` for both web and API on HTTPS `443`.
+- Route API through `/api` on the same hostname.
 - Database: self-hosted MySQL on deployment machine.
 - Reverse proxy: Nginx.
 - Service manager: systemd.
+- Cloudflare is proxied (orange cloud).
 
 ## Phase 1: Target Architecture (Start Here)
 
@@ -21,10 +21,10 @@ Decide and lock these items before provisioning:
 - Frontend web can run on the same computer or separate hosting.
 
 2. Domain + routing
-- Current choice: same hostname `food.sonorousduck.com` with different ports.
+- Current choice: same hostname `food.sonorousduck.com` with path-based routing.
 - Example pattern:
-  - Web: `https://food.sonorousduck.com` (port 443)
-  - API: `https://food.sonorousduck.com:8443` (or another TLS port)
+  - Web: `https://food.sonorousduck.com`
+  - API: `https://food.sonorousduck.com/api`
 
 3. Database location
 - Recommended: managed PostgreSQL for reliability and backups.
@@ -56,8 +56,7 @@ If you want lowest operational risk for production:
 Mark each item as selected before continuing:
 
 - [x] Shared hostname for web + API (`food.sonorousduck.com`)
-- [x] API custom port selected: `7774`
-- [x] Web custom port selected: `7775`
+- [x] Cloudflare-compatible routing: HTTPS `443` + `/api` path
 - [x] Database hosting: self-hosted MySQL on same host
 - [x] Reverse proxy: Nginx
 - [x] Service manager: `systemd`
@@ -67,8 +66,8 @@ Mark each item as selected before continuing:
 
 1. Domain and public entrypoints
 - Domain: `food.sonorousduck.com`
-- Web URL: `https://food.sonorousduck.com:7775`
-- API URL: `https://food.sonorousduck.com:7774`
+- Web URL: `https://food.sonorousduck.com`
+- API URL: `https://food.sonorousduck.com/api`
 
 2. Runtime layout
 - Same deployment computer hosts:
@@ -80,25 +79,25 @@ Mark each item as selected before continuing:
 
 3. Suggested internal port mapping (behind Nginx)
 - Nginx listen/public:
-  - `7775` -> web upstream
-  - `7774` -> API upstream
+  - `80` -> redirect to `443`
+  - `443` -> web + API path routing
 - Internal app examples:
-  - Web app process on `127.0.0.1:3000`
-  - Backend app on `127.0.0.1:3001`
+  - Web app process on `127.0.0.1:7776`
+  - Backend app on `127.0.0.1:7775`
   - MySQL on `127.0.0.1:3306`
 
 4. DNS and firewall requirements
 - DNS `A`/`AAAA` record:
   - `food.sonorousduck.com` -> deployment server public IP
 - Firewall:
-  - Allow inbound `7775/tcp` and `7774/tcp`
+  - Allow inbound `80/tcp` and `443/tcp`
   - Block direct external access to internal app ports and MySQL (`3306`)
 
 5. Environment URL values to use
 - Frontend production API base URL:
-  - `https://food.sonorousduck.com:7774`
+  - `https://food.sonorousduck.com/api`
 - Backend CORS allowlist should include:
-  - `https://food.sonorousduck.com:7775`
+  - `https://food.sonorousduck.com`
 
 ## Phase 2: Prepare Backend for Production
 
@@ -159,6 +158,7 @@ Mark each item as selected before continuing:
 - If splitting later, add `api.food.sonorousduck.com`.
 
 3. Configure TLS certificates (Let’s Encrypt recommended).
+- If Cloudflare is proxied, use SSL mode `Full (strict)`.
 
 4. Firewall:
 - Expose only `80` and `443` publicly.
@@ -183,10 +183,8 @@ Mark each item as selected before continuing:
 ## Phase 6: Frontend Integration (Web + Mobile)
 
 1. Set production API base URL in frontend config:
-- If shared hostname + custom API port:
-  - `https://food.sonorousduck.com:<api-port>`
-- If split-hostname:
-  - `https://api.food.sonorousduck.com`
+- Shared hostname with path routing:
+  - `https://food.sonorousduck.com/api`
 
 2. Confirm auth/session behavior against production API.
 
@@ -243,7 +241,7 @@ Mark each item as selected before continuing:
 ## Immediate Next Actions (Phase 1 Completion)
 
 1. Confirm final API exposure model:
-- Keep `food.sonorousduck.com` with custom API port, or split to `api.food.sonorousduck.com`.
+- Keep `food.sonorousduck.com` with `/api` routing on port `443`.
 
 2. Pick DB model:
 - Managed DB (recommended) or self-hosted DB on deployment machine.
@@ -253,3 +251,39 @@ Mark each item as selected before continuing:
 
 4. Pick service manager:
 - `systemd` (recommended on Linux servers) or `pm2`.
+
+## Nginx Config (Cloudflare Proxied)
+
+Use this as the production baseline for `sites-available`:
+
+```nginx
+server {
+    listen 80;
+    server_name food.sonorousduck.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name food.sonorousduck.com;
+
+    ssl_certificate /etc/letsencrypt/live/food.sonorousduck.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/food.sonorousduck.com/privkey.pem;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:7775/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:7776;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
