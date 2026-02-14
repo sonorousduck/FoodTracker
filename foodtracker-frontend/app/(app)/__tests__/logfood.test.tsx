@@ -267,7 +267,7 @@ describe("LogFood", () => {
     mockLocalSearchParams.mockReturnValue({ barcode: "012345" });
     mockedGetFoodByBarcode.mockResolvedValue(food);
 
-    const { getAllByText } = render(
+    const { getAllByText, getByTestId } = render(
       <PaperProvider>
         <LogFood />
       </PaperProvider>
@@ -276,6 +276,8 @@ describe("LogFood", () => {
     await waitFor(() => {
       expect(mockedGetFoodByBarcode).toHaveBeenCalledWith("012345");
       expect(getAllByText(food.name).length).toBeGreaterThan(0);
+      expect(getByTestId("foodentry-submit")).toBeTruthy();
+      expect(mockRouter.replace).not.toHaveBeenCalledWith("/logfood");
     });
   });
 

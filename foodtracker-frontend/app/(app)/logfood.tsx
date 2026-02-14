@@ -313,7 +313,6 @@ export default function LogFood() {
     processedBarcodeRef.current = normalizedBarcode;
 
     let isActive = true;
-    let shouldResetRoute = true;
     const lookupBarcode = async () => {
       try {
         const food = await getFoodByBarcode(normalizedBarcode);
@@ -323,7 +322,6 @@ export default function LogFood() {
         if (food) {
           openFoodModal({ food });
         } else {
-          shouldResetRoute = false;
           router.replace({
             pathname: '/createfood',
             params: { barcode: normalizedBarcode },
@@ -333,12 +331,6 @@ export default function LogFood() {
       } catch (error) {
         if (isAxiosError(error)) {
           Alert.alert('Error', 'Failed to look up the barcode.');
-        }
-      } finally {
-        if (isActive) {
-          if (shouldResetRoute) {
-            router.replace('/logfood');
-          }
         }
       }
     };
