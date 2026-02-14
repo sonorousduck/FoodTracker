@@ -1,7 +1,7 @@
 import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
-import { useRouter } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -69,18 +69,10 @@ export default function ScanBarcode() {
 
   return (
     <SafeAreaView style={backgroundStyle}>
-      <View style={styles.cameraWrapper}>
         <CameraView
           style={StyleSheet.absoluteFill}
           onBarcodeScanned={handleBarcodeScanned}
         />
-        <View style={styles.overlay}>
-          <View style={[styles.focusBox, { borderColor: colors.tint }]} />
-          <ThemedText style={styles.overlayText}>
-            Align the barcode inside the frame
-          </ThemedText>
-        </View>
-      </View>
     </SafeAreaView>
   );
 }
