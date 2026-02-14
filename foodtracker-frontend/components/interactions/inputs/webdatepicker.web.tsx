@@ -67,6 +67,8 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				dateFormat="MM/dd/yyyy"
 				open={open}
 				onClickOutside={onClose}
+				portalId="datepicker-portal"
+				popperProps={{ strategy: "fixed" }}
 				customInput={
 					<input
 						style={{
