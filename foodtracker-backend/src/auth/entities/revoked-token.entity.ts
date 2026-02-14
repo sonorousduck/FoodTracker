@@ -2,7 +2,6 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 
 
 @Entity()
 @Index(['expiresAt'])
-@Index(['tokenHash'])
 export class RevokedToken {
   @PrimaryGeneratedColumn()
   id: number;
