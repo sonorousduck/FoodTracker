@@ -104,7 +104,7 @@ describe('AuthController', () => {
 
     await controller.refresh({ refreshToken: 'refresh' }, request, response);
 
-    expect(authService.refresh).toHaveBeenCalledWith('refresh');
+    expect(authService.refresh).toHaveBeenCalledWith('refresh', request);
     expect(response.cookie).toHaveBeenCalled();
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith(refreshed);
@@ -124,7 +124,7 @@ describe('AuthController', () => {
 
     await controller.logout({ refreshToken: 'refresh' }, request, response);
 
-    expect(authService.logout).toHaveBeenCalledWith('refresh');
+    expect(authService.logout).toHaveBeenCalledWith('refresh', null, request);
     expect(response.clearCookie).toHaveBeenCalled();
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith({ success: true });

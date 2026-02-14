@@ -3,8 +3,8 @@ import { randomBytes } from 'crypto';
 const MIN_SECRET_LENGTH = 32;
 let developmentSecret: string | null = null;
 
-export function getJwtSecret(): string {
-  const jwtSecret = process.env.JWT_SECRET;
+export function getJwtSecret(configSecret?: string): string {
+  const jwtSecret = configSecret ?? process.env.JWT_SECRET;
   const isProduction = process.env.NODE_ENV === 'production';
 
   if (jwtSecret && jwtSecret.trim().length > 0) {

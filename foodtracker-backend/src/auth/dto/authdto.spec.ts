@@ -10,7 +10,7 @@ describe('Auth DTO validation', () => {
         email: 'user@example.com',
         firstName: 'Alex',
         lastName: 'Smith',
-        password: '123456',
+        password: 'Password1!',
       });
 
       const errors = validateSync(dto);
@@ -36,7 +36,8 @@ describe('Auth DTO validation', () => {
           'email must be an email',
           'firstName should not be empty',
           'lastName should not be empty',
-          'password must be longer than or equal to 6 characters',
+          'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+          'Password must be at least 8 characters long',
         ]),
       );
     });

@@ -3,6 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
+import { PasswordService } from './password.service';
+import { TokenRevocationService } from './token-revocation.service';
+import { CSRFService } from './csrf.service';
+import { AuditLogService } from './audit-log.service';
 
 jest.mock('crypto', () => ({
   randomBytes: jest.fn(() => Buffer.from('refresh-token')),
@@ -20,6 +24,10 @@ describe('AuthService', () => {
     findByRefreshTokenHash: jest.Mock;
   };
   let jwtService: { signAsync: jest.Mock };
+  let passwordService: { comparePassword: jest.Mock; hashPassword: jest.Mock };
+  let tokenRevocationService: { revokeToken: jest.Mock; isTokenRevoked: jest.Mock };
+  let csrfService: { generateToken: jest.Mock };
+  let auditLogService: { logEvent: jest.Mock };
 
   beforeEach(async () => {
     usersService = {
@@ -30,12 +38,30 @@ describe('AuthService', () => {
     jwtService = {
       signAsync: jest.fn(),
     };
+    passwordService = {
+      comparePassword: jest.fn(),
+      hashPassword: jest.fn(),
+    };
+    tokenRevocationService = {
+      revokeToken: jest.fn(),
+      isTokenRevoked: jest.fn(),
+    };
+    csrfService = {
+      generateToken: jest.fn().mockReturnValue('csrf-token'),
+    };
+    auditLogService = {
+      logEvent: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UsersService, useValue: usersService },
         { provide: JwtService, useValue: jwtService },
+        { provide: PasswordService, useValue: passwordService },
+        { provide: TokenRevocationService, useValue: tokenRevocationService },
+        { provide: CSRFService, useValue: csrfService },
+        { provide: AuditLogService, useValue: auditLogService },
       ],
     }).compile();
 

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { randomBytes, createHmac } from 'crypto';
 
 @Injectable()
 export class CSRFService {
   private readonly csrfSecret: string;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.csrfSecret = this.getCsrfSecret();
   }
 
@@ -67,7 +68,7 @@ export class CSRFService {
    * @returns The CSRF secret
    */
   private getCsrfSecret(): string {
-    const secret = process.env.CSRF_SECRET;
+    const secret = this.configService.get<string>('CSRF_SECRET') ?? process.env.CSRF_SECRET;
     const isProduction = process.env.NODE_ENV === 'production';
 
     if (!secret || secret.trim().length === 0) {

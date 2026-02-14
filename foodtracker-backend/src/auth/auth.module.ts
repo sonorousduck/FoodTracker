@@ -4,6 +4,7 @@ import { PassportModule } from "@nestjs/passport";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { LocalStrategy } from "./strategies/local.strategy";
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -20,11 +21,16 @@ import { AuditLogService } from "./audit-log.service";
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([User, RevokedToken, AuthLog]),
-    JwtModule.register({
-      global: true,
-      secret: getJwtSecret(),
-      signOptions: { expiresIn: "100d" },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: getJwtSecret(configService.get<string>('JWT_SECRET')),
+        signOptions: { expiresIn: '100d' },
+      }),
     }),
     PassportModule,
   ],
