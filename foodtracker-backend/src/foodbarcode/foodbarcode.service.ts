@@ -82,12 +82,29 @@ export class FoodBarcodeService {
       return null;
     }
 
-    const mapping = await this.foodBarcodeRepository.findOne({
-      where: { barcode: normalized },
-      relations: ['food', 'food.measurements'],
-    });
+    const findByBarcode = (b: string) =>
+      this.foodBarcodeRepository.findOne({
+        where: { barcode: b },
+        relations: ['food', 'food.measurements'],
+      });
 
-    return mapping?.food ?? null;
+    // Exact match
+    let mapping = await findByBarcode(normalized);
+    if (mapping) return mapping.food ?? null;
+
+    // UPC-A (12 digits) → try EAN-13 (leading zero)
+    if (/^\d{12}$/.test(normalized)) {
+      mapping = await findByBarcode('0' + normalized);
+      if (mapping) return mapping.food ?? null;
+    }
+
+    // EAN-13 with leading zero (13 digits) → try UPC-A (strip leading zero)
+    if (/^\d{13}$/.test(normalized) && normalized.startsWith('0')) {
+      mapping = await findByBarcode(normalized.slice(1));
+      if (mapping) return mapping.food ?? null;
+    }
+
+    return null;
   }
 
   private normalizeBarcode(value?: string): string {
