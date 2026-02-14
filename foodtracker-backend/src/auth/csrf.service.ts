@@ -30,19 +30,18 @@ export class CSRFService {
   }
 
   /**
-   * Validate a CSRF token by comparing the hash of the provided token
-   * with the expected hash
-   * @param token - The CSRF token from the cookie
-   * @param expectedHash - The expected hash from the request header
-   * @returns True if the token is valid, false otherwise
+   * Validate a CSRF token using the double-submit cookie pattern:
+   * the cookie value and the X-CSRF-Token header value must match.
+   * @param cookieToken - The CSRF token from the cookie
+   * @param headerToken - The CSRF token from the request header
+   * @returns True if the tokens match, false otherwise
    */
-  validateToken(token: string, expectedHash: string): boolean {
-    if (!token || !expectedHash) {
+  validateToken(cookieToken: string, headerToken: string): boolean {
+    if (!cookieToken || !headerToken) {
       return false;
     }
 
-    const actualHash = this.hashToken(token);
-    return this.secureCompare(actualHash, expectedHash);
+    return this.secureCompare(cookieToken, headerToken);
   }
 
   /**

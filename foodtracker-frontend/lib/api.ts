@@ -8,6 +8,12 @@ import axios, {
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
+const getCsrfTokenFromCookie = (): string | null => {
+	if (typeof document === "undefined") return null;
+	const match = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]+)/);
+	return match ? decodeURIComponent(match[1]) : null;
+};
+
 interface ApiError extends AxiosError {
 	config: InternalAxiosRequestConfig & { _retry?: boolean; skipAuthRefresh?: boolean };
 }
@@ -110,6 +116,14 @@ class ApiService {
 				// Get the token from storage automatically
 				if (this.currentToken) {
 					config.headers.Authorization = `Bearer ${this.currentToken}`;
+				}
+
+				// Attach CSRF token for web (cookie-based) requests
+				if (Platform.OS === "web") {
+					const csrfToken = getCsrfTokenFromCookie();
+					if (csrfToken) {
+						config.headers["X-CSRF-Token"] = csrfToken;
+					}
 				}
 
 				return config;

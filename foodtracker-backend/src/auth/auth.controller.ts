@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorExcepti
 import { CreateUserDto } from "src/users/dto/createuser.dto";
 import type { CookieOptions, Request, Response } from "express";
 import { Throttle, SkipThrottle } from "@nestjs/throttler";
+import { SkipCsrf } from "src/common/guards/csrf.guard";
 
 import { PassportJwtAuthGuard } from "./guards/passportjwt.guard";
 import { AuthService } from "./auth.service";
@@ -82,6 +83,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes
+  @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("login")
   async login(@Body() loginDto: LoginDto, @Req() request: Request, @Res() response: Response) {
@@ -92,13 +94,14 @@ export class AuthController {
       request
     );
 
-    // Set CSRF token cookie (non-httpOnly so frontend can read it)
+    // Set CSRF token cookie (non-httpOnly so frontend can read it).
+    // Lifetime matches the refresh token so it remains valid across access token renewals.
     if (authResult.csrfToken) {
       const cookieOptions = getCookieOptions(request);
       response.cookie('csrfToken', authResult.csrfToken, {
         ...cookieOptions,
-        httpOnly: false, // Allow frontend to read this cookie
-        maxAge: accessTokenMaxAgeMs,
+        httpOnly: false,
+        maxAge: refreshTokenMaxAgeMs,
       });
     }
 
@@ -106,6 +109,7 @@ export class AuthController {
   }
 
   @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 attempts per hour
+  @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("create")
   async create(@Body() createUserDto: CreateUserDto, @Req() request: Request, @Res() response: Response) {
@@ -116,13 +120,14 @@ export class AuthController {
       request
     );
 
-    // Set CSRF token cookie (non-httpOnly so frontend can read it)
+    // Set CSRF token cookie (non-httpOnly so frontend can read it).
+    // Lifetime matches the refresh token so it remains valid across access token renewals.
     if (authResult.csrfToken) {
       const cookieOptions = getCookieOptions(request);
       response.cookie('csrfToken', authResult.csrfToken, {
         ...cookieOptions,
-        httpOnly: false, // Allow frontend to read this cookie
-        maxAge: accessTokenMaxAgeMs,
+        httpOnly: false,
+        maxAge: refreshTokenMaxAgeMs,
       });
     }
 
