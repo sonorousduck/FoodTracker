@@ -1,3 +1,4 @@
+import WebDatePicker from '@/components/interactions/inputs/webdatepicker';
 import {
   buildEntryMacroRows,
   buildEntryNutritionRows,
@@ -29,7 +30,6 @@ import { UpdateFoodEntryDto } from '@/types/foodentry/updatefoodentry';
 import { GoalType } from '@/types/goal/goaltype';
 import type { Recipe } from '@/types/recipe/recipe';
 import { useFocusEffect } from 'expo-router';
-import type { ComponentProps } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -37,7 +37,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
   useColorScheme,
@@ -45,24 +44,6 @@ import {
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const WebDateInput = TextInput as unknown as React.ComponentType<
-  ComponentProps<typeof TextInput> & { type?: string }
->;
-
-const formatDateInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseDateInput = (value: string) => {
-  const [year, month, day] = value.split('-').map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-  return new Date(year, month - 1, day);
-};
 
 export default function Tab() {
   const colorScheme = useColorScheme();
@@ -289,11 +270,6 @@ export default function Tab() {
       day: 'numeric',
     });
   }, [selectedDate]);
-
-  const webDateValue = useMemo(
-    () => formatDateInput(selectedDate),
-    [selectedDate],
-  );
 
   const goToPreviousDay = () => {
     setSelectedDate(
@@ -529,41 +505,16 @@ export default function Tab() {
             </TouchableOpacity>
           </View>
           {Platform.OS === 'web' && isDatePickerVisible ? (
-            <View style={styles.webDatePicker}>
-              <WebDateInput
-                value={webDateValue}
-                type="date"
-                onChangeText={(value) => {
-                  const parsed = parseDateInput(value);
-                  if (parsed) {
-                    setSelectedDate(parsed);
-                    setIsDatePickerVisible(false);
-                  }
-                }}
-                onChange={(event) => {
-                  const nextValue =
-                    (event as unknown as { target?: { value?: string } }).target
-                      ?.value ??
-                    (event as unknown as { nativeEvent?: { text?: string } })
-                      .nativeEvent?.text;
-                  if (nextValue) {
-                    const parsed = parseDateInput(nextValue);
-                    if (parsed) {
-                      setSelectedDate(parsed);
-                      setIsDatePickerVisible(false);
-                    }
-                  }
-                }}
-                style={[
-                  styles.webDateInput,
-                  {
-                    borderColor: colors.modalSecondary,
-                    color: colors.text,
-                    backgroundColor: colors.modal,
-                  },
-                ]}
-              />
-            </View>
+            <WebDatePicker
+              label=""
+              value={selectedDate}
+              open
+              onChange={(date) => {
+                setSelectedDate(date);
+                setIsDatePickerVisible(false);
+              }}
+              onClose={() => setIsDatePickerVisible(false)}
+            />
           ) : null}
           <View
             style={[
@@ -903,16 +854,6 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 13,
     fontWeight: '600',
-  },
-  webDatePicker: {
-    alignSelf: 'flex-start',
-  },
-  webDateInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
   },
   title: {
     fontSize: 22,

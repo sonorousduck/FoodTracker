@@ -13,17 +13,16 @@ import { Colors } from '@/constants/Colors';
 import { Food } from '@/types/food/food';
 import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
-import type { ComponentProps } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import WebDatePicker from '@/components/interactions/inputs/webdatepicker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Modal, Portal } from 'react-native-paper';
 import {
@@ -55,24 +54,6 @@ type FoodEntryModalProps = {
   colors: typeof Colors.light;
 };
 
-const WebDateInput = TextInput as unknown as React.ComponentType<
-  ComponentProps<typeof TextInput> & { type?: string }
->;
-
-const formatDateInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseDateInput = (value: string) => {
-  const [year, month, day] = value.split('-').map(Number);
-  if (!year || !month || !day) {
-    return null;
-  }
-  return new Date(year, month - 1, day);
-};
 
 export default function FoodEntryModal({
   visible,
@@ -163,8 +144,6 @@ export default function FoodEntryModal({
       loggedAt: showDatePicker ? selectedDate : undefined,
     });
   };
-
-  const webDateValue = formatDateInput(selectedDate);
 
   return (
     <Portal>
@@ -276,36 +255,10 @@ export default function FoodEntryModal({
             <View>
               <ThemedText style={styles.modalSectionTitle}>Log date</ThemedText>
               {Platform.OS === 'web' ? (
-                <WebDateInput
-                  value={webDateValue}
-                  type="date"
-                  onChangeText={(value) => {
-                    const parsed = parseDateInput(value);
-                    if (parsed) {
-                      setSelectedDate(parsed);
-                    }
-                  }}
-                  onChange={(event) => {
-                    const nextValue =
-                      (event as unknown as { target?: { value?: string } })
-                        .target?.value ??
-                      (event as unknown as { nativeEvent?: { text?: string } })
-                        .nativeEvent?.text;
-                    if (nextValue) {
-                      const parsed = parseDateInput(nextValue);
-                      if (parsed) {
-                        setSelectedDate(parsed);
-                      }
-                    }
-                  }}
-                  style={[
-                    styles.webDateInput,
-                    {
-                      borderColor: colors.modalSecondary,
-                      color: colors.text,
-                      backgroundColor: colors.modal,
-                    },
-                  ]}
+                <WebDatePicker
+                  label=""
+                  value={selectedDate}
+                  onChange={setSelectedDate}
                 />
               ) : (
                 <TouchableOpacity
@@ -453,13 +406,6 @@ const styles = StyleSheet.create({
   modalPrimaryText: {
     color: '#FFFFFF',
     fontWeight: '600',
-  },
-  webDateInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
   },
   dateButton: {
     borderWidth: 1,

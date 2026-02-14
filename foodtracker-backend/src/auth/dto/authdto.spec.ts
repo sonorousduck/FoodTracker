@@ -36,7 +36,7 @@ describe('Auth DTO validation', () => {
           'email must be an email',
           'firstName should not be empty',
           'lastName should not be empty',
-          'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)',
+          'Password must contain at least one uppercase letter, one lowercase letter, and one number',
           'Password must be at least 8 characters long',
         ]),
       );

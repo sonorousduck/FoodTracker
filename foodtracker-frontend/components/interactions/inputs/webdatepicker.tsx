@@ -9,6 +9,10 @@ interface WebDatePickerProps {
 	onChange: (date: Date) => void;
 	error?: string;
 	disabled?: boolean;
+	/** Web-only: force the calendar popup open (ignored on native) */
+	open?: boolean;
+	/** Web-only: called when the calendar is dismissed (ignored on native) */
+	onClose?: () => void;
 }
 
 const WebDatePicker: React.FC<WebDatePickerProps> = ({
