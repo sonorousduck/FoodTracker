@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { CreateUserDto } from "src/users/dto/createuser.dto";
 import type { CookieOptions, Request, Response } from "express";
+import { Throttle, SkipThrottle } from "@nestjs/throttler";
 
 import { PassportJwtAuthGuard } from "./guards/passportjwt.guard";
 import { AuthService } from "./auth.service";
@@ -80,36 +81,62 @@ const requireRefreshToken = (authResult: { refreshToken?: string }) => {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes
   @HttpCode(HttpStatus.OK)
   @Post("login")
   async login(@Body() loginDto: LoginDto, @Req() request: Request, @Res() response: Response) {
-    const authResult = await this.authService.authenticate(loginDto);
+    const authResult = await this.authService.authenticate(loginDto, request);
     setAuthCookies(
       response,
       { accessToken: authResult.accessToken, refreshToken: requireRefreshToken(authResult) },
       request
     );
+
+    // Set CSRF token cookie (non-httpOnly so frontend can read it)
+    if (authResult.csrfToken) {
+      const cookieOptions = getCookieOptions(request);
+      response.cookie('csrfToken', authResult.csrfToken, {
+        ...cookieOptions,
+        httpOnly: false, // Allow frontend to read this cookie
+        maxAge: accessTokenMaxAgeMs,
+      });
+    }
+
     return response.status(HttpStatus.OK).json(buildAuthResponse(authResult, request));
   }
 
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 attempts per hour
   @HttpCode(HttpStatus.OK)
   @Post("create")
   async create(@Body() createUserDto: CreateUserDto, @Req() request: Request, @Res() response: Response) {
-    const authResult = await this.authService.createUser(createUserDto);
+    const authResult = await this.authService.createUser(createUserDto, request);
     setAuthCookies(
       response,
       { accessToken: authResult.accessToken, refreshToken: requireRefreshToken(authResult) },
       request
     );
+
+    // Set CSRF token cookie (non-httpOnly so frontend can read it)
+    if (authResult.csrfToken) {
+      const cookieOptions = getCookieOptions(request);
+      response.cookie('csrfToken', authResult.csrfToken, {
+        ...cookieOptions,
+        httpOnly: false, // Allow frontend to read this cookie
+        maxAge: accessTokenMaxAgeMs,
+      });
+    }
+
     return response.status(HttpStatus.OK).json(buildAuthResponse(authResult, request));
   }
 
+  @SkipThrottle()
   @Get("user")
   @UseGuards(PassportJwtAuthGuard)
   getUserInfo(@Req() request: Request & { user?: unknown }) {
     return request.user;
   }
 
+  @Throttle({ default: { limit: 10, ttl: 300000 } }) // 10 attempts per 5 minutes
   @Post("refresh")
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -123,7 +150,7 @@ export class AuthController {
       return response.status(HttpStatus.UNAUTHORIZED).json({ message: "Missing refresh token." });
     }
 
-    const refreshed = await this.authService.refresh(refreshToken);
+    const refreshed = await this.authService.refresh(refreshToken, request);
     const cookieOptions = getCookieOptions(request);
     response.cookie(accessTokenCookieName, refreshed.accessToken, {
       ...cookieOptions,
@@ -138,12 +165,18 @@ export class AuthController {
     return response.status(HttpStatus.OK).json(buildAuthResponse(refreshed, request));
   }
 
+  @SkipThrottle()
   @Post("logout")
   @HttpCode(HttpStatus.OK)
   async logout(@Body() body: LogoutDto, @Req() request: RequestWithCookies, @Res() response: Response) {
     const refreshToken = request.cookies?.[refreshTokenCookieName] ?? body?.refreshToken ?? null;
+    const accessToken =
+      request.cookies?.[accessTokenCookieName] ??
+      request.headers?.authorization?.replace('Bearer ', '') ??
+      null;
+
     if (refreshToken) {
-      await this.authService.logout(refreshToken);
+      await this.authService.logout(refreshToken, accessToken, request);
     }
     clearAuthCookies(response, request);
     return response.status(HttpStatus.OK).json({ success: true });

@@ -10,11 +10,17 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { getJwtSecret } from "./jwt-secret";
+import { PasswordService } from "./password.service";
+import { RevokedToken } from "./entities/revoked-token.entity";
+import { TokenRevocationService } from "./token-revocation.service";
+import { CSRFService } from "./csrf.service";
+import { AuthLog } from "./entities/auth-log.entity";
+import { AuditLogService } from "./audit-log.service";
 
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, RevokedToken, AuthLog]),
     JwtModule.register({
       global: true,
       secret: getJwtSecret(),
@@ -23,6 +29,16 @@ import { getJwtSecret } from "./jwt-secret";
     PassportModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, UsersService, LocalStrategy, JwtStrategy],
+  providers: [
+    AuthService,
+    UsersService,
+    LocalStrategy,
+    JwtStrategy,
+    PasswordService,
+    TokenRevocationService,
+    CSRFService,
+    AuditLogService,
+  ],
+  exports: [CSRFService],
 })
 export class AuthModule {}

@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
+import { APP_GUARD } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CSRFGuard } from './common/guards/csrf.guard';
 import { FoodModule } from './food/food.module';
 import { FoodentryModule } from './foodentry/foodentry.module';
 import { FoodmeasurementModule } from './foodmeasurement/foodmeasurement.module';
@@ -22,6 +26,13 @@ import { GoalModule } from './goal/goal.module';
     AuthModule,
     UsersModule,
     ConfigModule.forRoot(),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 10, // 10 requests per minute (default)
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: "mysql",
       host: process.env.DB_HOST,
@@ -43,6 +54,16 @@ import { GoalModule } from './goal/goal.module';
     GoalModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: CSRFGuard,
+    },
+  ],
 })
 export class AppModule {}

@@ -8,8 +8,27 @@ import { AppModule } from './app.module';
 
 function getCorsOrigins(): string[] {
   const corsOrigins = process.env.CORS_ORIGINS;
+  const isProduction = process.env.NODE_ENV === 'production';
+
   if (!corsOrigins || corsOrigins.trim().length === 0) {
-    return [];
+    if (isProduction) {
+      throw new Error(
+        'CORS_ORIGINS environment variable must be set in production. ' +
+        'Example: CORS_ORIGINS=https://app.example.com,https://www.example.com'
+      );
+    }
+
+    // Development fallback to specific localhost origins
+    console.warn(
+      '⚠️  CORS_ORIGINS not set. Using development defaults: ' +
+      'http://localhost:3000, http://localhost:3001, http://localhost:8081, http://192.168.1.4:8081'
+    );
+    return [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:8081',
+      'http://192.168.1.4:8081',
+    ];
   }
 
   return corsOrigins
@@ -31,9 +50,9 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
     credentials: true,
   });
   await app.listen(process.env.PORT ?? 3001, '0.0.0.0');

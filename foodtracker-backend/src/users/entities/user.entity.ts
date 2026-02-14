@@ -30,6 +30,9 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   refreshTokenExpiresAt?: Date | null;
 
+  @Column({ type: 'boolean', default: true })
+  isActive: boolean;
+
   @OneToMany(() => Food, (food) => food.createdBy)
   foods: ReadonlyArray<Food>;
 

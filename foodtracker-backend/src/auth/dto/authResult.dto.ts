@@ -4,4 +4,5 @@ export type AuthResult = {
   refreshToken?: string;
   userId: number;
   username: string;
+  csrfToken?: string;
 };
