@@ -4,10 +4,9 @@ import { BrowserMultiFormatReader } from '@zxing/browser';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   StyleSheet,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import createElement from 'react-native-web/dist/exports/createElement';
@@ -100,18 +99,6 @@ export default function ScanBarcode() {
           muted
           style={[StyleSheet.absoluteFill, styles.video]}
         />
-        <View style={styles.overlay}>
-          {loading ? (
-            <ActivityIndicator color={colors.tint} />
-          ) : (
-            <>
-              <View style={[styles.focusBox, { borderColor: colors.tint }]} />
-              <ThemedText style={styles.overlayText}>
-                Align the barcode inside the frame
-              </ThemedText>
-            </>
-          )}
-        </View>
       </View>
     </SafeAreaView>
   );

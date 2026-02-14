@@ -69,10 +69,18 @@ export default function ScanBarcode() {
 
   return (
     <SafeAreaView style={backgroundStyle}>
+      <View style={styles.cameraWrapper}>
         <CameraView
           style={StyleSheet.absoluteFill}
           onBarcodeScanned={handleBarcodeScanned}
         />
+        <View style={styles.overlay}>
+          <View style={[styles.focusBox, { borderColor: colors.tint }]} />
+          <ThemedText style={styles.overlayText}>
+            Align the barcode inside the frame
+          </ThemedText>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
