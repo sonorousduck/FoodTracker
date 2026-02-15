@@ -72,7 +72,6 @@ export class FoodSearchService implements OnModuleInit {
     if (!sanitizedQuery) {
       return [];
     }
-    const normalizedQuery = sanitizedQuery.toLowerCase();
 
     const response = await this.client.search({
       index: this.indexName,
@@ -83,50 +82,42 @@ export class FoodSearchService implements OnModuleInit {
             bool: {
               should: [
                 {
-                  term: {
-                    'name.keyword': {
-                      value: normalizedQuery,
-                      boost: 10,
-                    },
-                  },
-                },
-                {
-                  match: {
-                    'name.prefix': {
-                      query: normalizedQuery,
-                      boost: 6,
-                    },
-                  },
-                },
-                {
-                  match_phrase: {
-                    name: {
-                      query: sanitizedQuery,
-                      boost: 3,
-                    },
-                  },
-                },
-                {
-                  match: {
-                    name: {
-                      query: sanitizedQuery,
-                      boost: 1.5,
-                    },
-                  },
-                },
-                {
-                  term: {
-                    'brand.keyword': {
-                      value: normalizedQuery,
-                      boost: 1,
-                    },
-                  },
-                },
-                {
                   multi_match: {
                     query: sanitizedQuery,
-                    fields: ['name^2', 'brand^0.5'],
+                    fields: ['name^2', 'brand'],
+                    type: 'best_fields',
                     fuzziness: 'AUTO',
+                    operator: 'and',
+                    boost: 4,
+                  },
+                },
+                {
+                  match_phrase_prefix: {
+                    name: {
+                      query: sanitizedQuery,
+                      max_expansions: 20,
+                      boost: 1.25,
+                    },
+                  },
+                },
+                {
+                  match: {
+                    name: {
+                      query: sanitizedQuery,
+                      fuzziness: 'AUTO',
+                      operator: 'and',
+                      boost: 2,
+                    },
+                  },
+                },
+                {
+                  match: {
+                    brand: {
+                      query: sanitizedQuery,
+                      fuzziness: 'AUTO',
+                      operator: 'and',
+                      boost: 1,
+                    },
                   },
                 },
               ],

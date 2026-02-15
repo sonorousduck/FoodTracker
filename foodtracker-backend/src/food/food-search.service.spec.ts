@@ -8,13 +8,19 @@ jest.mock('@elastic/elasticsearch', () => ({
 
 describe('FoodSearchService', () => {
   const bulkMock = jest.fn();
+  const searchMock = jest.fn();
 
   beforeEach(() => {
     bulkMock.mockResolvedValue({ errors: false });
+    searchMock.mockResolvedValue({
+      hits: {
+        hits: [],
+      },
+    });
     (Client as jest.Mock).mockImplementation(() => ({
       bulk: bulkMock,
       index: jest.fn(),
-      search: jest.fn(),
+      search: searchMock,
       indices: {
         exists: jest.fn(),
         create: jest.fn(),
@@ -43,5 +49,48 @@ describe('FoodSearchService', () => {
     expect(bulkMock).toHaveBeenCalledTimes(3);
     expect(bulkMock.mock.calls[0][0].operations).toHaveLength(4);
     expect(bulkMock.mock.calls[2][0].operations).toHaveLength(2);
+  });
+
+  it('uses fuzzy-first search query payload', async () => {
+    searchMock.mockResolvedValueOnce({
+      hits: {
+        hits: [{ _id: '10' }, { _id: '25' }],
+      },
+    });
+    const service = new FoodSearchService();
+
+    const ids = await service.searchFoodsByName('chiken brest', 5);
+
+    expect(ids).toEqual([10, 25]);
+    expect(searchMock).toHaveBeenCalledTimes(1);
+    expect(searchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        index: 'foods',
+        size: 5,
+        query: expect.objectContaining({
+          function_score: expect.objectContaining({
+            query: expect.objectContaining({
+              bool: expect.objectContaining({
+                should: expect.arrayContaining([
+                  expect.objectContaining({
+                    multi_match: expect.objectContaining({
+                      query: 'chiken brest',
+                      fuzziness: 'AUTO',
+                    }),
+                  }),
+                  expect.objectContaining({
+                    match: expect.objectContaining({
+                      name: expect.objectContaining({
+                        fuzziness: 'AUTO',
+                      }),
+                    }),
+                  }),
+                ]),
+              }),
+            }),
+          }),
+        }),
+      }),
+    );
   });
 });

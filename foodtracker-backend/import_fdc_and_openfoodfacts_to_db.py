@@ -1,5 +1,6 @@
 import argparse
 import csv
+import json
 import os
 import re
 import sqlite3
@@ -11,10 +12,12 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 import mysql.connector
 import pandas as pd
+import requests
 from tqdm import tqdm
 
 
 class FdcOpenFoodFactsImporter:
+    IMPORT_STAGES = ("fdc", "fdc-portions", "openfoodfacts")
     FOOD_COLUMNS = [
         "sourceId",
         "isCsvFood",
@@ -95,6 +98,12 @@ class FdcOpenFoodFactsImporter:
         batch_size: int,
         max_foods: Optional[int],
         max_openfoodfacts: Optional[int],
+        start_at: str = "fdc",
+        stop_after: Optional[str] = None,
+        es_url: str = "http://localhost:9200",
+        es_index: str = "foods",
+        skip_es_reindex: bool = False,
+        drop_elasticsearch_db: bool = False,
     ) -> None:
         self.fdc_dir = fdc_dir
         self.openfoodfacts_csv = openfoodfacts_csv
@@ -102,6 +111,12 @@ class FdcOpenFoodFactsImporter:
         self.batch_size = batch_size
         self.max_foods = max_foods
         self.max_openfoodfacts = max_openfoodfacts
+        self.start_at = start_at
+        self.stop_after = stop_after
+        self.es_url = es_url.rstrip("/")
+        self.es_index = es_index
+        self.skip_es_reindex = skip_es_reindex
+        self.drop_elasticsearch_db = drop_elasticsearch_db
 
         self.success_count = 0
         self.error_count = 0
@@ -198,6 +213,20 @@ class FdcOpenFoodFactsImporter:
             return float(value)
         except (ValueError, TypeError):
             return 0.0
+
+    def _standardize_food_name(self, value: Optional[str]) -> Optional[str]:
+        cleaned = self._clean_string(value)
+        if not cleaned:
+            return None
+
+        normalized_whitespace = re.sub(r"\s+", " ", cleaned)
+        lowered = normalized_whitespace.lower()
+        title_cased = re.sub(
+            r"[a-z]+(?:'[a-z]+)?",
+            lambda match: match.group(0).capitalize(),
+            lowered,
+        )
+        return title_cased
 
     def _create_abbreviation(self, description: str) -> str:
         cleaned = re.sub(r"^\d+\s*", "", description.lower())
@@ -762,6 +791,7 @@ class FdcOpenFoodFactsImporter:
                 self.skipped_count += 1
                 continue
             name, _data_type = meta
+            name = self._standardize_food_name(name)
             if not name:
                 self.skipped_count += 1
                 continue
@@ -886,7 +916,9 @@ class FdcOpenFoodFactsImporter:
 
     def _openfoodfacts_payload(self, row: Dict) -> Optional[Dict]:
         barcode = self._clean_string(row.get("code"))
-        name = self._clean_string(row.get("product_name")) or self._clean_string(row.get("generic_name"))
+        name = self._standardize_food_name(row.get("product_name")) or self._standardize_food_name(
+            row.get("generic_name")
+        )
 
         if not barcode or not name:
             return None
@@ -1083,6 +1115,7 @@ class FdcOpenFoodFactsImporter:
             "serving_quantity_unit",
         }
         usecols = [column for column in desired_columns if column in available_columns]
+        print(f"OpenFoodFacts columns selected: {len(usecols)}")
 
         match_cache: Dict[Tuple[str, int], Optional[int]] = {}
         batch_count = 0
@@ -1148,28 +1181,194 @@ class FdcOpenFoodFactsImporter:
                     cursor.close()
                     return
 
+                if processed % 50000 == 0:
+                    print(f"OpenFoodFacts rows processed: {processed}")
+
         if batch_count:
             conn.commit()
 
         cursor.close()
 
+    def _build_es_index_payload(self) -> Dict[str, object]:
+        return {
+            "settings": {
+                "analysis": {
+                    "filter": {
+                        "edge_ngram_filter": {
+                            "type": "edge_ngram",
+                            "min_gram": 1,
+                            "max_gram": 20,
+                        }
+                    },
+                    "normalizer": {
+                        "lowercase_normalizer": {
+                            "type": "custom",
+                            "filter": ["lowercase"],
+                        }
+                    },
+                    "analyzer": {
+                        "name_prefix_analyzer": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": ["lowercase", "edge_ngram_filter"],
+                        },
+                        "name_prefix_search": {
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": ["lowercase"],
+                        },
+                    },
+                }
+            },
+            "mappings": {
+                "properties": {
+                    "name": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "normalizer": "lowercase_normalizer",
+                            },
+                            "prefix": {
+                                "type": "text",
+                                "analyzer": "name_prefix_analyzer",
+                                "search_analyzer": "name_prefix_search",
+                            },
+                        },
+                    },
+                    "brand": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "normalizer": "lowercase_normalizer",
+                            },
+                        },
+                    },
+                    "isCsvFood": {
+                        "type": "boolean",
+                    },
+                }
+            },
+        }
+
+    def _delete_es_index(self) -> None:
+        response = requests.delete(f"{self.es_url}/{self.es_index}", timeout=30)
+        if response.status_code in (200, 404):
+            return
+
+        response.raise_for_status()
+
+    def _drop_es_db(self) -> None:
+        response = requests.delete(f"{self.es_url}/_all", timeout=60)
+        if response.status_code in (200, 404):
+            return
+
+        response.raise_for_status()
+
+    def _create_es_index(self) -> None:
+        payload = self._build_es_index_payload()
+        response = requests.put(f"{self.es_url}/{self.es_index}", json=payload, timeout=30)
+        response.raise_for_status()
+
+    def _bulk_index_foods(self) -> int:
+        conn = mysql.connector.connect(**self.db_config)
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, name, brand, isCsvFood FROM food ORDER BY id ASC")
+        indexed_count = 0
+        bulk_size = 500
+        try:
+            while True:
+                rows = cursor.fetchmany(bulk_size)
+                if not rows:
+                    break
+
+                lines: List[str] = []
+                for row in rows:
+                    food_id = int(row["id"])
+                    lines.append(
+                        '{"index":{"_index":"%s","_id":"%s"}}' % (self.es_index, str(food_id))
+                    )
+                    lines.append(
+                        '{"name":%s,"brand":%s,"isCsvFood":%s}'
+                        % (
+                            json.dumps(row["name"]),
+                            json.dumps(row["brand"]),
+                            "true" if bool(row["isCsvFood"]) else "false",
+                        )
+                    )
+
+                body = "\n".join(lines) + "\n"
+                response = requests.post(
+                    f"{self.es_url}/_bulk",
+                    data=body.encode("utf-8"),
+                    headers={"Content-Type": "application/x-ndjson"},
+                    timeout=60,
+                )
+                response.raise_for_status()
+                response_json = response.json()
+                if response_json.get("errors"):
+                    raise RuntimeError("Elasticsearch bulk indexing reported errors.")
+
+                indexed_count += len(rows)
+                if indexed_count % 5000 == 0:
+                    print(f"Elasticsearch rows indexed: {indexed_count}")
+        finally:
+            cursor.close()
+            conn.close()
+
+        return indexed_count
+
+    def _reindex_es_direct(self) -> None:
+        if self.skip_es_reindex:
+            print("Skipping Elasticsearch reindex.")
+            return
+
+        if self.drop_elasticsearch_db:
+            print(f"Dropping all Elasticsearch indices at {self.es_url} ...")
+            self._drop_es_db()
+        else:
+            print(f"Deleting Elasticsearch index '{self.es_index}' at {self.es_url} ...")
+            self._delete_es_index()
+        print(f"Creating Elasticsearch index '{self.es_index}' ...")
+        self._create_es_index()
+        print("Bulk indexing foods into Elasticsearch ...")
+        indexed_count = self._bulk_index_foods()
+        print(f"Elasticsearch reindex complete. Foods indexed: {indexed_count}")
+
     def run(self) -> None:
         start = time.perf_counter()
-        lookup_db = self._build_lookup_db()
         conn = mysql.connector.connect(**self.db_config)
+        start_idx = self.IMPORT_STAGES.index(self.start_at)
+        stop_target = self.stop_after or self.IMPORT_STAGES[-1]
+        stop_idx = self.IMPORT_STAGES.index(stop_target)
+        if stop_idx < start_idx:
+            raise ValueError("--stop-after cannot be earlier than --start-at.")
+
+        run_fdc = start_idx <= 0 <= stop_idx
+        run_fdc_portions = start_idx <= 1 <= stop_idx
+        run_openfoodfacts = start_idx <= 2 <= stop_idx
+        lookup_db: Optional[Path] = None
         try:
-            print("Importing FoodData Central foods...")
-            self._run_fdc_import(conn, lookup_db)
-            print("Adding FoodData Central portions...")
-            self._run_fdc_portions(conn)
-            print("Importing OpenFoodFacts foods/barcodes...")
-            self._run_openfoodfacts(conn)
+            if run_fdc:
+                lookup_db = self._build_lookup_db()
+                print("Importing FoodData Central foods...")
+                self._run_fdc_import(conn, lookup_db)
+            if run_fdc_portions:
+                print("Adding FoodData Central portions...")
+                self._run_fdc_portions(conn)
+            if run_openfoodfacts:
+                print("Importing OpenFoodFacts foods/barcodes...")
+                self._run_openfoodfacts(conn)
         finally:
             conn.close()
-            try:
-                lookup_db.unlink()
-            except OSError:
-                pass
+            if lookup_db:
+                try:
+                    lookup_db.unlink()
+                except OSError:
+                    pass
+
+        self._reindex_es_direct()
 
         elapsed = time.perf_counter() - start
         print("IMPORT SUMMARY")
@@ -1203,6 +1402,38 @@ def main() -> int:
     parser.add_argument(
         "--max-openfoodfacts", type=int, default=None, help="Limit OpenFoodFacts rows for testing."
     )
+    parser.add_argument(
+        "--start-at",
+        choices=FdcOpenFoodFactsImporter.IMPORT_STAGES,
+        default="fdc",
+        help="Import stage to start at.",
+    )
+    parser.add_argument(
+        "--stop-after",
+        choices=FdcOpenFoodFactsImporter.IMPORT_STAGES,
+        default=None,
+        help="Optional import stage to stop after.",
+    )
+    parser.add_argument(
+        "--es-url",
+        default=os.getenv("ES_URL", "http://localhost:9200"),
+        help="Elasticsearch base URL.",
+    )
+    parser.add_argument(
+        "--es-index",
+        default=os.getenv("ES_FOOD_INDEX", "foods"),
+        help="Elasticsearch index name for foods.",
+    )
+    parser.add_argument(
+        "--skip-es-reindex",
+        action="store_true",
+        help="Skip direct Elasticsearch delete/create/reindex at the end of the import.",
+    )
+    parser.add_argument(
+        "--drop-elastic-search-db",
+        action="store_true",
+        help="Drop all Elasticsearch indices before recreating and indexing foods.",
+    )
 
     args = parser.parse_args()
 
@@ -1213,6 +1444,12 @@ def main() -> int:
         batch_size=args.batch_size,
         max_foods=args.max_foods,
         max_openfoodfacts=args.max_openfoodfacts,
+        start_at=args.start_at,
+        stop_after=args.stop_after,
+        es_url=args.es_url,
+        es_index=args.es_index,
+        skip_es_reindex=args.skip_es_reindex,
+        drop_elasticsearch_db=args.drop_elastic_search_db,
     )
     importer.run()
     return 0

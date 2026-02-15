@@ -13,3 +13,5 @@ If I make updates, I can re-run everything by
 `npx serve dist -l 7776` to serve from the right port
 
 #### App
+
+npx eas build -p ios --auto-submit
