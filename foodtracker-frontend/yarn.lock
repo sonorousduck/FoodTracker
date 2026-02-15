@@ -7574,10 +7574,10 @@ send@^0.19.0, send@~0.19.1:
     range-parser "~1.2.1"
     statuses "~2.0.2"
 
-sentry@^0.10.2:
-  version "0.10.2"
-  resolved "https://registry.yarnpkg.com/sentry/-/sentry-0.10.2.tgz#4b15007db6987c485cdc5e48bbac356e9d846f40"
-  integrity sha512-+bmU4CnTEXDfr4YzwNIvDy/vhvhARXSTRzR5lXeKN05tALY3ulX2477/MhyZFdXlt22tKWMVLlCbExwLzVrnEg==
+sentry@0.10.1:
+  version "0.10.1"
+  resolved "https://registry.yarnpkg.com/sentry/-/sentry-0.10.1.tgz#3d4484abf774eb27f2f1ef3ad1b44965769a0af0"
+  integrity sha512-ArVxCWYQNx/71JIuRDYPuWXW+mo8kf9aNROz2rx23p3r0S5W89ONnSlYUuFizEkOLWvMz5Ojfu7FaTYA/JopQw==
 
 serialize-error@^2.1.0:
   version "2.1.0"
