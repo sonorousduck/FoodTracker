@@ -4,6 +4,7 @@ import { SessionProvider, useSession } from "@/hooks/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import * as Sentry from "@sentry/react-native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -11,7 +12,11 @@ import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
 
 import SplashScreenController from "./splash";
 
-export default function RootLayout() {
+Sentry.init({
+  dsn: "https://27d9e2271b7d48ff90adaf1bfed2b84b@logging.sonorousduck.com/1",
+});
+
+function RootLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const paperTheme =
@@ -69,6 +74,8 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);
 
 function RootNavigator() {
   const { session, isLoading } = useSession();
