@@ -65,6 +65,11 @@ export class FoodController {
     return this.foodService.reindexFoods();
   }
 
+  @Post('recreate-index')
+  recreateFoodsIndex() {
+    return this.foodService.recreateFoodIndex();
+  }
+
   @Get('all')
   @UseGuards(PassportJwtAuthGuard)
   getAll(

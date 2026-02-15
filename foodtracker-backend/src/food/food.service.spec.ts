@@ -126,7 +126,10 @@ describe('FoodService', () => {
 
     await service.createFood(createFoodDto);
 
-    expect(foodRepository.save).toHaveBeenCalledWith(createFoodDto);
-    expect(foodSearchService.indexFood).toHaveBeenCalledWith(createFoodDto);
+    expect(foodRepository.save).toHaveBeenCalledWith({ ...createFoodDto, isCsvFood: true });
+    expect(foodSearchService.indexFood).toHaveBeenCalledWith({
+      ...createFoodDto,
+      isCsvFood: true,
+    });
   });
 });

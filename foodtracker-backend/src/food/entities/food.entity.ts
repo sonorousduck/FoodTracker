@@ -12,6 +12,9 @@ export class Food {
   @Column({ nullable: true, unique: true })
   sourceId?: string; // Original ID from CSV for reference
 
+  @Column({ default: false })
+  isCsvFood: boolean;
+
   @Index()
   @Column()
   name: string;

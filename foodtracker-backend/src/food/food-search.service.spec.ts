@@ -35,26 +35,38 @@ describe('FoodSearchService', () => {
         index: 'foods',
         size: 5,
         query: {
-          bool: expect.objectContaining({
-            minimum_should_match: 1,
-            should: expect.arrayContaining([
-              {
-                term: {
-                  'name.keyword': {
-                    value: 'apple',
-                    boost: 8,
+          function_score: expect.objectContaining({
+            query: {
+              bool: expect.objectContaining({
+                minimum_should_match: 1,
+                should: expect.arrayContaining([
+                  {
+                    term: {
+                      'name.keyword': {
+                        value: 'apple',
+                        boost: 10,
+                      },
+                    },
                   },
-                },
-              },
-              {
-                match_phrase: {
-                  name: {
-                    query: 'Apple',
-                    boost: 4,
+                  {
+                    match: {
+                      'name.prefix': {
+                        query: 'apple',
+                        boost: 6,
+                      },
+                    },
                   },
-                },
-              },
-            ]),
+                  {
+                    match_phrase: {
+                      name: {
+                        query: 'Apple',
+                        boost: 3,
+                      },
+                    },
+                  },
+                ]),
+              }),
+            },
           }),
         },
       }),

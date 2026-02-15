@@ -37,9 +37,9 @@ export class FoodService {
     let food: Food;
 
     if (alreadyExistsFood) {
-      food = await this.foodRepository.save({ ...alreadyExistsFood, ...createFood });
+      food = await this.foodRepository.save({ ...alreadyExistsFood, ...createFood, isCsvFood: true });
     } else {
-      food = await this.foodRepository.save(createFood);
+      food = await this.foodRepository.save({ ...createFood, isCsvFood: true });
     }
 
     await this.indexFoodSafe(food);
@@ -90,15 +90,28 @@ export class FoodService {
   }
 
   async reindexFoods(): Promise<{ indexedCount: number }> {
-    const foods = await this.foodRepository.find({ select: ["id", "name", "brand"] });
-    await this.foodSearchService.bulkIndexFoods(foods);
+    const foods = await this.foodRepository.find({ select: ["id", "name", "brand", "isCsvFood"] });
+    await this.foodSearchService.bulkIndexFoods(
+      foods.map((food) => ({
+        ...food,
+        isCsvFood: Boolean(food.isCsvFood),
+      }))
+    );
 
     return { indexedCount: foods.length };
   }
 
+  async recreateFoodIndex(): Promise<{ indexedCount: number }> {
+    await this.foodSearchService.recreateIndex();
+    return this.reindexFoods();
+  }
+
   private async indexFoodSafe(food: Food): Promise<void> {
     try {
-      await this.foodSearchService.indexFood(food);
+      await this.foodSearchService.indexFood({
+        ...food,
+        isCsvFood: Boolean(food.isCsvFood),
+      });
     } catch (error) {
       this.logger.warn("Failed to index food in Elasticsearch.", error as Error);
     }

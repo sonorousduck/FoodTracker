@@ -5,6 +5,7 @@ type FoodSearchDocument = {
   id: number;
   name: string;
   brand?: string | null;
+  isCsvFood: boolean;
 };
 
 @Injectable()
@@ -30,6 +31,7 @@ export class FoodSearchService implements OnModuleInit {
       document: {
         name: food.name,
         brand: food.brand ?? null,
+        isCsvFood: food.isCsvFood,
       },
       refresh: 'wait_for',
     });
@@ -45,6 +47,7 @@ export class FoodSearchService implements OnModuleInit {
       {
         name: food.name,
         brand: food.brand ?? null,
+        isCsvFood: food.isCsvFood,
       },
     ]);
 
@@ -69,41 +72,69 @@ export class FoodSearchService implements OnModuleInit {
       index: this.indexName,
       size: limit,
       query: {
-        bool: {
-          should: [
-            {
-              term: {
-                'name.keyword': {
-                  value: normalizedQuery,
-                  boost: 8,
+        function_score: {
+          query: {
+            bool: {
+              should: [
+                {
+                  term: {
+                    'name.keyword': {
+                      value: normalizedQuery,
+                      boost: 10,
+                    },
+                  },
                 },
-              },
-            },
-            {
-              match_phrase: {
-                name: {
-                  query: sanitizedQuery,
-                  boost: 4,
+                {
+                  match: {
+                    'name.prefix': {
+                      query: normalizedQuery,
+                      boost: 6,
+                    },
+                  },
                 },
-              },
-            },
-            {
-              term: {
-                'brand.keyword': {
-                  value: normalizedQuery,
-                  boost: 1,
+                {
+                  match_phrase: {
+                    name: {
+                      query: sanitizedQuery,
+                      boost: 3,
+                    },
+                  },
                 },
-              },
+                {
+                  match: {
+                    name: {
+                      query: sanitizedQuery,
+                      boost: 1.5,
+                    },
+                  },
+                },
+                {
+                  term: {
+                    'brand.keyword': {
+                      value: normalizedQuery,
+                      boost: 1,
+                    },
+                  },
+                },
+                {
+                  multi_match: {
+                    query: sanitizedQuery,
+                    fields: ['name^2', 'brand^0.5'],
+                    fuzziness: 'AUTO',
+                  },
+                },
+              ],
+              minimum_should_match: 1,
             },
+          },
+          functions: [
             {
-              multi_match: {
-                query: sanitizedQuery,
-                fields: ['name^3', 'brand^0.5'],
-                fuzziness: 'AUTO',
-              },
+              filter: { term: { isCsvFood: true } },
+              weight: 1.25,
             },
           ],
-          minimum_should_match: 1,
+          boost_mode: 'multiply',
+          score_mode: 'multiply',
         },
       },
     });
@@ -126,14 +157,51 @@ export class FoodSearchService implements OnModuleInit {
       return;
     }
 
+    await this.createIndex();
+  }
+
+  async recreateIndex(): Promise<void> {
+    const existsResponse = await this.client.indices.exists({ index: this.indexName });
+    const indexExists =
+      typeof existsResponse === 'boolean'
+        ? existsResponse
+        : (existsResponse as { body: boolean }).body;
+
+    if (indexExists) {
+      await this.client.indices.delete({ index: this.indexName });
+    }
+
+    await this.createIndex();
+  }
+
+  private async createIndex(): Promise<void> {
     try {
       await this.client.indices.create({
         index: this.indexName,
         settings: {
           analysis: {
+            filter: {
+              edge_ngram_filter: {
+                type: 'edge_ngram',
+                min_gram: 1,
+                max_gram: 20,
+              },
+            },
             normalizer: {
               lowercase_normalizer: {
                 type: 'custom',
+                filter: ['lowercase'],
+              },
+            },
+            analyzer: {
+              name_prefix_analyzer: {
+                type: 'custom',
+                tokenizer: 'standard',
+                filter: ['lowercase', 'edge_ngram_filter'],
+              },
+              name_prefix_search: {
+                type: 'custom',
+                tokenizer: 'standard',
                 filter: ['lowercase'],
               },
             },
@@ -148,6 +216,11 @@ export class FoodSearchService implements OnModuleInit {
                   type: 'keyword',
                   normalizer: 'lowercase_normalizer',
                 },
+                prefix: {
+                  type: 'text',
+                  analyzer: 'name_prefix_analyzer',
+                  search_analyzer: 'name_prefix_search',
+                },
               },
             },
             brand: {
@@ -158,6 +231,9 @@ export class FoodSearchService implements OnModuleInit {
                   normalizer: 'lowercase_normalizer',
                 },
               },
+            },
+            isCsvFood: {
+              type: 'boolean',
             },
           },
         },

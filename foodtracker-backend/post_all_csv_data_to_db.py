@@ -14,6 +14,7 @@ from tqdm import tqdm
 class MyFoodDataImporter:
     FOOD_COLUMNS = [
         "sourceId",
+        "isCsvFood",
         "name",
         "calories",
         "protein",
@@ -269,6 +270,7 @@ class MyFoodDataImporter:
 
         food = {
             "sourceId": self._clean_string(row.get("ID")),
+            "isCsvFood": True,
             "name": name,
             "calories": int(self._clean_numeric(row.get("Calories", 0))),
             "protein": self._clean_numeric(row.get("Protein (g)", 0)),
