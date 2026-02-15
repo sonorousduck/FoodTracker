@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "FoodTracker",
+    "name": "Duck Log",
     "slug": "FoodTracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -47,7 +47,15 @@
       "expo-secure-store",
       "expo-camera",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://logging.sonorousduck.com/",
+          "project": "foodtracker",
+          "organization": "sonorousduck"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
