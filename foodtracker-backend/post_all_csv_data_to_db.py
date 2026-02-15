@@ -81,6 +81,14 @@ class MyFoodDataImporter:
         "lycopene",
         "luteinZeaxanthin",
     ]
+    SERVING_WEIGHT_RE = re.compile(
+        r"^Serving Weight\s*(\d+)(?:\s*\(g\)|\s*grams?)?$",
+        re.IGNORECASE,
+    )
+    SERVING_DESC_RE = re.compile(
+        r"^Serving Description\s*(\d+)(?:\s*\(g\))?$",
+        re.IGNORECASE,
+    )
 
     def __init__(
         self,
@@ -164,6 +172,18 @@ class MyFoodDataImporter:
     def _clean_numeric(self, value) -> float:
         if pd.isna(value) or value in ("", "N/A", "NULL", "null", "None"):
             return 0.0
+        if isinstance(value, str):
+            stripped = value.strip()
+            if stripped in ("", "N/A", "NULL", "null", "None"):
+                return 0.0
+            stripped = stripped.replace(",", "")
+            match = re.search(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", stripped)
+            if not match:
+                return 0.0
+            try:
+                return float(match.group(0))
+            except ValueError:
+                return 0.0
         try:
             return float(value)
         except (ValueError, TypeError):
@@ -205,25 +225,35 @@ class MyFoodDataImporter:
             },
         ]
 
-        for i in range(1, 10):
-            weight_col = f"Serving Weight {i} (g)"
-            desc_col = f"Serving Description {i} (g)"
+        weight_columns: Dict[int, str] = {}
+        desc_columns: Dict[int, str] = {}
+        for key in row:
+            if not isinstance(key, str):
+                continue
+            cleaned_key = key.strip()
+            weight_match = self.SERVING_WEIGHT_RE.match(cleaned_key)
+            if weight_match:
+                weight_columns[int(weight_match.group(1))] = key
+                continue
+            desc_match = self.SERVING_DESC_RE.match(cleaned_key)
+            if desc_match:
+                desc_columns[int(desc_match.group(1))] = key
 
-            if weight_col in row and desc_col in row:
-                weight = self._clean_numeric(row[weight_col])
-                description = self._clean_string(row[desc_col])
+        for index in sorted(set(weight_columns) & set(desc_columns)):
+            weight = self._clean_numeric(row.get(weight_columns[index]))
+            description = self._clean_string(row.get(desc_columns[index]))
 
-                if weight > 0 and description:
-                    measurements.append(
-                        {
-                            "name": description,
-                            "unit": self._create_unit_label(description),
-                            "abbreviation": self._create_abbreviation(description),
-                            "weightInGrams": weight,
-                            "isDefault": False,
-                            "isFromSource": True,
-                        }
-                    )
+            if weight > 0 and description:
+                measurements.append(
+                    {
+                        "name": description,
+                        "unit": self._create_unit_label(description),
+                        "abbreviation": self._create_abbreviation(description),
+                        "weightInGrams": weight,
+                        "isDefault": False,
+                        "isFromSource": True,
+                    }
+                )
 
         return measurements
 
@@ -333,19 +363,31 @@ class MyFoodDataImporter:
         cursor.execute(sql, values)
         return int(cursor.lastrowid)
 
-    def _find_food_id_by_name(
+    def _find_food_id(
         self,
         cursor: mysql.connector.cursor.MySQLCursor,
-        name: str,
+        food: Dict,
     ) -> Optional[int]:
-        cursor.execute(
-            "SELECT id FROM food WHERE name = %s ORDER BY id LIMIT 1",
-            (name,),
-        )
-        row = cursor.fetchone()
-        if not row:
-            return None
-        return int(row[0])
+        source_id = food.get("sourceId")
+        if source_id:
+            cursor.execute(
+                "SELECT id FROM food WHERE sourceId = %s ORDER BY id LIMIT 1",
+                (source_id,),
+            )
+            row = cursor.fetchone()
+            if row:
+                return int(row[0])
+
+        name = food.get("name")
+        if name:
+            cursor.execute(
+                "SELECT id FROM food WHERE name = %s ORDER BY id LIMIT 1",
+                (name,),
+            )
+            row = cursor.fetchone()
+            if row:
+                return int(row[0])
+        return None
 
     def _ensure_measurements(
         self,
@@ -358,7 +400,9 @@ class MyFoodDataImporter:
             "(foodId, unit, name, abbreviation, weightInGrams, isDefault, isActive, isFromSource) "
             "SELECT %s, %s, %s, %s, %s, %s, %s, %s "
             "FROM DUAL WHERE NOT EXISTS ("
-            "SELECT 1 FROM food_measurement WHERE foodId = %s AND abbreviation = %s"
+            "SELECT 1 FROM food_measurement "
+            "WHERE foodId = %s AND unit = %s AND name = %s AND abbreviation = %s "
+            "AND ABS(weightInGrams - %s) < 0.01"
             ")"
         )
 
@@ -376,7 +420,10 @@ class MyFoodDataImporter:
                     1,
                     1 if measurement.get("isFromSource") else 0,
                     food_id,
+                    measurement["unit"],
+                    measurement["name"],
                     abbreviation,
+                    measurement["weightInGrams"],
                 ),
             )
 
@@ -386,8 +433,7 @@ class MyFoodDataImporter:
 
         try:
             for item in batch:
-                food_name = item["food"]["name"]
-                food_id = self._find_food_id_by_name(cursor, food_name)
+                food_id = self._find_food_id(cursor, item["food"])
                 if food_id is None:
                     food_id = self._insert_or_update_food(cursor, item["food"])
                 self._ensure_measurements(cursor, food_id, item["measurements"])
@@ -480,6 +526,7 @@ class MyFoodDataImporter:
                 chunksize=5000,
                 low_memory=False,
             ):
+                chunk.rename(columns=lambda col: str(col).strip(), inplace=True)
                 if "Name" not in chunk.columns:
                     raise RuntimeError(
                         "CSV header missing expected 'Name' column. "
