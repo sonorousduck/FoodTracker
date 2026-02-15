@@ -24,12 +24,6 @@ export class User {
   @Column()
   lastName: string;
 
-  @Column({ type: 'varchar', length: 64, nullable: true })
-  refreshTokenHash?: string | null;
-
-  @Column({ type: 'timestamp', nullable: true })
-  refreshTokenExpiresAt?: Date | null;
-
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 

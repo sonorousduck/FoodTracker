@@ -1,4 +1,3 @@
-import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
@@ -8,22 +7,12 @@ import { TokenRevocationService } from './token-revocation.service';
 import { CSRFService } from './csrf.service';
 import { AuditLogService } from './audit-log.service';
 
-jest.mock('crypto', () => ({
-  randomBytes: jest.fn(() => Buffer.from('refresh-token')),
-  createHash: jest.fn(() => ({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn(() => 'hashed-refresh-token'),
-  })),
-}));
-
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: {
-    updateRefreshToken: jest.Mock;
-    clearRefreshToken: jest.Mock;
-    findByRefreshTokenHash: jest.Mock;
+    findOne: jest.Mock;
   };
-  let jwtService: { signAsync: jest.Mock };
+  let jwtService: { signAsync: jest.Mock; decode: jest.Mock };
   let passwordService: { comparePassword: jest.Mock; hashPassword: jest.Mock };
   let tokenRevocationService: { revokeToken: jest.Mock; isTokenRevoked: jest.Mock };
   let csrfService: { generateToken: jest.Mock };
@@ -31,12 +20,11 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     usersService = {
-      updateRefreshToken: jest.fn(),
-      clearRefreshToken: jest.fn(),
-      findByRefreshTokenHash: jest.fn(),
+      findOne: jest.fn(),
     };
     jwtService = {
       signAsync: jest.fn(),
+      decode: jest.fn(),
     };
     passwordService = {
       comparePassword: jest.fn(),
@@ -72,66 +60,38 @@ describe('AuthService', () => {
     expect(service).toBeDefined();
   });
 
-  it('signIn returns tokens and stores refresh hash', async () => {
+  it('signIn returns access token without refresh token', async () => {
     jwtService.signAsync.mockResolvedValue('access-token');
 
     const result = await service.signIn({ userId: 10, email: 'test@example.com' });
 
-    expect(result).toEqual(
-      expect.objectContaining({
-        accessToken: 'access-token',
-        refreshToken: expect.any(String),
-        userId: 10,
-        username: 'test@example.com',
-      }),
-    );
-    expect(usersService.updateRefreshToken).toHaveBeenCalledWith(
-      10,
-      'hashed-refresh-token',
+    expect(result).toEqual({
+      accessToken: 'access-token',
+      userId: 10,
+      username: 'test@example.com',
+      csrfToken: 'csrf-token',
+    });
+    expect(result).not.toHaveProperty('refreshToken');
+  });
+
+  it('revokes access token on logout', async () => {
+    const expAt = Math.floor(Date.now() / 1000) + 60;
+    jwtService.decode.mockReturnValue({ sub: 8, exp: expAt });
+    usersService.findOne.mockResolvedValue({ id: 8, email: 'test@example.com' });
+
+    await service.logout('access-token');
+
+    expect(tokenRevocationService.revokeToken).toHaveBeenCalledWith(
+      'access-token',
+      8,
+      'logout',
       expect.any(Date),
     );
+    expect(auditLogService.logEvent).toHaveBeenCalled();
   });
 
-  it('refreshes access token when refresh token is valid', async () => {
-    usersService.findByRefreshTokenHash.mockResolvedValue({
-      id: 4,
-      email: 'test@example.com',
-      refreshTokenHash: 'hashed-refresh-token',
-      refreshTokenExpiresAt: new Date(Date.now() + 1000 * 60),
-    });
-    jwtService.signAsync.mockResolvedValue('new-access-token');
-
-    await expect(service.refresh('refresh-token')).resolves.toEqual(
-      expect.objectContaining({
-        accessToken: 'new-access-token',
-        refreshToken: expect.any(String),
-      }),
-    );
-  });
-
-  it('throws when refresh token is expired', async () => {
-    usersService.findByRefreshTokenHash.mockResolvedValue({
-      id: 4,
-      email: 'test@example.com',
-      refreshTokenHash: 'hashed-refresh-token',
-      refreshTokenExpiresAt: new Date(Date.now() - 1000),
-    });
-
-    await expect(service.refresh('refresh-token')).rejects.toThrow(
-      ForbiddenException,
-    );
-  });
-
-  it('throws when refresh token does not match', async () => {
-    usersService.findByRefreshTokenHash.mockResolvedValue(null);
-
-    await expect(service.refresh('wrong-token')).rejects.toThrow(ForbiddenException);
-  });
-
-  it('clears refresh token on logout', async () => {
-    usersService.findByRefreshTokenHash.mockResolvedValue({ id: 8 });
-
-    await service.logout('refresh-token');
-    expect(usersService.clearRefreshToken).toHaveBeenCalledWith(8);
+  it('does nothing on logout when access token is null', async () => {
+    await service.logout(null);
+    expect(tokenRevocationService.revokeToken).not.toHaveBeenCalled();
   });
 });

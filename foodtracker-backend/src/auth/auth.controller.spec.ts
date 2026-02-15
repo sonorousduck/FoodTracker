@@ -4,14 +4,12 @@ import type { Request, Response } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import type { AuthResult } from './dto/authResult.dto';
-import type { RefreshResultDto } from './dto/refreshresult.dto';
 
 describe('AuthController', () => {
   let controller: AuthController;
   let authService: {
     authenticate: jest.Mock;
     createUser: jest.Mock;
-    refresh: jest.Mock;
     logout: jest.Mock;
   };
 
@@ -19,7 +17,6 @@ describe('AuthController', () => {
     authService = {
       authenticate: jest.fn(),
       createUser: jest.fn(),
-      refresh: jest.fn(),
       logout: jest.fn(),
     };
 
@@ -56,7 +53,6 @@ describe('AuthController', () => {
   it('sets cookies on login', async () => {
     const authResult: AuthResult = {
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       userId: 5,
       username: 'test@example.com',
     };
@@ -82,7 +78,6 @@ describe('AuthController', () => {
   it('sets csrf cookie when csrfToken present on login', async () => {
     const authResult: AuthResult = {
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       userId: 5,
       username: 'test@example.com',
       csrfToken: 'csrf-token-value',
@@ -112,7 +107,6 @@ describe('AuthController', () => {
   it('sets csrf cookie when csrfToken present on create', async () => {
     const authResult: AuthResult = {
       accessToken: 'access-token',
-      refreshToken: 'refresh-token',
       userId: 7,
       username: 'new@example.com',
       csrfToken: 'csrf-token-value',
@@ -139,61 +133,11 @@ describe('AuthController', () => {
     expect(csrfCall[2]).toMatchObject({ httpOnly: false });
   });
 
-  it('omits refresh token in browser responses', async () => {
-    const authResult: AuthResult = {
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-      userId: 6,
-      username: 'test@example.com',
-    };
-    authService.authenticate.mockResolvedValue(authResult);
-    const request = {
-      secure: false,
-      headers: { origin: 'http://localhost:8081' },
-    } as Request;
-    const response = {
-      cookie: jest.fn(),
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    } as unknown as Response;
-
-    await controller.login(
-      { email: 'test@example.com', password: 'pw' },
-      request,
-      response,
-    );
-
-    const payload = (response.json as jest.Mock).mock.calls[0][0];
-    expect(payload.refreshToken).toBeUndefined();
-  });
-
-
-  it('refreshes access token from body for native clients', async () => {
-    const refreshed: RefreshResultDto = {
-      accessToken: 'new-access',
-      refreshToken: 'new-refresh',
-    };
-    authService.refresh.mockResolvedValue(refreshed);
-    const request = { secure: false, headers: {}, cookies: {} } as Request;
-    const response = {
-      cookie: jest.fn(),
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    } as unknown as Response;
-
-    await controller.refresh({ refreshToken: 'refresh' }, request, response);
-
-    expect(authService.refresh).toHaveBeenCalledWith('refresh', request);
-    expect(response.cookie).toHaveBeenCalled();
-    expect(response.status).toHaveBeenCalledWith(200);
-    expect(response.json).toHaveBeenCalledWith(refreshed);
-  });
-
   it('clears cookies on logout', async () => {
     const request = {
       secure: false,
       headers: {},
-      cookies: { refreshToken: 'refresh' },
+      cookies: { accessToken: 'access-token' },
     } as Request;
     const response = {
       clearCookie: jest.fn(),
@@ -201,9 +145,9 @@ describe('AuthController', () => {
       json: jest.fn(),
     } as unknown as Response;
 
-    await controller.logout({ refreshToken: 'refresh' }, request, response);
+    await controller.logout(request, response);
 
-    expect(authService.logout).toHaveBeenCalledWith('refresh', null, request);
+    expect(authService.logout).toHaveBeenCalledWith('access-token', request);
     expect(response.clearCookie).toHaveBeenCalled();
     expect(response.status).toHaveBeenCalledWith(200);
     expect(response.json).toHaveBeenCalledWith({ success: true });

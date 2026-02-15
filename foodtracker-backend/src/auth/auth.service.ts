@@ -2,12 +2,10 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/createuser.dto';
 import { UsersService } from 'src/users/users.service';
-import { randomBytes, createHash } from 'crypto';
 import type { Request } from 'express';
 
 import { AuthResult } from './dto/authResult.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshResultDto } from './dto/refreshresult.dto';
 import { PasswordService } from './password.service';
 import { TokenRevocationService } from './token-revocation.service';
 import { CSRFService } from './csrf.service';
@@ -16,8 +14,8 @@ import { AuthEventType } from './entities/auth-log.entity';
 
 
 type SignInData = { userId: number; email: string };
-const accessTokenExpiresIn = '15m';
-const refreshTokenTtlMs = 1000 * 60 * 60 * 24 * 30;
+const tokenExpiresIn = '30d';
+const tokenTtlMs = 1000 * 60 * 60 * 24 * 30;
 
 @Injectable()
 export class AuthService {
@@ -84,21 +82,12 @@ export class AuthService {
     };
 
     const accessToken = await this.jwtService.signAsync(tokenPayload, {
-      expiresIn: accessTokenExpiresIn,
+      expiresIn: tokenExpiresIn,
     });
-    const refreshToken = this.generateRefreshToken();
-    const refreshTokenExpiresAt = new Date(Date.now() + refreshTokenTtlMs);
     const csrfToken = this.csrfService.generateToken();
-
-    await this.userService.updateRefreshToken(
-      user.userId,
-      this.hashToken(refreshToken),
-      refreshTokenExpiresAt,
-    );
 
     return {
       accessToken,
-      refreshToken,
       username: user.email,
       userId: user.userId,
       csrfToken,
@@ -124,93 +113,35 @@ export class AuthService {
     return this.signIn({ userId: user.id, email: user.email });
   }
 
-  async refresh(refreshToken: string, request?: Request): Promise<RefreshResultDto> {
-    const refreshTokenHash = this.hashToken(refreshToken);
-    const user = await this.userService.findByRefreshTokenHash(refreshTokenHash);
-    if (
-      !user ||
-      !user.refreshTokenHash ||
-      !user.refreshTokenExpiresAt ||
-      user.refreshTokenExpiresAt.getTime() < Date.now()
-    ) {
-      // Log failed token refresh
-      await this.auditLogService.logEvent({
-        eventType: AuthEventType.TOKEN_REFRESH_FAILURE,
-        success: false,
-        request,
-        metadata: { reason: 'Invalid or expired refresh token' },
-      });
-      throw new ForbiddenException();
-    }
-
-    const accessToken = await this.jwtService.signAsync(
-      { sub: user.id },
-      { expiresIn: accessTokenExpiresIn },
-    );
-    const nextRefreshToken = this.generateRefreshToken();
-    const nextRefreshTokenExpiresAt = new Date(Date.now() + refreshTokenTtlMs);
-    await this.userService.updateRefreshToken(
-      user.id,
-      this.hashToken(nextRefreshToken),
-      nextRefreshTokenExpiresAt,
-    );
-
-    // Log successful token refresh
-    await this.auditLogService.logEvent({
-      userId: user.id,
-      email: user.email,
-      eventType: AuthEventType.TOKEN_REFRESH,
-      success: true,
-      request,
-    });
-
-    return { accessToken, refreshToken: nextRefreshToken };
-  }
-
-  async logout(refreshToken: string, accessToken?: string, request?: Request): Promise<void> {
-    const refreshTokenHash = this.hashToken(refreshToken);
-    const user = await this.userService.findByRefreshTokenHash(refreshTokenHash);
-    if (!user) {
+  async logout(accessToken: string | null, request?: Request): Promise<void> {
+    if (!accessToken) {
       return;
     }
 
-    // Clear refresh token from database
-    await this.userService.clearRefreshToken(user.id);
-
-    // Revoke access token if provided
-    if (accessToken) {
-      try {
-        const decoded = this.jwtService.decode(accessToken) as { exp?: number };
-        if (decoded && decoded.exp) {
-          const expiresAt = new Date(decoded.exp * 1000);
-          await this.tokenRevocationService.revokeToken(
-            accessToken,
-            user.id,
-            'logout',
-            expiresAt,
-          );
-        }
-      } catch (error) {
-        // Token may be invalid or expired, but we already cleared the refresh token
-        // so we can safely ignore this error
+    try {
+      const decoded = this.jwtService.decode(accessToken) as { sub?: number; exp?: number };
+      if (!decoded) {
+        return;
       }
+
+      const expiresAt = decoded.exp
+        ? new Date(decoded.exp * 1000)
+        : new Date(Date.now() + tokenTtlMs);
+
+      if (decoded.sub) {
+        await this.tokenRevocationService.revokeToken(accessToken, decoded.sub, 'logout', expiresAt);
+
+        const user = await this.userService.findOne(decoded.sub);
+        await this.auditLogService.logEvent({
+          userId: user.id,
+          email: user.email,
+          eventType: AuthEventType.LOGOUT,
+          success: true,
+          request,
+        });
+      }
+    } catch (error) {
+      // Ignore errors during logout
     }
-
-    // Log logout
-    await this.auditLogService.logEvent({
-      userId: user.id,
-      email: user.email,
-      eventType: AuthEventType.LOGOUT,
-      success: true,
-      request,
-    });
-  }
-
-  private generateRefreshToken(): string {
-    return randomBytes(32).toString('hex');
-  }
-
-  private hashToken(token: string): string {
-    return createHash('sha256').update(token).digest('hex');
   }
 }
