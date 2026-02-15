@@ -94,12 +94,17 @@ class MyFoodDataImporter:
         self,
         csv_file_path: str,
         env_file_path: Optional[str] = None,
+        measurements_only: bool = False,
     ):
         self.csv_file_path = csv_file_path
         self.env_file_path = env_file_path
+        self.measurements_only = measurements_only
         self.success_count = 0
         self.error_count = 0
         self.skipped_count = 0
+        self.skipped_missing_food_count = 0
+        self.measurements_added_count = 0
+        self.measurements_skipped_count = 0
         self.submitted_count = 0
         self.batch_success_count = 0
         self.batch_fail_count = 0
@@ -394,7 +399,7 @@ class MyFoodDataImporter:
         cursor: mysql.connector.cursor.MySQLCursor,
         food_id: int,
         measurements: List[Dict],
-    ) -> None:
+    ) -> Dict[str, int]:
         sql = (
             "INSERT INTO food_measurement "
             "(foodId, unit, name, abbreviation, weightInGrams, isDefault, isActive, isFromSource) "
@@ -406,6 +411,8 @@ class MyFoodDataImporter:
             ")"
         )
 
+        inserted = 0
+        skipped = 0
         for measurement in measurements:
             abbreviation = measurement["abbreviation"]
             cursor.execute(
@@ -426,6 +433,11 @@ class MyFoodDataImporter:
                     measurement["weightInGrams"],
                 ),
             )
+            if cursor.rowcount and cursor.rowcount > 0:
+                inserted += 1
+            else:
+                skipped += 1
+        return {"inserted": inserted, "skipped": skipped}
 
     def _write_batch(self, conn: mysql.connector.MySQLConnection, batch: List[Dict], batch_id: int) -> Dict:
         started = time.perf_counter()
@@ -434,9 +446,16 @@ class MyFoodDataImporter:
         try:
             for item in batch:
                 food_id = self._find_food_id(cursor, item["food"])
-                if food_id is None:
-                    food_id = self._insert_or_update_food(cursor, item["food"])
-                self._ensure_measurements(cursor, food_id, item["measurements"])
+                if self.measurements_only:
+                    if food_id is None:
+                        self.skipped_missing_food_count += 1
+                        continue
+                else:
+                    if food_id is None:
+                        food_id = self._insert_or_update_food(cursor, item["food"])
+                measurement_result = self._ensure_measurements(cursor, food_id, item["measurements"])
+                self.measurements_added_count += measurement_result["inserted"]
+                self.measurements_skipped_count += measurement_result["skipped"]
 
             conn.commit()
             latency = time.perf_counter() - started
@@ -455,6 +474,8 @@ class MyFoodDataImporter:
             f"{self.db_config['user']}@{self.db_config['host']}:{self.db_config['port']}/{self.db_config['database']}"
         )
         print(f"Settings: batch_size={batch_size}")
+        if self.measurements_only:
+            print("Mode: measurements-only (no food inserts/updates)")
 
         batch: List[Dict] = []
         processed_rows = 0
@@ -558,9 +579,13 @@ class MyFoodDataImporter:
         print(f"Batches written: {submitted_batches}")
         print(f"Rows processed: {processed_rows}")
         print(f"Rows skipped (missing name): {self.skipped_count}")
+        if self.measurements_only:
+            print(f"Rows skipped (food not found): {self.skipped_missing_food_count}")
         print(f"Rows submitted: {self.submitted_count}")
         print(f"Successful rows written: {self.success_count}")
         print(f"Failed rows written: {self.error_count}")
+        print(f"Measurements added: {self.measurements_added_count}")
+        print(f"Measurements skipped (already existed): {self.measurements_skipped_count}")
         print(f"Successful batches: {self.batch_success_count}")
         print(f"Failed batches: {self.batch_fail_count}")
         print(f"Avg batch latency: {avg_latency_s:.2f}s")
@@ -587,6 +612,11 @@ if __name__ == "__main__":
     )
     parser.add_argument("--batch-size", type=int, default=100, help="Rows per DB transaction.")
     parser.add_argument(
+        "--measurements-only",
+        action="store_true",
+        help="Only insert missing measurements for existing foods (no food inserts/updates).",
+    )
+    parser.add_argument(
         "--max-error-examples",
         type=int,
         default=10,
@@ -595,7 +625,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    importer = MyFoodDataImporter(args.csv_file, args.env_file)
+    importer = MyFoodDataImporter(args.csv_file, args.env_file, measurements_only=args.measurements_only)
     importer.import_foods(
         batch_size=args.batch_size,
         max_error_examples=args.max_error_examples,
