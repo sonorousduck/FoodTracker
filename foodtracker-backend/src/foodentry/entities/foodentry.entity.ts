@@ -20,7 +20,7 @@ export class FoodEntry {
   @ManyToOne(() => FoodMeasurement, { nullable: true })
   measurement?: FoodMeasurement;
 
-  @ManyToOne(() => Recipe, { nullable: true })
+  @ManyToOne(() => Recipe, { nullable: true, onDelete: 'SET NULL' })
   recipe?: Recipe;
 
   @Column("decimal", { precision: 10, scale: 4 })

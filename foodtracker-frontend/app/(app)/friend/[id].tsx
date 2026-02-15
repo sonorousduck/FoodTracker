@@ -177,14 +177,6 @@ export default function FriendDetail() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.backButton, { borderColor: colors.modalSecondary }]}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-          testID="friend-back"
-        >
-          <ThemedText style={styles.backButtonText}>← Back</ThemedText>
-        </TouchableOpacity>
         <ThemedText style={styles.title}>{friend ? `${friend.firstName} ${friend.lastName}` : "Friend"}</ThemedText>
         {friend ? <ThemedText style={[styles.subtitle, { color: colors.icon }]}>{friend.email}</ThemedText> : null}
       </View>
@@ -399,19 +391,6 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 4,
-    paddingTop: 8,
-  },
-  backButton: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 6,
-  },
-  backButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
   },
   title: {
     fontSize: 22,
