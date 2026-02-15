@@ -30,7 +30,7 @@ import { GoalModule } from './goal/goal.module';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // 1 minute
-        limit: 10, // 10 requests per minute (default)
+        limit: 1000, // 1000 requests per minute (default)
       },
     ]),
     TypeOrmModule.forRoot({
