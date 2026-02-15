@@ -11,6 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { PassportJwtAuthGuard } from 'src/auth/guards/passportjwt.guard';
+import { SkipCsrf } from 'src/common/guards/csrf.guard';
 import { User } from 'src/common/user.decorator';
 
 import { CreateBasicFoodDto } from './dto/createbasicfood.dto';
@@ -66,6 +67,7 @@ export class FoodController {
   }
 
   @Post('recreate-index')
+  @SkipCsrf()
   recreateFoodsIndex() {
     return this.foodService.recreateFoodIndex();
   }
