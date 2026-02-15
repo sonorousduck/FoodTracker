@@ -157,12 +157,12 @@ class MyFoodDataImporter:
             os.environ.setdefault(key, value)
 
     def _clean_string(self, value) -> Optional[str]:
-        if pd.isna(value) or value == "" or value == "N/A":
+        if pd.isna(value) or value in ("", "N/A", "NULL", "null", "None"):
             return None
         return str(value).strip()
 
     def _clean_numeric(self, value) -> float:
-        if pd.isna(value) or value == "" or value == "N/A":
+        if pd.isna(value) or value in ("", "N/A", "NULL", "null", "None"):
             return 0.0
         try:
             return float(value)
@@ -456,13 +456,18 @@ class MyFoodDataImporter:
             batch = []
 
         try:
-            # The CSV has 3 non-data rows after the header row; skiprows=[1,2,3] drops them.
+            # The CSV has 3 non-data rows before the header row; skiprows=[0,1,2] drops them.
             for chunk in pd.read_csv(
                 self.csv_file_path,
-                skiprows=[1, 2, 3],
+                skiprows=[0, 1, 2],
                 chunksize=5000,
                 low_memory=False,
             ):
+                if "Name" not in chunk.columns:
+                    raise RuntimeError(
+                        "CSV header missing expected 'Name' column. "
+                        f"Found columns: {', '.join(str(col) for col in chunk.columns)}"
+                    )
                 for row in chunk.to_dict(orient="records"):
                     processed_rows += 1
                     payload = self._row_to_payload(row)
