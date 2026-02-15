@@ -10,7 +10,7 @@ import { MealType } from '@/types/foodentry/updatefoodentry';
 import { FriendProfile } from '@/types/friends/friendprofile';
 import { Recipe } from '@/types/recipe/recipe';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 
@@ -84,6 +84,12 @@ export default function FriendDetail() {
       loadDiary(selectedDate);
     }, [loadDiary, loadFriend, selectedDate])
   );
+
+  useEffect(() => {
+    if (activeView === "search") {
+      searchRecipes();
+    }
+  }, [activeView, searchRecipes]);
 
   const searchRecipes = useCallback(async () => {
     if (!Number.isFinite(friendId)) {
@@ -305,14 +311,16 @@ export default function FriendDetail() {
               label="Search recipes"
               value={recipeQuery}
               onChangeText={setRecipeQuery}
+              onSubmitEditing={searchRecipes}
+              returnKeyType="search"
               containerStyle={styles.searchInput}
               testID="friend-recipe-query"
             />
             <TouchableOpacity
-              style={[styles.primaryButton, { backgroundColor: colors.tint, opacity: recipeQuery.trim() ? 1 : 0.6 }]}
+              style={[styles.primaryButton, { backgroundColor: colors.tint, opacity: isRecipeLoading ? 0.6 : 1 }]}
               onPress={searchRecipes}
               activeOpacity={0.8}
-              disabled={!recipeQuery.trim() || isRecipeLoading}
+              disabled={isRecipeLoading}
               testID="friend-recipe-search"
             >
               {isRecipeLoading ? (

@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import mysql.connector
+from tqdm import tqdm
 
 
 class DuplicateFoodMerger:
@@ -96,7 +97,12 @@ class DuplicateFoodMerger:
 
         try:
             groups = self._fetch_duplicate_groups(cursor)
-            for name, calories, ids in groups:
+            for name, calories, ids in tqdm(
+                groups,
+                desc="Duplicate groups merged",
+                unit="group",
+                dynamic_ncols=True,
+            ):
                 canonical_id = ids[0]
                 duplicate_ids = ids[1:]
                 if not duplicate_ids:
