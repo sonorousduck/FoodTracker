@@ -333,6 +333,20 @@ class MyFoodDataImporter:
         cursor.execute(sql, values)
         return int(cursor.lastrowid)
 
+    def _find_food_id_by_name(
+        self,
+        cursor: mysql.connector.cursor.MySQLCursor,
+        name: str,
+    ) -> Optional[int]:
+        cursor.execute(
+            "SELECT id FROM food WHERE name = %s ORDER BY id LIMIT 1",
+            (name,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return int(row[0])
+
     def _ensure_measurements(
         self,
         cursor: mysql.connector.cursor.MySQLCursor,
@@ -372,7 +386,10 @@ class MyFoodDataImporter:
 
         try:
             for item in batch:
-                food_id = self._insert_or_update_food(cursor, item["food"])
+                food_name = item["food"]["name"]
+                food_id = self._find_food_id_by_name(cursor, food_name)
+                if food_id is None:
+                    food_id = self._insert_or_update_food(cursor, item["food"])
                 self._ensure_measurements(cursor, food_id, item["measurements"])
 
             conn.commit()
