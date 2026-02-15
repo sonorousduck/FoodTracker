@@ -122,7 +122,7 @@ describe('FoodService', () => {
     };
 
     foodRepository.findOneBy.mockResolvedValueOnce(null);
-    foodRepository.save.mockResolvedValueOnce(createFoodDto);
+    foodRepository.save.mockResolvedValueOnce({ ...createFoodDto, isCsvFood: true });
 
     await service.createFood(createFoodDto);
 
