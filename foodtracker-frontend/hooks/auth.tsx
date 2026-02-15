@@ -1,4 +1,4 @@
-import apiService, { isAxiosError, updateRefreshToken, updateToken } from "@/lib/api";
+import apiService, { isAxiosError, updateToken } from "@/lib/api";
 import { AuthResult } from "@/types/auth/authResult";
 import { CreateUserDto } from "@/types/users/createuser";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
@@ -75,7 +75,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
           setSession("cookie");
         } else {
           setSession(authResult.accessToken);
-          await updateRefreshToken(authResult.refreshToken ?? null);
         }
       }
 
@@ -110,12 +109,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const signOut = async () => {
     try {
-      if (Platform.OS === "web") {
-        await apiService.post("/auth/logout");
-      } else {
-        const refreshToken = apiService.getRefreshToken();
-        await apiService.post("/auth/logout", { refreshToken });
-      }
+      await apiService.post("/auth/logout");
     } catch (error) {
       if (!isAxiosError(error)) {
         console.error("Failed to log out:", error);
@@ -123,7 +117,6 @@ export function SessionProvider({ children }: PropsWithChildren) {
     } finally {
       setSession(null);
       await updateToken(null);
-      await updateRefreshToken(null);
     }
   };
 

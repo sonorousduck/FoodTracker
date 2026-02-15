@@ -22,6 +22,7 @@
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
+    "@sentry/react-native": "^8.0.0",
     "@shopify/react-native-skia": "2.2.12",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
