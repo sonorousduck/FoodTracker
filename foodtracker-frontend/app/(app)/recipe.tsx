@@ -32,6 +32,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'reac
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
@@ -390,8 +391,34 @@ export default function Recipe() {
     validateInputs,
   ]);
 
+  const executeDelete = useCallback(async () => {
+    if (!isEditing || !recipeId) {
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await deleteRecipe(recipeId);
+      router.replace('/recipes');
+    } catch (error) {
+      const message = isAxiosError(error)
+        ? error.response?.data?.message || error.message
+        : 'Failed to delete recipe.';
+      Alert.alert('Error', message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isEditing, recipeId, router]);
+
   const handleDelete = useCallback(() => {
     if (!isEditing || !recipeId || isSubmitting) {
+      return;
+    }
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const confirmed = window.confirm('Delete recipe? This cannot be undone.');
+      if (confirmed) {
+        executeDelete();
+      }
       return;
     }
 
@@ -400,23 +427,10 @@ export default function Recipe() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          setIsSubmitting(true);
-          try {
-            await deleteRecipe(recipeId);
-            router.replace('/recipes');
-          } catch (error) {
-            const message = isAxiosError(error)
-              ? error.response?.data?.message || error.message
-              : 'Failed to delete recipe.';
-            Alert.alert('Error', message);
-          } finally {
-            setIsSubmitting(false);
-          }
-        },
+        onPress: executeDelete,
       },
     ]);
-  }, [isEditing, isSubmitting, recipeId, router]);
+  }, [executeDelete, isEditing, isSubmitting, recipeId]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
