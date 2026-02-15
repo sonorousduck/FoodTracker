@@ -55,7 +55,8 @@
           "project": "foodtracker",
           "organization": "sonorousduck"
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true
