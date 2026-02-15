@@ -12,6 +12,7 @@ jest.mock("expo-router", () => {
       React.useEffect(() => cb(), [cb]);
     },
     useLocalSearchParams: () => ({ id: "2" }),
+    useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
   };
 });
 

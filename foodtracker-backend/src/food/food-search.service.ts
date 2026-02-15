@@ -13,10 +13,13 @@ export class FoodSearchService implements OnModuleInit {
   private readonly logger = new Logger(FoodSearchService.name);
   private readonly client: Client;
   private readonly indexName: string;
+  private readonly bulkBatchSize: number;
 
   constructor() {
     const node = process.env.ES_URL ?? 'http://localhost:9200';
     this.indexName = process.env.ES_FOOD_INDEX ?? 'foods';
+    const parsedBatchSize = Number.parseInt(process.env.ES_BULK_BATCH_SIZE ?? '', 10);
+    this.bulkBatchSize = Number.isFinite(parsedBatchSize) && parsedBatchSize > 0 ? parsedBatchSize : 500;
     this.client = new Client({ node });
   }
 
@@ -42,22 +45,25 @@ export class FoodSearchService implements OnModuleInit {
       return;
     }
 
-    const operations = foods.flatMap((food) => [
-      { index: { _index: this.indexName, _id: food.id.toString() } },
-      {
-        name: food.name,
-        brand: food.brand ?? null,
-        isCsvFood: food.isCsvFood,
-      },
-    ]);
+    for (let start = 0; start < foods.length; start += this.bulkBatchSize) {
+      const batch = foods.slice(start, start + this.bulkBatchSize);
+      const operations = batch.flatMap((food) => [
+        { index: { _index: this.indexName, _id: food.id.toString() } },
+        {
+          name: food.name,
+          brand: food.brand ?? null,
+          isCsvFood: food.isCsvFood,
+        },
+      ]);
 
-    const response = await this.client.bulk({
-      refresh: 'wait_for',
-      operations,
-    });
+      const response = await this.client.bulk({
+        refresh: 'wait_for',
+        operations,
+      });
 
-    if (response.errors) {
-      this.logger.warn('Elasticsearch bulk indexing reported errors.');
+      if (response.errors) {
+        this.logger.warn('Elasticsearch bulk indexing reported errors.');
+      }
     }
   }
 

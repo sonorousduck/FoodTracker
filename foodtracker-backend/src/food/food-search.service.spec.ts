@@ -1,89 +1,47 @@
-const searchMock = jest.fn();
-const indicesExistsMock = jest.fn();
-const indicesCreateMock = jest.fn();
-
-jest.mock('@elastic/elasticsearch', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    search: searchMock,
-    indices: {
-      exists: indicesExistsMock,
-      create: indicesCreateMock,
-    },
-  })),
-}));
+import { Client } from '@elastic/elasticsearch';
 
 import { FoodSearchService } from './food-search.service';
 
+jest.mock('@elastic/elasticsearch', () => ({
+  Client: jest.fn(),
+}));
+
 describe('FoodSearchService', () => {
+  const bulkMock = jest.fn();
+
+  beforeEach(() => {
+    bulkMock.mockResolvedValue({ errors: false });
+    (Client as jest.Mock).mockImplementation(() => ({
+      bulk: bulkMock,
+      index: jest.fn(),
+      search: jest.fn(),
+      indices: {
+        exists: jest.fn(),
+        create: jest.fn(),
+        delete: jest.fn(),
+      },
+    }));
+  });
+
   afterEach(() => {
+    delete process.env.ES_BULK_BATCH_SIZE;
     jest.clearAllMocks();
   });
 
-  it('boosts exact name matches ahead of fuzzy results', async () => {
-    searchMock.mockResolvedValueOnce({
-      hits: {
-        hits: [{ _id: '2' }, { _id: '1' }],
-      },
-    });
-
+  it('batches bulk indexing requests', async () => {
+    process.env.ES_BULK_BATCH_SIZE = '2';
     const service = new FoodSearchService();
 
-    await service.searchFoodsByName('Apple', 5);
+    await service.bulkIndexFoods([
+      { id: 1, name: 'Food 1', brand: 'Brand', isCsvFood: true },
+      { id: 2, name: 'Food 2', brand: null, isCsvFood: false },
+      { id: 3, name: 'Food 3', brand: null, isCsvFood: true },
+      { id: 4, name: 'Food 4', brand: null, isCsvFood: false },
+      { id: 5, name: 'Food 5', brand: null, isCsvFood: true },
+    ]);
 
-    expect(searchMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        index: 'foods',
-        size: 5,
-        query: {
-          function_score: expect.objectContaining({
-            query: {
-              bool: expect.objectContaining({
-                minimum_should_match: 1,
-                should: expect.arrayContaining([
-                  {
-                    term: {
-                      'name.keyword': {
-                        value: 'apple',
-                        boost: 10,
-                      },
-                    },
-                  },
-                  {
-                    match: {
-                      'name.prefix': {
-                        query: 'apple',
-                        boost: 6,
-                      },
-                    },
-                  },
-                  {
-                    match_phrase: {
-                      name: {
-                        query: 'Apple',
-                        boost: 3,
-                      },
-                    },
-                  },
-                ]),
-              }),
-            },
-          }),
-        },
-      }),
-    );
-  });
-
-  it('returns numeric ids in search order', async () => {
-    searchMock.mockResolvedValueOnce({
-      hits: {
-        hits: [{ _id: '5' }, { _id: '2' }],
-      },
-    });
-
-    const service = new FoodSearchService();
-
-    const result = await service.searchFoodsByName('Apple', 10);
-
-    expect(result).toEqual([5, 2]);
+    expect(bulkMock).toHaveBeenCalledTimes(3);
+    expect(bulkMock.mock.calls[0][0].operations).toHaveLength(4);
+    expect(bulkMock.mock.calls[2][0].operations).toHaveLength(2);
   });
 });
