@@ -85,12 +85,6 @@ export default function FriendDetail() {
     }, [loadDiary, loadFriend, selectedDate])
   );
 
-  useEffect(() => {
-    if (activeView === "search") {
-      searchRecipes();
-    }
-  }, [activeView, searchRecipes]);
-
   const searchRecipes = useCallback(async () => {
     if (!Number.isFinite(friendId)) {
       return;
@@ -108,6 +102,12 @@ export default function FriendDetail() {
       setIsRecipeLoading(false);
     }
   }, [friendId, recipeQuery]);
+
+  useEffect(() => {
+    if (activeView === "search") {
+      searchRecipes();
+    }
+  }, [activeView, searchRecipes]);
 
   const goToPreviousDay = () => {
     setSelectedDate((prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate() - 1));
