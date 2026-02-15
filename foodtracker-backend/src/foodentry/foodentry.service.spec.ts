@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 import { Food } from 'src/food/entities/food.entity';
 import { FoodMeasurement } from 'src/foodmeasurement/entities/foodmeasurement.entity';
+import { Friendship } from 'src/friends/entities/friendship.entity';
 import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
 import { FoodentryService } from './foodentry.service';
@@ -43,6 +44,9 @@ describe('FoodentryService', () => {
   let measurementRepository: {
     findOne: jest.Mock;
   };
+  let friendshipRepository: {
+    findOne: jest.Mock;
+  };
 
   beforeEach(async () => {
     queryBuilder = {
@@ -77,6 +81,9 @@ describe('FoodentryService', () => {
     measurementRepository = {
       findOne: jest.fn(),
     };
+    friendshipRepository = {
+      findOne: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -101,6 +108,10 @@ describe('FoodentryService', () => {
           provide: getRepositoryToken(FoodMeasurement),
           useValue:
             measurementRepository as unknown as Repository<FoodMeasurement>,
+        },
+        {
+          provide: getRepositoryToken(Friendship),
+          useValue: friendshipRepository as unknown as Repository<Friendship>,
         },
       ],
     }).compile();

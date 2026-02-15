@@ -58,6 +58,15 @@ export default function AppLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="friend/[id]"
+        options={{
+          headerTitle: 'Friend',
+          headerBackButtonDisplayMode: 'generic',
+          headerShadowVisible: false,
+          headerTransparent: true,
+        }}
+      />
     </Stack>
   );
 }

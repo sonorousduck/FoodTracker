@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { FoodMeasurement } from 'src/foodmeasurement/entities/foodmeasurement.en
 import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
 import { Repository } from 'typeorm';
+import { Friendship, FriendshipStatus } from 'src/friends/entities/friendship.entity';
 import {
   CreateFoodEntryDto,
   MEAL_TYPES,
@@ -30,6 +32,8 @@ export class FoodentryService {
     private readonly recipeRepository: Repository<Recipe>,
     @InjectRepository(FoodMeasurement)
     private readonly measurementRepository: Repository<FoodMeasurement>,
+    @InjectRepository(Friendship)
+    private readonly friendshipRepository: Repository<Friendship>,
   ) {}
 
   async getHistory({ userId, limit }: { userId: number; limit?: number }) {
@@ -177,12 +181,35 @@ export class FoodentryService {
     if (hasRecipe) {
       recipe =
         (await this.recipeRepository.findOne({
-          where: { id: recipeId, user: { id: userId } },
+          where: { id: recipeId },
+          relations: ['user'],
         })) ?? undefined;
       if (!recipe) {
         throw new NotFoundException(
           `Recipe was not found with id: ${recipeId}`,
         );
+      }
+      if (recipe.user.id !== userId) {
+        const friendship = await this.friendshipRepository.findOne({
+          where: [
+            {
+              requester: { id: userId },
+              addressee: { id: recipe.user.id },
+              status: FriendshipStatus.Accepted,
+            },
+            {
+              requester: { id: recipe.user.id },
+              addressee: { id: userId },
+              status: FriendshipStatus.Accepted,
+            },
+          ],
+        });
+
+        if (!friendship) {
+          throw new ForbiddenException(
+            'You do not have access to this recipe.',
+          );
+        }
       }
     }
 

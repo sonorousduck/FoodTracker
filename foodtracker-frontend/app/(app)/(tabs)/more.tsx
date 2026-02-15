@@ -29,6 +29,20 @@ export default function Tab() {
             Search and edit your recipes
           </ThemedText>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.listItem,
+            { borderColor: colors.modalSecondary, backgroundColor: colors.modal },
+          ]}
+          onPress={() => router.push("/friends")}
+          activeOpacity={0.7}
+          testID="more-friends"
+        >
+          <ThemedText style={styles.listTitle}>Friends</ThemedText>
+          <ThemedText style={[styles.listSubtitle, { color: colors.icon }]}>
+            Find people and share recipes
+          </ThemedText>
+        </TouchableOpacity>
       </View>
       <AddModalPrimaryAction
         onPress={() => {

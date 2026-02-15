@@ -19,6 +19,7 @@ import { RecipefoodModule } from './recipefood/recipefood.module';
 import { UsersModule } from './users/users.module';
 import { WeightModule } from './weight/weight.module';
 import { GoalModule } from './goal/goal.module';
+import { FriendsModule } from './friends/friends.module';
 
 
 @Module({
@@ -52,6 +53,7 @@ import { GoalModule } from './goal/goal.module';
     FoodmeasurementModule,
     WeightModule,
     GoalModule,
+    FriendsModule,
   ],
   controllers: [AppController],
   providers: [

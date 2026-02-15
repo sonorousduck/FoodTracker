@@ -5,6 +5,7 @@ import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
 import { Weight } from 'src/weight/entities/weight.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Friendship } from 'src/friends/entities/friendship.entity';
 
 
 @Entity()
@@ -44,4 +45,10 @@ export class User {
 
   @OneToMany(() => Goal, (goal) => goal.user)
   goals: ReadonlyArray<Goal>;
+
+  @OneToMany(() => Friendship, (friendship) => friendship.requester)
+  friendRequestsSent: ReadonlyArray<Friendship>;
+
+  @OneToMany(() => Friendship, (friendship) => friendship.addressee)
+  friendRequestsReceived: ReadonlyArray<Friendship>;
 }

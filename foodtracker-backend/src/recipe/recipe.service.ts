@@ -146,6 +146,49 @@ export class RecipeService {
     return true;
   }
 
+  async cloneRecipeFromUser({
+    recipeId,
+    sourceUserId,
+    targetUserId,
+  }: {
+    recipeId: number;
+    sourceUserId: number;
+    targetUserId: number;
+  }) {
+    const sourceRecipe = await this.recipeRepository.findOne({
+      where: { id: recipeId, user: { id: sourceUserId } },
+      relations: ['ingredients', 'ingredients.food'],
+    });
+
+    if (!sourceRecipe) {
+      throw new NotFoundException(`Recipe not found with id ${recipeId}`);
+    }
+
+    const ingredients = sourceRecipe.ingredients.map((ingredient) => ({
+      foodId: ingredient.food.id,
+      servings: ingredient.servings,
+      measurementId: ingredient.measurementId ?? null,
+    }));
+
+    await this.ensureFoodsExist(ingredients);
+    const totalCalories = await this.calculateTotalCalories(ingredients);
+
+    const recipe = this.recipeRepository.create({
+      title: sourceRecipe.title,
+      servings: sourceRecipe.servings,
+      calories: totalCalories,
+      user: { id: targetUserId },
+      ingredients: ingredients.map((ingredient) => ({
+        food: { id: ingredient.foodId },
+        servings: ingredient.servings,
+        measurementId: ingredient.measurementId ?? null,
+      })),
+    });
+
+    const saved = await this.recipeRepository.save(recipe);
+    return this.getRecipe(saved.id, targetUserId);
+  }
+
   private async ensureFoodsExist(
     ingredients: ReadonlyArray<{ foodId: number }>,
   ): Promise<void> {

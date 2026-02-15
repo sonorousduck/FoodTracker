@@ -1,16 +1,17 @@
-import "react-native-reanimated";
+import 'react-native-reanimated';
 
-import { SessionProvider, useSession } from "@/hooks/auth";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import * as Sentry from "@sentry/react-native";
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from "react-native-paper";
+import { Colors } from '@/constants/Colors';
+import { SessionProvider, useSession } from '@/hooks/auth';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
+import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
 
-import SplashScreenController from "./splash";
+import SplashScreenController from './splash';
+
 
 Sentry.init({
   dsn: "https://27d9e2271b7d48ff90adaf1bfed2b84b@logging.sonorousduck.com/1",
@@ -85,13 +86,13 @@ function RootNavigator() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, title: "Duck Log" }}>
       <Stack.Protected guard={session != null}>
-        <Stack.Screen name="(app)" />
+        <Stack.Screen name="(app)" options={{ title: "Duck log" }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
-        <Stack.Screen name="signin" />
-        <Stack.Screen name="createaccount" />
+        <Stack.Screen name="signin" options={{ title: "Duck log" }} />
+        <Stack.Screen name="createaccount" options={{ title: "Duck log" }} />
       </Stack.Protected>
     </Stack>
   );
