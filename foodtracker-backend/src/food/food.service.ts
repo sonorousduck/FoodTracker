@@ -14,12 +14,20 @@ import { FoodSearchService } from "./food-search.service";
 @Injectable()
 export class FoodService {
   private readonly logger = new Logger(FoodService.name);
+  private readonly reindexBatchSize: number;
 
   constructor(
     @InjectRepository(Food)
     private readonly foodRepository: Repository<Food>,
     private readonly foodSearchService: FoodSearchService
-  ) {}
+  ) {
+    const parsedBatchSize = Number.parseInt(
+      process.env.ES_REINDEX_BATCH_SIZE ?? process.env.ES_BULK_BATCH_SIZE ?? "",
+      10
+    );
+    this.reindexBatchSize =
+      Number.isFinite(parsedBatchSize) && parsedBatchSize > 0 ? parsedBatchSize : 500;
+  }
   async createBasicFood(createBasicFoodDto: CreateBasicFoodDto, userRequest: UserRequest) {
     const food = await this.foodRepository.save({ ...createBasicFoodDto, createdBy: { id: userRequest.userId } });
 
@@ -90,15 +98,37 @@ export class FoodService {
   }
 
   async reindexFoods(): Promise<{ indexedCount: number }> {
-    const foods = await this.foodRepository.find({ select: ["id", "name", "brand", "isCsvFood"] });
-    await this.foodSearchService.bulkIndexFoods(
-      foods.map((food) => ({
-        ...food,
-        isCsvFood: Boolean(food.isCsvFood),
-      }))
-    );
+    let indexedCount = 0;
+    let offset = 0;
 
-    return { indexedCount: foods.length };
+    while (true) {
+      const foods = await this.foodRepository.find({
+        select: ["id", "name", "brand", "isCsvFood"],
+        take: this.reindexBatchSize,
+        skip: offset,
+        order: { id: "ASC" },
+      });
+
+      if (foods.length === 0) {
+        break;
+      }
+
+      await this.foodSearchService.bulkIndexFoods(
+        foods.map((food) => ({
+          ...food,
+          isCsvFood: Boolean(food.isCsvFood),
+        }))
+      );
+
+      indexedCount += foods.length;
+      offset += foods.length;
+
+      if (foods.length < this.reindexBatchSize) {
+        break;
+      }
+    }
+
+    return { indexedCount };
   }
 
   async recreateFoodIndex(): Promise<{ indexedCount: number }> {

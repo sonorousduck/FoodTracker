@@ -19,6 +19,7 @@ describe('FoodService', () => {
   };
 
   beforeEach(async () => {
+    process.env.ES_REINDEX_BATCH_SIZE = '2';
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FoodService,
@@ -31,6 +32,7 @@ describe('FoodService', () => {
   });
 
   afterEach(() => {
+    delete process.env.ES_REINDEX_BATCH_SIZE;
     jest.clearAllMocks();
   });
 
@@ -130,6 +132,43 @@ describe('FoodService', () => {
     expect(foodSearchService.indexFood).toHaveBeenCalledWith({
       ...createFoodDto,
       isCsvFood: true,
+    });
+  });
+
+  it('reindexes foods in batches', async () => {
+    const firstBatch = [
+      { id: 1, name: 'Apple', brand: null, isCsvFood: true },
+      { id: 2, name: 'Banana', brand: 'Brand', isCsvFood: false },
+    ];
+    const secondBatch = [{ id: 3, name: 'Carrot', brand: null, isCsvFood: true }];
+
+    foodRepository.find
+      .mockResolvedValueOnce(firstBatch)
+      .mockResolvedValueOnce(secondBatch)
+      .mockResolvedValueOnce([]);
+
+    const result = await service.reindexFoods();
+
+    expect(foodSearchService.bulkIndexFoods).toHaveBeenCalledTimes(2);
+    expect(foodSearchService.bulkIndexFoods).toHaveBeenNthCalledWith(1, [
+      { ...firstBatch[0], isCsvFood: true },
+      { ...firstBatch[1], isCsvFood: false },
+    ]);
+    expect(foodSearchService.bulkIndexFoods).toHaveBeenNthCalledWith(2, [
+      { ...secondBatch[0], isCsvFood: true },
+    ]);
+    expect(result).toEqual({ indexedCount: 3 });
+    expect(foodRepository.find).toHaveBeenNthCalledWith(1, {
+      select: ['id', 'name', 'brand', 'isCsvFood'],
+      take: 2,
+      skip: 0,
+      order: { id: 'ASC' },
+    });
+    expect(foodRepository.find).toHaveBeenNthCalledWith(2, {
+      select: ['id', 'name', 'brand', 'isCsvFood'],
+      take: 2,
+      skip: 2,
+      order: { id: 'ASC' },
     });
   });
 });
