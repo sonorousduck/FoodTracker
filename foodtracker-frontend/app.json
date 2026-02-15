@@ -11,8 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "We need access to your camera to scan barcodes."
-      }
+        "NSCameraUsageDescription": "We need access to your camera to scan barcodes.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.sonorousduck.FoodTracker"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +22,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +51,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f48d3cae-707b-4df9-9c70-f111fa56b182"
+      }
     }
   }
 }
