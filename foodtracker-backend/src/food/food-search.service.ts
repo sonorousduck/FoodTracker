@@ -84,7 +84,7 @@ export class FoodSearchService implements OnModuleInit {
                 {
                   multi_match: {
                     query: sanitizedQuery,
-                    fields: ['name^2', 'brand'],
+                    fields: ['name^3', 'brand^0.2'],
                     type: 'best_fields',
                     fuzziness: 'AUTO',
                     operator: 'and',
@@ -116,7 +116,7 @@ export class FoodSearchService implements OnModuleInit {
                       query: sanitizedQuery,
                       fuzziness: 'AUTO',
                       operator: 'and',
-                      boost: 1,
+                      boost: 0.2,
                     },
                   },
                 },

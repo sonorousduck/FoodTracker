@@ -75,6 +75,7 @@ describe('FoodSearchService', () => {
                   expect.objectContaining({
                     multi_match: expect.objectContaining({
                       query: 'chiken brest',
+                      fields: ['name^3', 'brand^0.2'],
                       fuzziness: 'AUTO',
                     }),
                   }),
@@ -82,6 +83,13 @@ describe('FoodSearchService', () => {
                     match: expect.objectContaining({
                       name: expect.objectContaining({
                         fuzziness: 'AUTO',
+                      }),
+                    }),
+                  }),
+                  expect.objectContaining({
+                    match: expect.objectContaining({
+                      brand: expect.objectContaining({
+                        boost: 0.2,
                       }),
                     }),
                   }),
