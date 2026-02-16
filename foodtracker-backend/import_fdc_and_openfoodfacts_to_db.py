@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 
 class FdcOpenFoodFactsImporter:
-    IMPORT_STAGES = ("fdc", "fdc-portions", "openfoodfacts")
+    IMPORT_STAGES = ("fdc", "fdc-portions", "openfoodfacts", "elasticsearch")
     FOOD_COLUMNS = [
         "sourceId",
         "isCsvFood",
@@ -1352,11 +1352,23 @@ class FdcOpenFoodFactsImporter:
         response.raise_for_status()
 
     def _drop_es_db(self) -> None:
-        response = requests.delete(f"{self.es_url}/_all", timeout=60)
-        if response.status_code in (200, 404):
+        list_response = requests.get(f"{self.es_url}/_cat/indices?format=json", timeout=60)
+        list_response.raise_for_status()
+        indices_payload = list_response.json()
+        indices = [
+            str(item.get("index"))
+            for item in indices_payload
+            if isinstance(item, dict) and item.get("index")
+        ]
+        if not indices:
+            print("No Elasticsearch indices found to drop.")
             return
 
-        response.raise_for_status()
+        for index_name in indices:
+            response = requests.delete(f"{self.es_url}/{index_name}", timeout=60)
+            if response.status_code in (200, 404):
+                continue
+            response.raise_for_status()
 
     def _create_es_index(self) -> None:
         payload = self._build_es_index_payload()
@@ -1440,6 +1452,7 @@ class FdcOpenFoodFactsImporter:
         run_fdc = start_idx <= 0 <= stop_idx
         run_fdc_portions = start_idx <= 1 <= stop_idx
         run_openfoodfacts = start_idx <= 2 <= stop_idx
+        run_elasticsearch = start_idx <= 3 <= stop_idx
         lookup_db: Optional[Path] = None
         try:
             if run_fdc:
@@ -1460,7 +1473,8 @@ class FdcOpenFoodFactsImporter:
                 except OSError:
                     pass
 
-        self._reindex_es_direct()
+        if run_elasticsearch:
+            self._reindex_es_direct()
 
         elapsed = time.perf_counter() - start
         print("IMPORT SUMMARY")
