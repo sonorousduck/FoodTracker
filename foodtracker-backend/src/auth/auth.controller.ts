@@ -1,12 +1,12 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from "@nestjs/common";
-import { CreateUserDto } from "src/users/dto/createuser.dto";
+import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import type { CookieOptions, Request, Response } from "express";
-import { Throttle, SkipThrottle } from "@nestjs/throttler";
 import { SkipCsrf } from "src/common/guards/csrf.guard";
+import { CreateUserDto } from "src/users/dto/createuser.dto";
 
-import { PassportJwtAuthGuard } from "./guards/passportjwt.guard";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
+import { PassportJwtAuthGuard } from "./guards/passportjwt.guard";
 
 const accessTokenCookieName = "accessToken";
 const tokenMaxAgeMs = 1000 * 60 * 60 * 24 * 30;
@@ -53,7 +53,7 @@ const isSecureRequest = (request: Request) => {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Throttle({ default: { limit: 5, ttl: 900000 } }) // 5 attempts per 15 minutes
+  @Throttle({ default: { limit: 100, ttl: 900000 } }) // 5 attempts per 15 minutes
   @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("login")
@@ -73,7 +73,7 @@ export class AuthController {
     return response.status(HttpStatus.OK).json(authResult);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 attempts per hour
+  @Throttle({ default: { limit: 100, ttl: 900000 } }) // 20 attempts per 15 minutes
   @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("create")
