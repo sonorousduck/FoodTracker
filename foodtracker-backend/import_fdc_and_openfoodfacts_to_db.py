@@ -1041,6 +1041,65 @@ class FdcOpenFoodFactsImporter:
             return value * 1000.0
         return value
 
+    def _ensure_food_match_index(self, conn: mysql.connector.MySQLConnection) -> None:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SHOW INDEX FROM food WHERE Key_name = 'idx_food_name_calories'")
+            has_index = cursor.fetchone() is not None
+            if not has_index:
+                print("Creating MySQL index idx_food_name_calories on food(name, calories)...")
+                cursor.execute("CREATE INDEX idx_food_name_calories ON food (name, calories)")
+                conn.commit()
+        finally:
+            cursor.close()
+
+    def _build_food_match_lookup(
+        self, conn: mysql.connector.MySQLConnection
+    ) -> Dict[Tuple[str, int], int]:
+        print("Building in-memory food match lookup (name+calories)...")
+        self._ensure_food_match_index(conn)
+
+        count_cursor = conn.cursor()
+        try:
+            count_cursor.execute("SELECT COUNT(*) FROM food")
+            result = count_cursor.fetchone()
+            total_rows = int(result[0]) if result else 0
+        finally:
+            count_cursor.close()
+
+        lookup: Dict[Tuple[str, int], int] = {}
+        cursor = conn.cursor(dictionary=True)
+        progress = tqdm(
+            total=total_rows,
+            unit="rows",
+            desc="Food lookup rows",
+            leave=True,
+            dynamic_ncols=True,
+            file=sys.stdout,
+            disable=False,
+        )
+        try:
+            cursor.execute("SELECT id, name, calories FROM food ORDER BY id ASC")
+            while True:
+                rows = cursor.fetchmany(10000)
+                if not rows:
+                    break
+                for row in rows:
+                    raw_name = row.get("name")
+                    calories_raw = row.get("calories")
+                    if not raw_name or calories_raw is None:
+                        continue
+                    key = (str(raw_name).lower(), int(calories_raw))
+                    # Keep the first inserted id as canonical match.
+                    lookup.setdefault(key, int(row["id"]))
+                progress.update(len(rows))
+        finally:
+            progress.close()
+            cursor.close()
+
+        print(f"Food match lookup keys: {len(lookup)}")
+        return lookup
+
     def _run_openfoodfacts(self, conn: mysql.connector.MySQLConnection) -> None:
         if not self.openfoodfacts_csv.exists():
             print(f"OpenFoodFacts CSV not found: {self.openfoodfacts_csv}")
@@ -1048,6 +1107,7 @@ class FdcOpenFoodFactsImporter:
 
         cursor = conn.cursor()
         self._validate_food_columns(conn)
+        food_match_lookup = self._build_food_match_lookup(conn)
 
         print("Reading OpenFoodFacts header to determine available columns...")
         header = pd.read_csv(self.openfoodfacts_csv, sep="\t", nrows=0)
@@ -1164,12 +1224,7 @@ class FdcOpenFoodFactsImporter:
 
                     food_id = match_cache.get(match_key)
                     if food_id is None:
-                        cursor.execute(
-                            "SELECT id FROM food WHERE LOWER(name) = %s AND calories = %s LIMIT 1",
-                            (name.lower(), calories),
-                        )
-                        result = cursor.fetchone()
-                        food_id = int(result[0]) if result else 0
+                        food_id = food_match_lookup.get(match_key, 0)
                         match_cache[match_key] = food_id
                         if len(match_cache) > 50000:
                             match_cache.clear()
@@ -1183,6 +1238,8 @@ class FdcOpenFoodFactsImporter:
                             new_food_id = self._insert_or_update_food(cursor, food)
                             self._ensure_measurements(cursor, new_food_id, payload["measurements"])
                             self._insert_or_update_barcode(cursor, barcode, new_food_id)
+                            food_match_lookup[match_key] = new_food_id
+                            match_cache[match_key] = new_food_id
                             self.openfoodfacts_new_count += 1
                     except mysql.connector.Error:
                         conn.rollback()
