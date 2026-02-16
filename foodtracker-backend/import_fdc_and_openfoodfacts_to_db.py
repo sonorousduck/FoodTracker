@@ -1120,69 +1120,104 @@ class FdcOpenFoodFactsImporter:
         match_cache: Dict[Tuple[str, int], Optional[int]] = {}
         batch_count = 0
         processed = 0
+        scanned = 0
+        skipped_before = self.skipped_count
+        errors_before = self.error_count
+        next_heartbeat_at = time.perf_counter() + 30.0
+        chunk_index = 0
+        progress = tqdm(
+            total=None,
+            unit="rows",
+            desc="OpenFoodFacts rows scanned",
+            leave=True,
+            dynamic_ncols=True,
+            file=sys.stdout,
+            disable=False,
+        )
 
-        for chunk in pd.read_csv(
-            self.openfoodfacts_csv,
-            sep="\t",
-            usecols=usecols,
-            chunksize=5000,
-            dtype=str,
-            low_memory=False,
-        ):
-            rows = chunk.to_dict(orient="records")
-            for row in rows:
-                payload = self._openfoodfacts_payload(row)
-                if not payload:
-                    self.skipped_count += 1
-                    continue
+        try:
+            for chunk in pd.read_csv(
+                self.openfoodfacts_csv,
+                sep="\t",
+                usecols=usecols,
+                chunksize=5000,
+                dtype=str,
+                low_memory=False,
+            ):
+                chunk_index += 1
+                chunk_started_at = time.perf_counter()
+                rows = chunk.to_dict(orient="records")
+                scanned += len(rows)
+                progress.update(len(rows))
 
-                food = payload["food"]
-                barcode = payload["barcode"]
-                name = food["name"]
-                calories = int(food["calories"])
-                match_key = (name.lower(), calories)
+                for row in rows:
+                    payload = self._openfoodfacts_payload(row)
+                    if not payload:
+                        self.skipped_count += 1
+                        continue
 
-                food_id = match_cache.get(match_key)
-                if food_id is None:
-                    cursor.execute(
-                        "SELECT id FROM food WHERE LOWER(name) = %s AND calories = %s LIMIT 1",
-                        (name.lower(), calories),
+                    food = payload["food"]
+                    barcode = payload["barcode"]
+                    name = food["name"]
+                    calories = int(food["calories"])
+                    match_key = (name.lower(), calories)
+
+                    food_id = match_cache.get(match_key)
+                    if food_id is None:
+                        cursor.execute(
+                            "SELECT id FROM food WHERE LOWER(name) = %s AND calories = %s LIMIT 1",
+                            (name.lower(), calories),
+                        )
+                        result = cursor.fetchone()
+                        food_id = int(result[0]) if result else 0
+                        match_cache[match_key] = food_id
+                        if len(match_cache) > 50000:
+                            match_cache.clear()
+
+                    try:
+                        if food_id:
+                            self._ensure_measurements(cursor, food_id, payload["measurements"])
+                            self._insert_or_update_barcode(cursor, barcode, food_id)
+                            self.openfoodfacts_matched_count += 1
+                        else:
+                            new_food_id = self._insert_or_update_food(cursor, food)
+                            self._ensure_measurements(cursor, new_food_id, payload["measurements"])
+                            self._insert_or_update_barcode(cursor, barcode, new_food_id)
+                            self.openfoodfacts_new_count += 1
+                    except mysql.connector.Error:
+                        conn.rollback()
+                        self.error_count += 1
+                        continue
+
+                    batch_count += 1
+                    processed += 1
+
+                    if batch_count >= self.batch_size:
+                        conn.commit()
+                        batch_count = 0
+
+                    if self.max_openfoodfacts and processed >= self.max_openfoodfacts:
+                        conn.commit()
+                        return
+
+                now = time.perf_counter()
+                if now >= next_heartbeat_at:
+                    progress.write(
+                        "OpenFoodFacts heartbeat | "
+                        f"scanned={scanned} processed={processed} "
+                        f"new={self.openfoodfacts_new_count} matched={self.openfoodfacts_matched_count} "
+                        f"skipped={self.skipped_count - skipped_before} errors={self.error_count - errors_before}"
                     )
-                    result = cursor.fetchone()
-                    food_id = int(result[0]) if result else 0
-                    match_cache[match_key] = food_id
-                    if len(match_cache) > 50000:
-                        match_cache.clear()
+                    next_heartbeat_at = now + 30.0
 
-                try:
-                    if food_id:
-                        self._ensure_measurements(cursor, food_id, payload["measurements"])
-                        self._insert_or_update_barcode(cursor, barcode, food_id)
-                        self.openfoodfacts_matched_count += 1
-                    else:
-                        new_food_id = self._insert_or_update_food(cursor, food)
-                        self._ensure_measurements(cursor, new_food_id, payload["measurements"])
-                        self._insert_or_update_barcode(cursor, barcode, new_food_id)
-                        self.openfoodfacts_new_count += 1
-                except mysql.connector.Error:
-                    conn.rollback()
-                    self.error_count += 1
-                    continue
-
-                batch_count += 1
-                processed += 1
-
-                if batch_count >= self.batch_size:
-                    conn.commit()
-                    batch_count = 0
-
-                if self.max_openfoodfacts and processed >= self.max_openfoodfacts:
-                    conn.commit()
-                    cursor.close()
-                    return
-
-                if processed % 50000 == 0:
-                    print(f"OpenFoodFacts rows processed: {processed}")
+                if chunk_index % 10 == 0:
+                    chunk_elapsed = max(time.perf_counter() - chunk_started_at, 0.0001)
+                    progress.write(
+                        f"OpenFoodFacts chunk {chunk_index} "
+                        f"({len(rows)} rows) in {chunk_elapsed:.2f}s"
+                    )
+        finally:
+            progress.close()
 
         if batch_count:
             conn.commit()
