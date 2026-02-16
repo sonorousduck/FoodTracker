@@ -4,7 +4,6 @@ import { useSession } from '@/hooks/auth';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -22,13 +21,15 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setFormError('Please fill in all fields');
       return;
     }
 
+    setFormError('');
     setIsLoading(true);
 
     try {
@@ -36,10 +37,11 @@ export default function SignIn() {
       if (result.accessToken) {
         // Navigate after successful sign-in
         router.replace('/');
+      } else {
+        setFormError('Sign in failed. Please try again.');
       }
     } catch (error) {
-      Alert.alert(
-        'Sign In Failed',
+      setFormError(
         error instanceof Error ? error.message : 'An unexpected error occurred',
       );
     } finally {
@@ -91,7 +93,10 @@ export default function SignIn() {
                   },
                 ]}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(value) => {
+                  setEmail(value);
+                  setFormError('');
+                }}
                 placeholder="Enter your email"
                 placeholderTextColor={colors.icon}
                 selectionColor={colors.tint}
@@ -99,6 +104,8 @@ export default function SignIn() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                textContentType="emailAddress"
+                autoComplete="email"
               />
             </View>
 
@@ -120,7 +127,10 @@ export default function SignIn() {
                   },
                 ]}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(value) => {
+                  setPassword(value);
+                  setFormError('');
+                }}
                 placeholder="Enter your password"
                 placeholderTextColor={colors.icon}
                 selectionColor={colors.tint}
@@ -128,8 +138,14 @@ export default function SignIn() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                textContentType="password"
+                autoComplete="current-password"
               />
             </View>
+
+            {formError && (
+              <ThemedText style={styles.errorText}>{formError}</ThemedText>
+            )}
 
             <TouchableOpacity
               style={[
@@ -226,6 +242,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#ff3b30',
+    marginBottom: 16,
+    marginLeft: 4,
   },
   signInButton: {
     width: '100%',

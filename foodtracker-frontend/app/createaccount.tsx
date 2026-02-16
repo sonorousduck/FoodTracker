@@ -4,7 +4,6 @@ import { useSession } from '@/hooks/auth';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -27,51 +26,69 @@ export default function CreateAccount() {
     confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   const updateForm = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validateForm = () => {
     const { firstName, lastName, email, password, confirmPassword } = formData;
+    const newErrors = { firstName: '', lastName: '', email: '', password: '', confirmPassword: '' };
 
     if (!firstName.trim()) {
-      Alert.alert('Error', 'First name is required');
-      return false;
+      newErrors.firstName = 'First name is required';
     }
 
     if (!lastName.trim()) {
-      Alert.alert('Error', 'Last name is required');
-      return false;
+      newErrors.lastName = 'Last name is required';
     }
 
     if (!email.trim()) {
-      Alert.alert('Error', 'Email is required');
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return false;
+      newErrors.email = 'Email is required';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        newErrors.email = 'Please enter a valid email address';
+      }
     }
 
     if (!password.trim()) {
-      Alert.alert('Error', 'Password is required');
-      return false;
+      newErrors.password = 'Password is required';
+    } else {
+      const passwordErrors = [];
+      if (password.length < 8) {
+        passwordErrors.push('at least 8 characters');
+      }
+      if (!/[A-Z]/.test(password)) {
+        passwordErrors.push('uppercase letter');
+      }
+      if (!/[a-z]/.test(password)) {
+        passwordErrors.push('lowercase letter');
+      }
+      if (!/\d/.test(password)) {
+        passwordErrors.push('number');
+      }
+      if (passwordErrors.length > 0) {
+        newErrors.password = `Must contain ${passwordErrors.join(', ')}`;
+      }
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
-      return false;
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Confirm password is required';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return false;
-    }
-
-    return true;
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((err) => err !== '');
   };
 
   const handleSignUp = async () => {
@@ -86,10 +103,10 @@ export default function CreateAccount() {
         password: formData.password,
       });
     } catch (error) {
-      Alert.alert(
-        'Sign Up Failed',
-        error instanceof Error ? error.message : 'An unexpected error occurred',
-      );
+      setErrors((prev) => ({
+        ...prev,
+        email: error instanceof Error ? error.message : 'An unexpected error occurred',
+      }));
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +158,7 @@ export default function CreateAccount() {
                       borderColor: colors.modalSecondary,
                       color: colors.text,
                     },
+                    errors.firstName && styles.inputError,
                   ]}
                   value={formData.firstName}
                   onChangeText={(value) => updateForm('firstName', value)}
@@ -151,6 +169,9 @@ export default function CreateAccount() {
                   autoCorrect={false}
                   editable={!isLoading}
                 />
+                {errors.firstName && (
+                  <ThemedText style={styles.errorText}>{errors.firstName}</ThemedText>
+                )}
               </View>
 
               <View style={[styles.inputContainer, { flex: 1, marginLeft: 8 }]}>
@@ -169,6 +190,7 @@ export default function CreateAccount() {
                       borderColor: colors.modalSecondary,
                       color: colors.text,
                     },
+                    errors.lastName && styles.inputError,
                   ]}
                   value={formData.lastName}
                   onChangeText={(value) => updateForm('lastName', value)}
@@ -179,6 +201,9 @@ export default function CreateAccount() {
                   autoCorrect={false}
                   editable={!isLoading}
                 />
+                {errors.lastName && (
+                  <ThemedText style={styles.errorText}>{errors.lastName}</ThemedText>
+                )}
               </View>
             </View>
 
@@ -198,6 +223,7 @@ export default function CreateAccount() {
                     borderColor: colors.modalSecondary,
                     color: colors.text,
                   },
+                  errors.email && styles.inputError,
                 ]}
                 value={formData.email}
                 onChangeText={(value) => updateForm('email', value)}
@@ -208,7 +234,12 @@ export default function CreateAccount() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                textContentType="emailAddress"
+                autoComplete="email"
               />
+              {errors.email && (
+                <ThemedText style={styles.errorText}>{errors.email}</ThemedText>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -227,6 +258,7 @@ export default function CreateAccount() {
                     borderColor: colors.modalSecondary,
                     color: colors.text,
                   },
+                  errors.password && styles.inputError,
                 ]}
                 value={formData.password}
                 onChangeText={(value) => updateForm('password', value)}
@@ -237,14 +269,21 @@ export default function CreateAccount() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                textContentType="newPassword"
+                autoComplete="new-password"
+                passwordRules="minlength: 8; required: upper; required: lower; required: digit;"
               />
-              <ThemedText
-                style={styles.helperText}
-                lightColor={Colors.light.icon}
-                darkColor={Colors.dark.icon}
-              >
-                Must be at least 6 characters
-              </ThemedText>
+              {errors.password ? (
+                <ThemedText style={styles.errorText}>{errors.password}</ThemedText>
+              ) : (
+                <ThemedText
+                  style={styles.helperText}
+                  lightColor={Colors.light.icon}
+                  darkColor={Colors.dark.icon}
+                >
+                  At least 8 characters with uppercase, lowercase, and a number
+                </ThemedText>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -263,6 +302,7 @@ export default function CreateAccount() {
                     borderColor: colors.modalSecondary,
                     color: colors.text,
                   },
+                  errors.confirmPassword && styles.inputError,
                 ]}
                 value={formData.confirmPassword}
                 onChangeText={(value) => updateForm('confirmPassword', value)}
@@ -273,7 +313,13 @@ export default function CreateAccount() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!isLoading}
+                textContentType="newPassword"
+                autoComplete="new-password"
+                passwordRules="minlength: 8; required: upper; required: lower; required: digit;"
               />
+              {errors.confirmPassword && (
+                <ThemedText style={styles.errorText}>{errors.confirmPassword}</ThemedText>
+              )}
             </View>
 
             <TouchableOpacity

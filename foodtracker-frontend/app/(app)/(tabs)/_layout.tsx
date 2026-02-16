@@ -63,6 +63,12 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="ellipsis-horizontal" size={28} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="friends"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

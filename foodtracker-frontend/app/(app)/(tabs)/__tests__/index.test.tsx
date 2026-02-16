@@ -28,6 +28,11 @@ jest.mock('@/hooks/useColorScheme', () => ({
 }));
 
 jest.mock('@/components/weightcarddisplay', () => () => null);
+jest.mock('@/components/calorieprogress', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return ({ testID }: { testID?: string }) => <View testID={testID} />;
+});
 
 jest.mock('@/lib/api/foodentry', () => ({
   __esModule: true,
@@ -109,5 +114,45 @@ describe('Dashboard', () => {
 
     fireEvent.press(cta);
     expect(mockPush).toHaveBeenCalledWith('/goals');
+  });
+
+  it('shows over-goal text when calories exceed the daily goal', async () => {
+    mockedGetDiaryEntries.mockResolvedValue([
+      {
+        id: 1,
+        servings: 25,
+        food: {
+          calories: 100,
+          measurements: [],
+        },
+      } as never,
+    ]);
+    mockedGetCurrentGoals.mockResolvedValue({
+      [GoalType.Calorie]: {
+        id: 1,
+        name: 'Calorie Goal',
+        value: 2000,
+        goalType: GoalType.Calorie,
+        user: {} as never,
+        startDate: new Date('2026-01-01T00:00:00.000Z'),
+        endDate: new Date('2026-01-02T00:00:00.000Z'),
+        createdDate: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    });
+
+    const screen = render(
+      <PaperProvider>
+        <Dashboard />
+      </PaperProvider>,
+    );
+
+    await act(async () => {});
+
+    await waitFor(() => {
+      expect(screen.getByTestId('dashboard-calorie-summary')).toHaveTextContent(
+        '2500 / 2000 cal',
+      );
+      expect(screen.getByText('500 cal over')).toBeTruthy();
+    });
   });
 });

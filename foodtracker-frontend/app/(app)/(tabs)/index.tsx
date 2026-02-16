@@ -1,6 +1,7 @@
 import {
   getEntryCalories,
 } from '@/components/foodentry/foodentry-utils';
+import CalorieProgress from '@/components/calorieprogress';
 import ThemedText from '@/components/themedtext';
 import WeightCardDisplay from '@/components/weightcarddisplay';
 import { Colors } from '@/constants/Colors';
@@ -16,7 +17,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Snackbar } from 'react-native-paper';
+import { Card, Snackbar } from 'react-native-paper';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -94,6 +95,7 @@ export default function Tab() {
   const chartColors = useMemo(
     () => ({
       eaten: colorScheme === 'dark' ? '#ECEDEE' : '#26667F',
+      over: '#D93025',
       remaining:
         colorScheme === 'dark'
           ? 'rgba(236, 237, 238, 0.25)'
@@ -109,27 +111,22 @@ export default function Tab() {
     return Math.max(0, Math.min(totalCaloriesEaten / dailyCalorieGoal, 1));
   }, [dailyCalorieGoal, totalCaloriesEaten]);
 
-  const remainingCalories = useMemo(() => {
+  const calorieDelta = useMemo(() => {
     if (!dailyCalorieGoal) {
       return 0;
     }
-    return Math.max(dailyCalorieGoal - totalCaloriesEaten, 0);
+    return dailyCalorieGoal - totalCaloriesEaten;
   }, [dailyCalorieGoal, totalCaloriesEaten]);
+  const isOverGoal = calorieDelta < 0;
+  const remainingCalories = Math.max(calorieDelta, 0);
+  const overCalories = Math.abs(Math.min(calorieDelta, 0));
 
-  const consumedWidth = Math.max(
-    0,
-    Math.min(SEMI_CIRCLE_SIZE * progress, SEMI_CIRCLE_SIZE),
-  );
   const toastEmoji = toastKind === 'error' ? '❌' : '✅';
 
   return (
     <SafeAreaView style={styles.container}>
-      <View
-        style={[
-          styles.calorieCard,
-          { backgroundColor: colors.card, borderColor: colors.modalSecondary },
-        ]}
-      >
+      <Card mode="elevated" style={styles.calorieCard}>
+        <View style={styles.calorieCardContent}>
         <ThemedText style={styles.cardTitle}>Daily Calories</ThemedText>
         {isLoadingCalories ? (
           <View style={styles.loadingState}>
@@ -150,53 +147,28 @@ export default function Tab() {
           </View>
         ) : (
           <View style={styles.chartSection}>
-            <View
-              style={styles.semiCircleContainer}
+            <CalorieProgress
+              size={SEMI_CIRCLE_SIZE}
+              strokeWidth={STROKE_WIDTH}
+              progress={progress}
+              trackColor={chartColors.remaining}
+              progressColor={isOverGoal ? chartColors.over : chartColors.eaten}
               testID="dashboard-calorie-chart"
-            >
-              <View style={styles.semiCircleClipper}>
-                <View
-                  style={[
-                    styles.semiCircleTrack,
-                    {
-                      borderColor: chartColors.remaining,
-                      width: SEMI_CIRCLE_SIZE,
-                      height: SEMI_CIRCLE_SIZE,
-                      borderRadius: SEMI_CIRCLE_SIZE / 2,
-                    },
-                  ]}
-                />
-                <View
-                  style={[
-                    styles.semiCircleProgressMask,
-                    { width: consumedWidth, height: SEMI_CIRCLE_SIZE / 2 },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.semiCircleTrack,
-                      {
-                        borderColor: chartColors.eaten,
-                        width: SEMI_CIRCLE_SIZE,
-                        height: SEMI_CIRCLE_SIZE,
-                        borderRadius: SEMI_CIRCLE_SIZE / 2,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-            </View>
+            />
             <View style={styles.summaryContainer}>
               <ThemedText style={styles.summaryMain} testID="dashboard-calorie-summary">
                 {Math.round(totalCaloriesEaten)} / {Math.round(dailyCalorieGoal)} cal
               </ThemedText>
               <ThemedText style={[styles.summarySub, { color: colors.icon }]}>
-                {Math.round(remainingCalories)} cal left
+                {isOverGoal
+                  ? `${Math.round(overCalories)} cal over`
+                  : `${Math.round(remainingCalories)} cal left`}
               </ThemedText>
             </View>
           </View>
         )}
-      </View>
+        </View>
+      </Card>
 
       <WeightCardDisplay></WeightCardDisplay>
 
@@ -222,8 +194,11 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   calorieCard: {
-    borderWidth: 1,
-    borderRadius: 16,
+    alignSelf: 'center',
+    width: '90%',
+    marginHorizontal: 16,
+  },
+  calorieCardContent: {
     padding: 16,
     gap: 12,
   },
@@ -256,29 +231,6 @@ const styles = StyleSheet.create({
   chartSection: {
     alignItems: 'center',
     gap: 8,
-  },
-  semiCircleContainer: {
-    width: SEMI_CIRCLE_SIZE,
-    height: SEMI_CIRCLE_SIZE / 2 + STROKE_WIDTH / 2,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  semiCircleClipper: {
-    width: SEMI_CIRCLE_SIZE,
-    height: SEMI_CIRCLE_SIZE / 2 + STROKE_WIDTH / 2,
-    overflow: 'hidden',
-  },
-  semiCircleTrack: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    borderWidth: STROKE_WIDTH,
-  },
-  semiCircleProgressMask: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    overflow: 'hidden',
   },
   summaryContainer: {
     alignItems: 'center',
