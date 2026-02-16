@@ -1045,7 +1045,7 @@ class FdcOpenFoodFactsImporter:
         cursor = conn.cursor()
         try:
             cursor.execute("SHOW INDEX FROM food WHERE Key_name = 'idx_food_name_calories'")
-            has_index = cursor.fetchone() is not None
+            has_index = len(cursor.fetchall()) > 0
             if not has_index:
                 print("Creating MySQL index idx_food_name_calories on food(name, calories)...")
                 cursor.execute("CREATE INDEX idx_food_name_calories ON food (name, calories)")
