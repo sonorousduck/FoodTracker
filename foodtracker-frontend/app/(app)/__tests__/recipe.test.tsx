@@ -199,6 +199,10 @@ describe('Recipe ingredient modal flow', () => {
       await Promise.resolve();
     });
 
+    expect(getByTestId('search-result-subtext-1')).toHaveTextContent(
+      'Acme Farms · 1 oz',
+    );
+
     fireEvent.press(getByTestId('search-result-1'));
 
     expect(getByTestId('ingredient-details-content')).toBeTruthy();

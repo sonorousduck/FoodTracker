@@ -300,6 +300,41 @@ describe("LogFood", () => {
     });
   });
 
+  it("shows food brand in database search results", async () => {
+    jest.useFakeTimers();
+    try {
+      const food = createFoodFixture();
+      const measurement = createMeasurementFixture(food);
+      food.measurements = [measurement];
+      mockedSearchFoods.mockResolvedValue([food]);
+
+      const screen = render(
+        <PaperProvider>
+          <LogFood />
+        </PaperProvider>
+      );
+
+      await act(async () => {
+        fireEvent.changeText(screen.getByTestId("logfood-search-input"), "gr");
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(350);
+      });
+
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(screen.getByText("Acme Farms · 1 cup")).toBeTruthy();
+    } finally {
+      act(() => {
+        jest.runOnlyPendingTimers();
+      });
+      jest.useRealTimers();
+    }
+  });
+
   it("filters history based on the search query", async () => {
     const user = createUserFixture();
     const meal: Meal = {

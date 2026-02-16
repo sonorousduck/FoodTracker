@@ -77,7 +77,16 @@ export default function IngredientSearch({
               </ThemedText>
             )}
 
-          {searchResults.map((result) => (
+          {searchResults.map((result) => {
+            const measurementText = formatMeasurementText(
+              getDefaultMeasurement(result),
+            );
+            const brandText = result.brand?.trim();
+            const subtext = brandText
+              ? `${brandText} · ${measurementText}`
+              : measurementText;
+
+            return (
             <TouchableOpacity
               key={result.id}
               style={[
@@ -100,7 +109,7 @@ export default function IngredientSearch({
                     style={[styles.resultSubtext, { color: colors.icon }]}
                     testID={`search-result-subtext-${result.id}`}
                   >
-                    {formatMeasurementText(getDefaultMeasurement(result))}
+                    {subtext}
                   </ThemedText>
                 </View>
                 <ThemedText
@@ -117,7 +126,8 @@ export default function IngredientSearch({
                 </ThemedText>
               </View>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
       )}
     </View>

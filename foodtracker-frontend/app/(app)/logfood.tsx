@@ -108,13 +108,10 @@ export default function LogFood() {
   useFocusEffect(
     useCallback(() => {
       loadHistory();
-      if (
-        activeTab === 'recipes' &&
-        searchQuery.trim().length < minSearchLength
-      ) {
+      if (activeTab === 'recipes') {
         loadRecipes();
       }
-    }, [activeTab, loadHistory, loadRecipes, searchQuery]),
+    }, [activeTab, loadHistory, loadRecipes]),
   );
 
   useEffect(() => {
@@ -558,6 +555,11 @@ export default function LogFood() {
                 ) : (
                   foodResults.map((food) => {
                     const measurement = getDefaultMeasurement(food);
+                    const measurementText = formatMeasurementText(measurement);
+                    const brandText = food.brand?.trim();
+                    const subtext = brandText
+                      ? `${brandText} · ${measurementText}`
+                      : measurementText;
                     return (
                       <TouchableOpacity
                         key={food.id}
@@ -583,7 +585,7 @@ export default function LogFood() {
                                 { color: colors.icon },
                               ]}
                             >
-                              {formatMeasurementText(measurement)}
+                              {subtext}
                             </ThemedText>
                           </View>
                           <ThemedText style={styles.cardCalories}>
