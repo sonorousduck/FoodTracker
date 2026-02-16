@@ -127,7 +127,7 @@ export class FoodSearchService implements OnModuleInit {
           functions: [
             {
               filter: { term: { isCsvFood: true } },
-              weight: 1.25,
+              weight: 4,
             },
           ],
           boost_mode: 'multiply',

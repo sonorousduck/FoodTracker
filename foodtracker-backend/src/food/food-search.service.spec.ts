@@ -96,6 +96,12 @@ describe('FoodSearchService', () => {
                 ]),
               }),
             }),
+            functions: expect.arrayContaining([
+              expect.objectContaining({
+                filter: { term: { isCsvFood: true } },
+                weight: 4,
+              }),
+            ]),
           }),
         }),
       }),
