@@ -1,74 +1,295 @@
-import ThemedText from "@/components/themedtext";
-import WeightCardDisplay from "@/components/weightcarddisplay";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { StyleSheet } from "react-native";
-import { Snackbar } from "react-native-paper";
 import {
-	SafeAreaView,
-	useSafeAreaInsets,
-} from "react-native-safe-area-context";
+  getEntryCalories,
+} from '@/components/foodentry/foodentry-utils';
+import ThemedText from '@/components/themedtext';
+import WeightCardDisplay from '@/components/weightcarddisplay';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { getDiaryEntries } from '@/lib/api/foodentry';
+import { getCurrentGoals } from '@/lib/api/goal';
+import { GoalType } from '@/types/goal/goaltype';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Snackbar } from 'react-native-paper';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 
-type ToastType = "success" | "error";
+type ToastType = 'success' | 'error';
+
+const SEMI_CIRCLE_SIZE = 220;
+const STROKE_WIDTH = 18;
 
 export default function Tab() {
-	const { toast, toastType } = useLocalSearchParams<{
-		toast?: string;
-		toastType?: string;
-	}>();
-	const router = useRouter();
-	const [showToast, setShowToast] = useState(false);
-	const [toastText, setToastText] = useState("");
-	const [toastKind, setToastKind] = useState<ToastType>("success");
-	const insets = useSafeAreaInsets();
-	const toastOffset = insets.bottom + 64;
-	const colorScheme = useColorScheme();
-	const colors = Colors[colorScheme ?? "light"];
-	const toastMessage = Array.isArray(toast) ? toast[0] : toast;
-	const toastTypeValue = Array.isArray(toastType) ? toastType[0] : toastType;
+  const { toast, toastType } = useLocalSearchParams<{
+    toast?: string;
+    toastType?: string;
+  }>();
+  const router = useRouter();
+  const [showToast, setShowToast] = useState(false);
+  const [toastText, setToastText] = useState('');
+  const [toastKind, setToastKind] = useState<ToastType>('success');
+  const [isLoadingCalories, setIsLoadingCalories] = useState(false);
+  const [totalCaloriesEaten, setTotalCaloriesEaten] = useState(0);
+  const [dailyCalorieGoal, setDailyCalorieGoal] = useState<number | null>(null);
+  const insets = useSafeAreaInsets();
+  const toastOffset = insets.bottom + 64;
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const toastMessage = Array.isArray(toast) ? toast[0] : toast;
+  const toastTypeValue = Array.isArray(toastType) ? toastType[0] : toastType;
 
-	useFocusEffect(
-		useCallback(() => {
-			if (!toastMessage) {
-				return;
-			}
+  useFocusEffect(
+    useCallback(() => {
+      if (!toastMessage) {
+        return;
+      }
 
-			setToastText(toastMessage);
-			setToastKind(toastTypeValue === "error" ? "error" : "success");
-			setShowToast(true);
-			router.setParams({ toast: undefined, toastType: undefined });
-		}, [toastMessage, toastTypeValue, router])
-	);
+      setToastText(toastMessage);
+      setToastKind(toastTypeValue === 'error' ? 'error' : 'success');
+      setShowToast(true);
+      router.setParams({ toast: undefined, toastType: undefined });
+    }, [toastMessage, toastTypeValue, router]),
+  );
 
-	const toastEmoji = toastKind === "error" ? "❌" : "✅";
+  const loadCaloriesAndGoals = useCallback(async () => {
+    setIsLoadingCalories(true);
+    try {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const [entries, goals] = await Promise.all([
+        getDiaryEntries(startOfDay.toISOString()),
+        getCurrentGoals(),
+      ]);
+      const calories = entries.reduce((sum, entry) => {
+        const value = getEntryCalories(entry);
+        return sum + (value ?? 0);
+      }, 0);
+      const calorieGoalValue = goals[GoalType.Calorie]?.value;
+      setTotalCaloriesEaten(calories);
+      setDailyCalorieGoal(
+        calorieGoalValue != null && calorieGoalValue > 0 ? calorieGoalValue : null,
+      );
+    } catch (error) {
+      setTotalCaloriesEaten(0);
+      setDailyCalorieGoal(null);
+    } finally {
+      setIsLoadingCalories(false);
+    }
+  }, []);
 
-	return (
-		<SafeAreaView style={styles.container}>
-			<WeightCardDisplay></WeightCardDisplay>
+  useFocusEffect(
+    useCallback(() => {
+      loadCaloriesAndGoals();
+    }, [loadCaloriesAndGoals]),
+  );
 
-			<Snackbar
-				visible={showToast}
-				onDismiss={() => setShowToast(false)}
-				duration={2200}
-				style={{ marginBottom: toastOffset }}
-				contentStyle={{ alignItems: "center" }}
-			>
-				<ThemedText
-					style={{ color: colors.text, textAlign: "center", width: "100%" }}
-				>
-					{toastEmoji} {toastText}
-				</ThemedText>
-			</Snackbar>
-		</SafeAreaView>
-	);
+  const chartColors = useMemo(
+    () => ({
+      eaten: colorScheme === 'dark' ? '#ECEDEE' : '#26667F',
+      remaining:
+        colorScheme === 'dark'
+          ? 'rgba(236, 237, 238, 0.25)'
+          : 'rgba(38, 102, 127, 0.24)',
+    }),
+    [colorScheme],
+  );
+
+  const progress = useMemo(() => {
+    if (!dailyCalorieGoal || dailyCalorieGoal <= 0) {
+      return 0;
+    }
+    return Math.max(0, Math.min(totalCaloriesEaten / dailyCalorieGoal, 1));
+  }, [dailyCalorieGoal, totalCaloriesEaten]);
+
+  const remainingCalories = useMemo(() => {
+    if (!dailyCalorieGoal) {
+      return 0;
+    }
+    return Math.max(dailyCalorieGoal - totalCaloriesEaten, 0);
+  }, [dailyCalorieGoal, totalCaloriesEaten]);
+
+  const consumedWidth = Math.max(
+    0,
+    Math.min(SEMI_CIRCLE_SIZE * progress, SEMI_CIRCLE_SIZE),
+  );
+  const toastEmoji = toastKind === 'error' ? '❌' : '✅';
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View
+        style={[
+          styles.calorieCard,
+          { backgroundColor: colors.card, borderColor: colors.modalSecondary },
+        ]}
+      >
+        <ThemedText style={styles.cardTitle}>Daily Calories</ThemedText>
+        {isLoadingCalories ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator size="small" color={colors.tint} />
+          </View>
+        ) : dailyCalorieGoal == null ? (
+          <View style={styles.zeroState}>
+            <ThemedText style={styles.zeroStateText}>
+              Set a calorie goal to track progress for the day.
+            </ThemedText>
+            <Pressable
+              style={[styles.goalButton, { backgroundColor: colors.tint }]}
+              onPress={() => router.push('/goals')}
+              testID="dashboard-goals-cta"
+            >
+              <ThemedText style={styles.goalButtonText}>Set goals</ThemedText>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.chartSection}>
+            <View
+              style={styles.semiCircleContainer}
+              testID="dashboard-calorie-chart"
+            >
+              <View style={styles.semiCircleClipper}>
+                <View
+                  style={[
+                    styles.semiCircleTrack,
+                    {
+                      borderColor: chartColors.remaining,
+                      width: SEMI_CIRCLE_SIZE,
+                      height: SEMI_CIRCLE_SIZE,
+                      borderRadius: SEMI_CIRCLE_SIZE / 2,
+                    },
+                  ]}
+                />
+                <View
+                  style={[
+                    styles.semiCircleProgressMask,
+                    { width: consumedWidth, height: SEMI_CIRCLE_SIZE / 2 },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.semiCircleTrack,
+                      {
+                        borderColor: chartColors.eaten,
+                        width: SEMI_CIRCLE_SIZE,
+                        height: SEMI_CIRCLE_SIZE,
+                        borderRadius: SEMI_CIRCLE_SIZE / 2,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+            <View style={styles.summaryContainer}>
+              <ThemedText style={styles.summaryMain} testID="dashboard-calorie-summary">
+                {Math.round(totalCaloriesEaten)} / {Math.round(dailyCalorieGoal)} cal
+              </ThemedText>
+              <ThemedText style={[styles.summarySub, { color: colors.icon }]}>
+                {Math.round(remainingCalories)} cal left
+              </ThemedText>
+            </View>
+          </View>
+        )}
+      </View>
+
+      <WeightCardDisplay></WeightCardDisplay>
+
+      <Snackbar
+        visible={showToast}
+        onDismiss={() => setShowToast(false)}
+        duration={2200}
+        style={{ marginBottom: toastOffset }}
+        contentStyle={{ alignItems: 'center' }}
+      >
+        <ThemedText style={{ color: colors.text, textAlign: 'center', width: '100%' }}>
+          {toastEmoji} {toastText}
+        </ThemedText>
+      </Snackbar>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-	container: {
-		display: "flex",
-		gap: 8,
-		padding: 8,
-	},
+  container: {
+    display: 'flex',
+    gap: 8,
+    padding: 8,
+  },
+  calorieCard: {
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  loadingState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 120,
+  },
+  zeroState: {
+    gap: 12,
+    alignItems: 'flex-start',
+  },
+  zeroStateText: {
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  goalButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  goalButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  chartSection: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  semiCircleContainer: {
+    width: SEMI_CIRCLE_SIZE,
+    height: SEMI_CIRCLE_SIZE / 2 + STROKE_WIDTH / 2,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  semiCircleClipper: {
+    width: SEMI_CIRCLE_SIZE,
+    height: SEMI_CIRCLE_SIZE / 2 + STROKE_WIDTH / 2,
+    overflow: 'hidden',
+  },
+  semiCircleTrack: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    borderWidth: STROKE_WIDTH,
+  },
+  semiCircleProgressMask: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    overflow: 'hidden',
+  },
+  summaryContainer: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  summaryMain: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  summarySub: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });
