@@ -53,7 +53,7 @@ const isSecureRequest = (request: Request) => {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Throttle({ default: { limit: 20, ttl: 900000 } }) // 5 attempts per 15 minutes
+  @Throttle({ default: { limit: 100, ttl: 900000 } }) // 5 attempts per 15 minutes
   @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("login")
@@ -73,7 +73,7 @@ export class AuthController {
     return response.status(HttpStatus.OK).json(authResult);
   }
 
-  @Throttle({ default: { limit: 20, ttl: 900000 } }) // 20 attempts per 15 minutes
+  @Throttle({ default: { limit: 100, ttl: 900000 } }) // 20 attempts per 15 minutes
   @SkipCsrf()
   @HttpCode(HttpStatus.OK)
   @Post("create")
