@@ -1,3 +1,4 @@
+import CopyToDayModal from '@/components/foodentry/copytodaymodal';
 import { getEntryServingsText, getEntryTitle, getMealTypeFromName } from '@/components/foodentry/foodentry-utils';
 import FoodEntryModal from '@/components/foodentry/foodentrymodal';
 import DuckTextInput from '@/components/interactions/inputs/textinput';
@@ -9,7 +10,7 @@ import { FoodEntry } from '@/types/foodentry/foodentry';
 import { MealType } from '@/types/foodentry/updatefoodentry';
 import { FriendProfile } from '@/types/friends/friendprofile';
 import { Recipe } from '@/types/recipe/recipe';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 
@@ -19,7 +20,6 @@ type LogAction = "log" | "copy-log";
 export default function FriendDetail() {
   const params = useLocalSearchParams();
   const friendId = Number(params.id);
-  const router = useRouter();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const [friend, setFriend] = useState<FriendProfile | null>(null);
@@ -36,6 +36,10 @@ export default function FriendDetail() {
   const [selectedMealType, setSelectedMealType] = useState<MealType | undefined>(0);
   const [selectedServings, setSelectedServings] = useState(1);
   const [pendingAction, setPendingAction] = useState<LogAction>("log");
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+  const [isCopyModalVisible, setIsCopyModalVisible] = useState(false);
+  const [isCopySubmitting, setIsCopySubmitting] = useState(false);
 
   const formattedDate = useMemo(
     () =>
@@ -172,10 +176,72 @@ export default function FriendDetail() {
     }
   };
 
-  const recipeEntries = useMemo(() => entries.filter((entry) => entry.recipe), [entries]);
+  const copyDefaultMealType = useMemo(() => {
+    const selected = entries.filter((e) => selectedEntryIds.has(e.id));
+    const mealNames = new Set(selected.map((e) => e.meal?.name));
+    if (mealNames.size === 1) {
+      return getMealTypeFromName([...mealNames][0]);
+    }
+    return 0;
+  }, [entries, selectedEntryIds]);
+
+  const copyDefaultDate = useMemo(() => {
+    return new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate() + 1,
+    );
+  }, [selectedDate]);
+
+  const toggleEntrySelection = (id: number) => {
+    setSelectedEntryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedEntryIds(new Set());
+  };
+
+  const handleCopyEntries = async (
+    targetDate: Date,
+    targetMealType: MealType,
+  ) => {
+    const selected = entries.filter((e) => selectedEntryIds.has(e.id));
+    setIsCopySubmitting(true);
+    try {
+      await Promise.all(
+        selected.map((entry) =>
+          createFoodEntry({
+            servings: entry.servings,
+            mealType: targetMealType,
+            foodId: entry.food?.id,
+            recipeId: entry.recipe?.id,
+            measurementId: entry.food ? entry.measurement?.id : undefined,
+            loggedAt: targetDate,
+          }),
+        ),
+      );
+      setIsCopyModalVisible(false);
+      exitSelectMode();
+      Alert.alert("Copied", "Added to your day.");
+    } catch (error) {
+      Alert.alert("Error", "Could not copy entries.");
+    } finally {
+      setIsCopySubmitting(false);
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <View style={styles.wrapper}>
+      <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.title}>{friend ? `${friend.firstName} ${friend.lastName}` : "Friend"}</ThemedText>
         {friend ? <ThemedText style={[styles.subtitle, { color: colors.icon }]}>{friend.email}</ThemedText> : null}
@@ -242,58 +308,88 @@ export default function FriendDetail() {
             </TouchableOpacity>
           </View>
 
+
           {isLoading ? (
             <View style={styles.loading}>
               <ActivityIndicator size="small" color={colors.tint} />
             </View>
-          ) : recipeEntries.length === 0 ? (
-            <ThemedText style={[styles.emptyText, { color: colors.icon }]}>No recipes logged for this day.</ThemedText>
+          ) : entries.length === 0 ? (
+            <ThemedText style={[styles.emptyText, { color: colors.icon }]}>No entries logged for this day.</ThemedText>
           ) : (
-            recipeEntries.map((entry) => (
-              <View
-                key={entry.id}
-                style={[styles.card, { borderColor: colors.modalSecondary, backgroundColor: colors.modal }]}
-              >
-                <View style={styles.cardHeader}>
-                  <ThemedText style={styles.cardTitle}>{getEntryTitle(entry)}</ThemedText>
-                  <ThemedText style={[styles.cardSubtitle, { color: colors.icon }]}>
-                    {entry.meal?.name ?? "Meal"} • {getEntryServingsText(entry)}
-                  </ThemedText>
-                </View>
-                {entry.recipe ? (
-                  <View style={styles.row}>
-                    <TouchableOpacity
-                      style={[styles.secondaryButton, { borderColor: colors.modalSecondary }]}
-                      onPress={() =>
-                        openLogModal({
-                          recipe: entry.recipe as Recipe,
-                          action: "log",
-                          initialMealType: getMealTypeFromName(entry.meal?.name),
-                          initialServings: entry.servings ?? 1,
-                        })
-                      }
-                      activeOpacity={0.7}
-                    >
-                      <ThemedText style={styles.secondaryButtonText}>Log to my day</ThemedText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.secondaryButton, { borderColor: colors.modalSecondary }]}
-                      onPress={() =>
-                        openLogModal({
-                          recipe: entry.recipe as Recipe,
-                          action: "copy-log",
-                          initialMealType: getMealTypeFromName(entry.meal?.name),
-                          initialServings: entry.servings ?? 1,
-                        })
-                      }
-                      activeOpacity={0.7}
-                    >
-                      <ThemedText style={styles.secondaryButtonText}>Save copy & log</ThemedText>
-                    </TouchableOpacity>
+            entries.map((entry) => {
+              const isSelected = selectedEntryIds.has(entry.id);
+              return (
+                <TouchableOpacity
+                  key={entry.id}
+                  style={[
+                    styles.card,
+                    {
+                      borderColor: isSelected ? colors.tint : colors.modalSecondary,
+                      backgroundColor: isSelected ? colors.modal : colors.modal,
+                      borderWidth: isSelected ? 2 : 1,
+                    },
+                  ]}
+                  onPress={() => {
+                    if (isSelectMode) {
+                      toggleEntrySelection(entry.id);
+                    } else if (entry.recipe) {
+                      openLogModal({
+                        recipe: entry.recipe as Recipe,
+                        action: "log",
+                        initialMealType: getMealTypeFromName(entry.meal?.name),
+                        initialServings: entry.servings ?? 1,
+                      });
+                    }
+                  }}
+                  onLongPress={() => {
+                    if (!isSelectMode) {
+                      setIsSelectMode(true);
+                      toggleEntrySelection(entry.id);
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.cardHeader}>
+                    <ThemedText style={styles.cardTitle}>{getEntryTitle(entry)}</ThemedText>
+                    <ThemedText style={[styles.cardSubtitle, { color: colors.icon }]}>
+                      {entry.meal?.name ?? "Meal"} • {getEntryServingsText(entry)}
+                    </ThemedText>
                   </View>
-                ) : null}
-              </View>
-            ))
+                  {entry.recipe && !isSelectMode ? (
+                    <View style={styles.row}>
+                      <TouchableOpacity
+                        style={[styles.secondaryButton, { borderColor: colors.modalSecondary }]}
+                        onPress={() =>
+                          openLogModal({
+                            recipe: entry.recipe as Recipe,
+                            action: "log",
+                            initialMealType: getMealTypeFromName(entry.meal?.name),
+                            initialServings: entry.servings ?? 1,
+                          })
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <ThemedText style={styles.secondaryButtonText}>Log to my day</ThemedText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.secondaryButton, { borderColor: colors.modalSecondary }]}
+                        onPress={() =>
+                          openLogModal({
+                            recipe: entry.recipe as Recipe,
+                            action: "copy-log",
+                            initialMealType: getMealTypeFromName(entry.meal?.name),
+                            initialServings: entry.servings ?? 1,
+                          })
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <ThemedText style={styles.secondaryButtonText}>Save copy & log</ThemedText>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })
           )}
         </View>
       ) : (
@@ -365,6 +461,18 @@ export default function FriendDetail() {
         </View>
       )}
 
+
+      <CopyToDayModal
+        visible={isCopyModalVisible}
+        onDismiss={() => setIsCopyModalVisible(false)}
+        onConfirm={handleCopyEntries}
+        selectedCount={selectedEntryIds.size}
+        defaultDate={copyDefaultDate}
+        defaultMealType={copyDefaultMealType}
+        isSubmitting={isCopySubmitting}
+        colors={colors}
+      />
+
       <FoodEntryModal
         visible={isModalVisible}
         onDismiss={() => setIsModalVisible(false)}
@@ -378,11 +486,39 @@ export default function FriendDetail() {
         isSubmitting={isSubmitting}
         colors={colors}
       />
-    </ScrollView>
+      </ScrollView>
+
+      {isSelectMode && selectedEntryIds.size > 0 && (
+        <View style={[styles.selectionBar, { backgroundColor: colors.modal, borderTopColor: colors.modalSecondary }]}>
+          <ThemedText style={styles.selectionBarText}>
+            {selectedEntryIds.size} selected
+          </ThemedText>
+          <View style={styles.selectionBarButtons}>
+            <TouchableOpacity
+              style={[styles.selectionBarButton, { borderColor: colors.modalSecondary }]}
+              onPress={exitSelectMode}
+              activeOpacity={0.7}
+            >
+              <ThemedText style={[styles.selectionBarButtonText, { color: colors.text }]}>Cancel</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.selectionBarButton, { backgroundColor: colors.tint }]}
+              onPress={() => setIsCopyModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <ThemedText style={styles.selectionBarButtonText}>Copy</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     paddingTop: 24,
     paddingHorizontal: 12,
@@ -391,6 +527,7 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: 4,
+    paddingTop: 24,
   },
   title: {
     fontSize: 22,
@@ -496,5 +633,43 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#FFFFFF",
     fontWeight: "700",
+  },
+  selectionBar: {
+    borderTopWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  selectionBarText: {
+    fontSize: 14,
+    fontWeight: "600",
+    flex: 1,
+  },
+  selectionBarButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  selectionBarButton: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  selectionBarButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });
