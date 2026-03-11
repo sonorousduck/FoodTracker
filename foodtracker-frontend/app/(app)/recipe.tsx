@@ -2,6 +2,7 @@ import DuckTextInput from '@/components/interactions/inputs/textinput';
 import CalorieSum, {
   CALORIE_SUM_HEIGHT,
 } from '@/components/recipe/caloriesum';
+import BarcodeScanModal from '@/components/recipe/barcodeScanModal';
 import IngredientModal from '@/components/recipe/ingredientmodal';
 import IngredientSearch from '@/components/recipe/ingredientsearch';
 import SelectedIngredients from '@/components/recipe/selectedingredients';
@@ -22,12 +23,14 @@ import {
 import { Colors } from '@/constants/Colors';
 import { isAxiosError } from '@/lib/api';
 import { searchFoods } from '@/lib/api/food';
+import { getFoodByBarcode } from '@/lib/api/foodbarcode';
 import { createRecipe, deleteRecipe, getRecipe, updateRecipe } from '@/lib/api/recipe';
 import { Food } from '@/types/food/food';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCameraPermissions } from 'expo-camera';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -67,11 +70,13 @@ export default function Recipe() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showAllNutritionTotals, setShowAllNutritionTotals] = useState(false);
+  const [isScanModalVisible, setIsScanModalVisible] = useState(false);
   const [errors, setErrors] = useState<{
     title?: string;
     servings?: string;
     ingredients?: string;
   }>({});
+  const [permission, requestPermission] = useCameraPermissions();
 
   const recipeIdValue = Array.isArray(id) ? id[0] : id;
   const recipeId = recipeIdValue ? Number(recipeIdValue) : null;
@@ -203,7 +208,7 @@ export default function Recipe() {
     return Object.keys(nextErrors).length === 0;
   }, [ingredients.length, servings, title]);
 
-  const openIngredientModal = (food: Food, entry?: IngredientEntry) => {
+  const openIngredientModal = useCallback((food: Food, entry?: IngredientEntry) => {
     const measurement =
       entry?.measurementId !== undefined
         ? (getMeasurementById(food, entry.measurementId) ??
@@ -213,7 +218,34 @@ export default function Recipe() {
     setSelectedMeasurementId(measurement?.id ?? null);
     setServingInput(entry ? String(entry.servings) : '1');
     setIsIngredientModalVisible(true);
-  };
+  }, []);
+
+  const handleScanBarcode = useCallback(async () => {
+    if (!permission?.granted) {
+      await requestPermission();
+    }
+    setIsScanModalVisible(true);
+  }, [permission, requestPermission]);
+
+  const handleBarcodeScanned = useCallback(
+    async (barcode: string) => {
+      setIsScanModalVisible(false);
+      try {
+        const food = await getFoodByBarcode(barcode);
+        if (food) {
+          openIngredientModal(food);
+        } else {
+          Alert.alert(
+            'Not found',
+            'No food was found for that barcode. Try searching by name.',
+          );
+        }
+      } catch {
+        Alert.alert('Error', 'Failed to look up the barcode.');
+      }
+    },
+    [openIngredientModal],
+  );
 
   const handleRemoveIngredient = (foodId: number) => {
     setIngredients((prev) => prev.filter((entry) => entry.food.id !== foodId));
@@ -513,6 +545,7 @@ export default function Recipe() {
             onSearchQueryChange={setSearchQuery}
             isSearching={isSearching}
             searchResults={searchResults}
+            onScanBarcode={handleScanBarcode}
           />
           {errors.ingredients ? (
             <View style={styles.errorRow}>
@@ -568,6 +601,12 @@ export default function Recipe() {
         }}
         onConfirm={handleConfirmIngredient}
         onDismiss={handleCloseModal}
+      />
+      <BarcodeScanModal
+        visible={isScanModalVisible}
+        onDismiss={() => setIsScanModalVisible(false)}
+        onBarcodeScanned={handleBarcodeScanned}
+        colors={colors}
       />
     </SafeAreaView>
   );
