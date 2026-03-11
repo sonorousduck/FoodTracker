@@ -966,6 +966,7 @@ export default function Tab() {
         initialMealType={getMealTypeFromName(selectedEntry?.meal?.name)}
         initialMeasurementId={selectedEntry?.measurement?.id ?? null}
         initialServings={selectedEntry?.servings ?? 1}
+        currentMeasurement={selectedEntry?.measurement ?? null}
         submitLabel="Update"
         isSubmitting={isSubmitting}
         colors={colors}

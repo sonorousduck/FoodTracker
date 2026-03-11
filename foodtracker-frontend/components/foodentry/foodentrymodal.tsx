@@ -4,13 +4,15 @@ import {
   formatMeasurementText,
   getCaloriesForMeasurement,
   getDefaultMeasurement,
-  getFoodMeasurements,
+  getFoodMeasurements as getFoodMeasurementsFromFood,
   getMeasurementById,
   normalizeAmount,
 } from '@/components/recipe/recipe-utils';
 import ThemedText from '@/components/themedtext';
 import { Colors } from '@/constants/Colors';
+import { getFoodMeasurements } from '@/lib/api/food';
 import { Food } from '@/types/food/food';
+import { FoodMeasurement } from '@/types/foodmeasurement/foodmeasurement';
 import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -49,6 +51,7 @@ type FoodEntryModalProps = {
   initialMealType?: MealType;
   initialServings?: number;
   initialMeasurementId?: number | null;
+  currentMeasurement?: FoodMeasurement | null;
   submitLabel?: string;
   isSubmitting?: boolean;
   colors: typeof Colors.light;
@@ -68,6 +71,7 @@ export default function FoodEntryModal({
   initialMealType = 0,
   initialServings = 1,
   initialMeasurementId = null,
+  currentMeasurement = null,
   submitLabel = 'Log',
   isSubmitting = false,
   colors,
@@ -80,10 +84,13 @@ export default function FoodEntryModal({
   const [servingInput, setServingInput] = useState(String(initialServings));
   const [selectedDate, setSelectedDate] = useState(initialDate ?? new Date());
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [fetchedMeasurements, setFetchedMeasurements] = useState<
+    FoodMeasurement[]
+  >([]);
   const wasVisibleRef = useRef(false);
 
   useEffect(() => {
-    if (visible && !wasVisibleRef.current) {
+    if (visible) {
       setSelectedMealType(initialMealType);
       const fallbackMeasurementId =
         initialMeasurementId ??
@@ -91,6 +98,18 @@ export default function FoodEntryModal({
       setSelectedMeasurementId(fallbackMeasurementId);
       setServingInput(formatServings(initialServings));
       setSelectedDate(initialDate ?? new Date());
+
+      // Fetch measurements if food is missing them
+      if (food && !Array.isArray(food.measurements)) {
+        getFoodMeasurements(food.id)
+          .then(setFetchedMeasurements)
+          .catch(() => {
+            // Fallback to empty array if fetch fails
+            setFetchedMeasurements([]);
+          });
+      } else {
+        setFetchedMeasurements([]);
+      }
     }
     wasVisibleRef.current = visible;
   }, [
@@ -102,10 +121,10 @@ export default function FoodEntryModal({
     initialDate,
   ]);
 
-  const measurements = food ? getFoodMeasurements(food) : [];
-  const selectedMeasurement = food
-    ? getMeasurementById(food, selectedMeasurementId)
-    : undefined;
+  // Use food.measurements if populated, otherwise use fetched measurements, fallback to currentMeasurement
+  const foodMeasurements = food ? getFoodMeasurementsFromFood(food) : [];
+  const measurements = foodMeasurements.length > 0 ? foodMeasurements : (fetchedMeasurements.length > 0 ? fetchedMeasurements : (currentMeasurement ? [currentMeasurement] : []));
+  const selectedMeasurement = measurements.find(m => m.id === selectedMeasurementId) ?? (measurements.length > 0 ? measurements[0] : undefined);
 
   const totalCalories = useMemo(() => {
     const parsedServings = Number(normalizeAmount(servingInput));
