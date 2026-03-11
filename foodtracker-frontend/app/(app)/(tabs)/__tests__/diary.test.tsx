@@ -370,7 +370,7 @@ describe("Diary", () => {
       servings: 1,
       meal,
       recipe: undefined,
-      loggedAt: new Date("2025-01-02T08:00:00.000Z"),
+      loggedAt: new Date("2025-01-07T08:00:00.000Z"),
     };
 
     mockedGetDiaryEntries.mockResolvedValue([]);
@@ -388,7 +388,7 @@ describe("Diary", () => {
     await act(async () => {});
 
     expect(screen.getByTestId("last-meal-breakfast")).toHaveTextContent(
-      /Add Breakfast from 8 days ago/
+      /Add Breakfast from 3 days ago/
     );
 
     fireEvent.press(screen.getByTestId("last-meal-breakfast"));

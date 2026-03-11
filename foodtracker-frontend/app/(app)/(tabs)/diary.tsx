@@ -696,7 +696,7 @@ export default function Tab() {
                   <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
                     Nothing logged yet.
                   </ThemedText>
-                  {lastMealMeta ? (
+                  {lastMealMeta && lastMealMeta.daysAgo <= 5 ? (
                     <TouchableOpacity
                       style={styles.lastMealButton}
                       activeOpacity={0.7}
