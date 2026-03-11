@@ -24,21 +24,39 @@ jest.mock("expo-router", () => {
 jest.mock("@/lib/api/friends", () => ({
   __esModule: true,
   acceptFriendRequest: jest.fn(),
+  cancelFriendRequest: jest.fn(),
   getFriends: jest.fn(),
   getPendingFriendRequests: jest.fn(),
+  getSentFriendRequests: jest.fn(),
   rejectFriendRequest: jest.fn(),
+  removeFriend: jest.fn(),
   requestFriend: jest.fn(),
   searchFriends: jest.fn(),
 }));
+
+jest.mock("@/components/modal/addmodal", () => {
+  const React = require("react");
+  return function MockAddModal({ children }: any) {
+    return React.createElement("View", null, children);
+  };
+});
 
 jest.mock("react-native/Libraries/Utilities/useColorScheme", () => ({
   __esModule: true,
   default: jest.fn(),
 }));
 
+import {
+  cancelFriendRequest,
+  getSentFriendRequests,
+  removeFriend,
+} from "@/lib/api/friends";
+
 const mockedGetFriends = getFriends as jest.MockedFunction<typeof getFriends>;
 const mockedGetPendingFriendRequests =
   getPendingFriendRequests as jest.MockedFunction<typeof getPendingFriendRequests>;
+const mockedGetSentFriendRequests =
+  getSentFriendRequests as jest.MockedFunction<typeof getSentFriendRequests>;
 const mockedSearchFriends = searchFriends as jest.MockedFunction<typeof searchFriends>;
 
 const mockedUseColorScheme = useColorScheme as jest.MockedFunction<typeof useColorScheme>;
@@ -52,6 +70,7 @@ describe("FriendsTab", () => {
   it("renders empty states", async () => {
     mockedGetFriends.mockResolvedValueOnce([]);
     mockedGetPendingFriendRequests.mockResolvedValueOnce([]);
+    mockedGetSentFriendRequests.mockResolvedValueOnce([]);
 
     const screen = render(<FriendsTab />);
     await act(async () => {});
@@ -64,6 +83,7 @@ describe("FriendsTab", () => {
   it("searches by name and shows results", async () => {
     mockedGetFriends.mockResolvedValueOnce([]);
     mockedGetPendingFriendRequests.mockResolvedValueOnce([]);
+    mockedGetSentFriendRequests.mockResolvedValueOnce([]);
     mockedSearchFriends.mockResolvedValueOnce([
       { id: 2, firstName: "Sam", lastName: "Duck", email: "sam@example.com" },
     ]);

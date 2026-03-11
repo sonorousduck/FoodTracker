@@ -1,16 +1,21 @@
+import AddModal from "@/components/modal/addmodal";
 import DuckTextInput from "@/components/interactions/inputs/textinput";
 import ThemedText from "@/components/themedtext";
 import { Colors } from "@/constants/Colors";
 import {
   acceptFriendRequest,
+  cancelFriendRequest,
   getFriends,
   getPendingFriendRequests,
+  getSentFriendRequests,
   rejectFriendRequest,
+  removeFriend,
   requestFriend,
   searchFriends,
 } from "@/lib/api/friends";
 import { FriendProfile } from "@/types/friends/friendprofile";
 import { FriendRequest } from "@/types/friends/friendrequest";
+import { SentFriendRequest } from "@/types/friends/sentfriendrequest";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -32,8 +37,12 @@ export default function FriendsTab() {
   const [searchResults, setSearchResults] = useState<FriendProfile[]>([]);
   const [friends, setFriends] = useState<FriendProfile[]>([]);
   const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
+  const [sentRequests, setSentRequests] = useState<SentFriendRequest[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+  const [removeModalVisible, setRemoveModalVisible] = useState(false);
+  const [friendToRemove, setFriendToRemove] = useState<FriendProfile | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const canSearch = useMemo(
     () => firstName.trim().length > 0 || lastName.trim().length > 0,
@@ -43,15 +52,18 @@ export default function FriendsTab() {
   const loadFriends = useCallback(async () => {
     setIsLoadingFriends(true);
     try {
-      const [friendsResponse, requestsResponse] = await Promise.all([
+      const [friendsResponse, requestsResponse, sentRequestsResponse] = await Promise.all([
         getFriends(),
         getPendingFriendRequests(),
+        getSentFriendRequests(),
       ]);
       setFriends(friendsResponse);
       setPendingRequests(requestsResponse);
-    } catch (error) {
+      setSentRequests(sentRequestsResponse);
+    } catch {
       setFriends([]);
       setPendingRequests([]);
+      setSentRequests([]);
     } finally {
       setIsLoadingFriends(false);
     }
@@ -75,7 +87,7 @@ export default function FriendsTab() {
         lastName: lastName.trim(),
       });
       setSearchResults(response);
-    } catch (error) {
+    } catch {
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -87,7 +99,7 @@ export default function FriendsTab() {
       await requestFriend(userId);
       setSearchResults((prev) => prev.filter((user) => user.id !== userId));
       await loadFriends();
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not send friend request.");
     }
   };
@@ -96,7 +108,7 @@ export default function FriendsTab() {
     try {
       await acceptFriendRequest(requestId);
       await loadFriends();
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not accept friend request.");
     }
   };
@@ -105,8 +117,37 @@ export default function FriendsTab() {
     try {
       await rejectFriendRequest(requestId);
       await loadFriends();
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not reject friend request.");
+    }
+  };
+
+  const handleCancelRequest = async (friendshipId: number) => {
+    try {
+      await cancelFriendRequest(friendshipId);
+      await loadFriends();
+    } catch {
+      Alert.alert("Error", "Could not cancel friend request.");
+    }
+  };
+
+  const handleRemoveFriend = (friend: FriendProfile) => {
+    setFriendToRemove(friend);
+    setRemoveModalVisible(true);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!friendToRemove) return;
+    setIsRemoving(true);
+    try {
+      await removeFriend(friendToRemove.id);
+      setRemoveModalVisible(false);
+      setFriendToRemove(null);
+      await loadFriends();
+    } catch {
+      Alert.alert("Error", "Could not remove friend.");
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -180,6 +221,49 @@ export default function FriendsTab() {
       </View>
 
       <View style={styles.section}>
+        <ThemedText style={styles.sectionTitle}>Sent requests</ThemedText>
+        {isLoadingFriends ? (
+          <View style={styles.loading}>
+            <ActivityIndicator size="small" color={colors.tint} />
+          </View>
+        ) : sentRequests.length === 0 ? (
+          <ThemedText style={[styles.emptyText, { color: colors.icon }]}>
+            No sent requests.
+          </ThemedText>
+        ) : (
+          sentRequests.map((request) => (
+            <View
+              key={request.id}
+              style={[
+                styles.card,
+                { borderColor: colors.modalSecondary, backgroundColor: colors.modal },
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <ThemedText style={styles.cardTitle}>
+                  {request.addressee.firstName} {request.addressee.lastName}
+                </ThemedText>
+                <ThemedText style={[styles.cardSubtitle, { color: colors.icon }]}>
+                  {request.addressee.email}
+                </ThemedText>
+              </View>
+              <TouchableOpacity
+                style={[
+                  styles.secondaryButton,
+                  { borderColor: colors.modalSecondary },
+                ]}
+                onPress={() => handleCancelRequest(request.id)}
+                activeOpacity={0.7}
+                testID={`friend-cancel-${request.id}`}
+              >
+                <ThemedText style={styles.secondaryButtonText}>Cancel</ThemedText>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+      </View>
+
+      <View style={styles.section}>
         <ThemedText style={styles.sectionTitle}>Requests</ThemedText>
         {isLoadingFriends ? (
           <View style={styles.loading}>
@@ -247,26 +331,70 @@ export default function FriendsTab() {
           </ThemedText>
         ) : (
           friends.map((friend) => (
-            <TouchableOpacity
+            <View
               key={friend.id}
               style={[
                 styles.card,
                 { borderColor: colors.modalSecondary, backgroundColor: colors.modal },
               ]}
-              onPress={() => router.push({ pathname: "/friend", params: { id: String(friend.id) } })}
-              activeOpacity={0.7}
-              testID={`friend-open-${friend.id}`}
             >
-              <ThemedText style={styles.cardTitle}>
-                {friend.firstName} {friend.lastName}
-              </ThemedText>
-              <ThemedText style={[styles.cardSubtitle, { color: colors.icon }]}>
-                {friend.email}
-              </ThemedText>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => router.push({ pathname: "/friend", params: { id: String(friend.id) } })}
+                activeOpacity={0.7}
+                testID={`friend-open-${friend.id}`}
+              >
+                <ThemedText style={styles.cardTitle}>
+                  {friend.firstName} {friend.lastName}
+                </ThemedText>
+                <ThemedText style={[styles.cardSubtitle, { color: colors.icon }]}>
+                  {friend.email}
+                </ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.secondaryButton,
+                  { borderColor: colors.modalSecondary },
+                ]}
+                onPress={() => handleRemoveFriend(friend)}
+                testID={`friend-remove-${friend.id}`}
+              >
+                <ThemedText style={[styles.secondaryButtonText, { color: colors.tint }]}>
+                  Remove
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
           ))
         )}
       </View>
+
+      <AddModal isVisible={removeModalVisible} onClose={() => setRemoveModalVisible(false)}>
+        <View style={styles.modalContent}>
+          <ThemedText style={styles.modalTitle}>Remove Friend</ThemedText>
+          <ThemedText style={[styles.modalMessage, { color: colors.icon }]}>
+            Are you sure you want to remove {friendToRemove?.firstName} {friendToRemove?.lastName}?
+          </ThemedText>
+          <View style={styles.modalButtons}>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: colors.modalSecondary }]}
+              onPress={() => setRemoveModalVisible(false)}
+              disabled={isRemoving}
+            >
+              <ThemedText style={styles.modalButtonText}>Cancel</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: colors.tint }]}
+              onPress={handleConfirmRemove}
+              disabled={isRemoving}
+            >
+              {isRemoving ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <ThemedText style={[styles.modalButtonText, { color: "#FFFFFF" }]}>Remove</ThemedText>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </AddModal>
     </ScrollView>
   );
 }
@@ -340,5 +468,33 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: 8,
+  },
+  modalContent: {
+    gap: 16,
+    paddingHorizontal: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 8,
+  },
+  modalMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonText: {
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

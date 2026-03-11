@@ -221,6 +221,59 @@ export class FriendsService {
     }));
   }
 
+  async listSentRequests(userId: number) {
+    const friendships = await this.friendshipRepository.find({
+      where: { requester: { id: userId }, status: FriendshipStatus.Pending },
+      relations: ['addressee'],
+      order: { createdAt: 'DESC' },
+    });
+    return friendships.map((f) => ({
+      id: f.id,
+      addressee: {
+        id: f.addressee.id,
+        firstName: f.addressee.firstName,
+        lastName: f.addressee.lastName,
+        email: f.addressee.email,
+      },
+      createdAt: f.createdAt,
+    }));
+  }
+
+  async removeFriend(userId: number, friendId: number) {
+    const friendship = await this.friendshipRepository.findOne({
+      where: [
+        {
+          requester: { id: userId },
+          addressee: { id: friendId },
+          status: FriendshipStatus.Accepted,
+        },
+        {
+          requester: { id: friendId },
+          addressee: { id: userId },
+          status: FriendshipStatus.Accepted,
+        },
+      ],
+    });
+    if (!friendship) {
+      throw new NotFoundException('Friendship not found.');
+    }
+    await this.friendshipRepository.remove(friendship);
+  }
+
+  async cancelFriendRequest(userId: number, friendshipId: number) {
+    const friendship = await this.friendshipRepository.findOne({
+      where: {
+        id: friendshipId,
+        requester: { id: userId },
+        status: FriendshipStatus.Pending,
+      },
+    });
+    if (!friendship) {
+      throw new NotFoundException('Friend request not found.');
+    }
+    await this.friendshipRepository.remove(friendship);
+  }
+
   async getFriendProfile(userId: number, friendId: number) {
     await this.ensureAcceptedFriendship(userId, friendId);
 

@@ -63,14 +63,34 @@ export class FriendsController {
     return this.friendsService.rejectFriendRequest(user.userId, dto.friendshipId);
   }
 
-  @Get()
-  listFriends(@User() user: UserRequest) {
-    return this.friendsService.listFriends(user.userId);
+  @Post('remove')
+  @HttpCode(HttpStatus.OK)
+  removeFriend(@User() user: UserRequest, @Body() dto: RequestFriendDto) {
+    return this.friendsService.removeFriend(user.userId, dto.userId);
+  }
+
+  @Post('cancel')
+  @HttpCode(HttpStatus.OK)
+  cancelRequest(
+    @User() user: UserRequest,
+    @Body() dto: RespondFriendRequestDto,
+  ) {
+    return this.friendsService.cancelFriendRequest(user.userId, dto.friendshipId);
   }
 
   @Get('requests')
   listPendingRequests(@User() user: UserRequest) {
     return this.friendsService.listPendingRequests(user.userId);
+  }
+
+  @Get('sent-requests')
+  listSentRequests(@User() user: UserRequest) {
+    return this.friendsService.listSentRequests(user.userId);
+  }
+
+  @Get()
+  listFriends(@User() user: UserRequest) {
+    return this.friendsService.listFriends(user.userId);
   }
 
   @Get(':friendId')
