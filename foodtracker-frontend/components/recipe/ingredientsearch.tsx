@@ -1,6 +1,7 @@
 import DuckTextInput from '@/components/interactions/inputs/textinput';
 import ThemedText from '@/components/themedtext';
 import { Food } from '@/types/food/food';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -25,6 +26,7 @@ type IngredientSearchProps = {
   onSearchQueryChange: (value: string) => void;
   isSearching: boolean;
   searchResults: Food[];
+  onScanBarcode: () => void;
 };
 
 export default function IngredientSearch({
@@ -37,6 +39,7 @@ export default function IngredientSearch({
   onSearchQueryChange,
   isSearching,
   searchResults,
+  onScanBarcode,
 }: IngredientSearchProps) {
   return (
     <View>
@@ -64,6 +67,18 @@ export default function IngredientSearch({
             testID="ingredient-search-input"
             containerStyle={styles.searchInputContainer}
           />
+
+          <TouchableOpacity
+            style={[styles.scanButton, { borderColor: colors.tint }]}
+            onPress={onScanBarcode}
+            activeOpacity={0.8}
+            testID="ingredient-scan-barcode"
+          >
+            <FontAwesome name="barcode" size={18} color={colors.tint} />
+            <ThemedText style={[styles.scanButtonText, { color: colors.tint }]}>
+              Scan barcode
+            </ThemedText>
+          </TouchableOpacity>
 
           {isSearching && (
             <ActivityIndicator color={colors.tint} size="small" />
@@ -155,6 +170,21 @@ const styles = StyleSheet.create({
   },
   searchInputContainer: {
     marginBottom: 8,
+  },
+  scanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  scanButtonText: {
+    fontWeight: '600',
+    fontSize: 14,
   },
   resultItem: {
     borderWidth: 1,
