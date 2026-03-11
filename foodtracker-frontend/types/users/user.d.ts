@@ -1,5 +1,5 @@
 /**
- * Auto-generated from backend DTOs/Entities on 2026-01-17 13:24:01
+ * Auto-generated from backend DTOs/Entities on 2026-03-11 08:05:29
  * Do not edit manually.
  */
 
@@ -9,6 +9,7 @@ import { Meal } from "../meal/meal";
 import { Recipe } from "../recipe/recipe";
 import { Weight } from "../weight/weight";
 import { Goal } from "../goal/goal";
+import { Friendship } from "../friends/friendship";
 
 export interface User {
     id: number;
@@ -16,12 +17,13 @@ export interface User {
     password: string;
     firstName: string;
     lastName: string;
-    refreshTokenHash?: string | null;
-    refreshTokenExpiresAt?: Date | null;
+    isActive: boolean;
     foods: ReadonlyArray<Food>;
     foodEntries: ReadonlyArray<FoodEntry>;
     meals: ReadonlyArray<Meal>;
     recipes: ReadonlyArray<Recipe>;
     weightEntries: ReadonlyArray<Weight>;
     goals: ReadonlyArray<Goal>;
+    friendRequestsSent: ReadonlyArray<Friendship>;
+    friendRequestsReceived: ReadonlyArray<Friendship>;
 }

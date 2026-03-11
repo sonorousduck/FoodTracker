@@ -1,5 +1,5 @@
 /**
- * Auto-generated from backend DTOs/Entities on 2026-01-14 07:48:19
+ * Auto-generated from backend DTOs/Entities on 2026-03-11 08:05:29
  * Do not edit manually.
  */
 
@@ -10,6 +10,7 @@ import { FoodMeasurement } from "../foodmeasurement/foodmeasurement";
 export interface Food {
     id: number;
     sourceId?: string;
+    isCsvFood: boolean;
     name: string;
     brand?: string;
     calories: number;

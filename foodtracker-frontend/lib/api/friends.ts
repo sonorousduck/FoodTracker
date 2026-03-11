@@ -1,6 +1,7 @@
 import { apiMethods } from '@/lib/api';
 import { FriendProfile } from '@/types/friends/friendprofile';
 import { FriendRequest } from '@/types/friends/friendrequest';
+import { SentFriendRequest } from '@/types/friends/sentfriendrequest';
 import { FoodEntry } from '@/types/foodentry/foodentry';
 import { Recipe } from '@/types/recipe/recipe';
 
@@ -99,4 +100,16 @@ export const importFriendRecipe = async (
   return apiMethods.post<Recipe>(
     `/friends/${friendId}/recipes/${recipeId}/import`,
   );
+};
+
+export const getSentFriendRequests = async (): Promise<SentFriendRequest[]> => {
+  return apiMethods.get<SentFriendRequest[]>('/friends/sent-requests');
+};
+
+export const removeFriend = async (userId: number): Promise<void> => {
+  await apiMethods.post('/friends/remove', { userId });
+};
+
+export const cancelFriendRequest = async (friendshipId: number): Promise<void> => {
+  await apiMethods.post('/friends/cancel', { friendshipId });
 };
