@@ -1,4 +1,4 @@
-import WebDatePicker from '@/components/interactions/inputs/webdatepicker';
+import CopyToDayModal from '@/components/foodentry/copytodaymodal';
 import {
   buildEntryMacroRows,
   buildEntryNutritionRows,
@@ -11,6 +11,7 @@ import {
   mealOrder,
 } from '@/components/foodentry/foodentry-utils';
 import FoodEntryModal from '@/components/foodentry/foodentrymodal';
+import WebDatePicker from '@/components/interactions/inputs/webdatepicker';
 import DayNutritionSection from '@/components/nutrition/dailynutritionsection';
 import MealNutritionSection from '@/components/nutrition/mealnutritionsection';
 import ThemedText from '@/components/themedtext';
@@ -26,7 +27,7 @@ import {
 import { CurrentGoalsResponse, getCurrentGoals } from '@/lib/api/goal';
 import { getRecipe } from '@/lib/api/recipe';
 import { FoodEntry } from '@/types/foodentry/foodentry';
-import { UpdateFoodEntryDto } from '@/types/foodentry/updatefoodentry';
+import { MealType, UpdateFoodEntryDto } from '@/types/foodentry/updatefoodentry';
 import { GoalType } from '@/types/goal/goaltype';
 import type { Recipe } from '@/types/recipe/recipe';
 import { useFocusEffect } from 'expo-router';
@@ -69,6 +70,10 @@ export default function Tab() {
   const [lastMealEntriesByName, setLastMealEntriesByName] = useState<
     Record<string, FoodEntry[]>
   >({});
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
+  const [isCopyModalVisible, setIsCopyModalVisible] = useState(false);
+  const [isCopySubmitting, setIsCopySubmitting] = useState(false);
 
   const hydrateEntries = useCallback(async (response: FoodEntry[]) => {
     const recipeIds = Array.from(
@@ -193,6 +198,23 @@ export default function Tab() {
     [entries],
   );
 
+  const copyDefaultMealType = useMemo(() => {
+    const selected = entries.filter((e) => selectedEntryIds.has(e.id));
+    const mealNames = new Set(selected.map((e) => e.meal?.name));
+    if (mealNames.size === 1) {
+      return getMealTypeFromName([...mealNames][0]);
+    }
+    return 0;
+  }, [entries, selectedEntryIds]);
+
+  const copyDefaultDate = useMemo(() => {
+    return new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate() + 1,
+    );
+  }, [selectedDate]);
+
   const hasPercentGoals = Boolean(
     goals[GoalType.ProteinPercent] ||
     goals[GoalType.CarbohydratesPercent] ||
@@ -315,6 +337,23 @@ export default function Tab() {
   const openEditModal = (entry: FoodEntry) => {
     setSelectedEntry(entry);
     setIsModalVisible(true);
+  };
+
+  const toggleEntrySelection = (id: number) => {
+    setSelectedEntryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setIsSelectMode(false);
+    setSelectedEntryIds(new Set());
   };
 
   const handleUpdateEntry = async ({
@@ -463,6 +502,49 @@ export default function Tab() {
       loadLastMeals(selectedDate, groupedEntries);
     }, [groupedEntries, loadLastMeals, selectedDate]),
   );
+
+  const handleCopyEntries = async (
+    targetDate: Date,
+    targetMealType: MealType,
+  ) => {
+    const selected = entries.filter((e) => selectedEntryIds.has(e.id));
+    setIsCopySubmitting(true);
+    try {
+      await Promise.all(
+        selected.map((entry) =>
+          createFoodEntry({
+            servings: entry.servings,
+            mealType: targetMealType,
+            foodId: entry.food?.id,
+            recipeId: entry.recipe?.id,
+            measurementId: entry.food ? entry.measurement?.id : undefined,
+            loggedAt: targetDate,
+          }),
+        ),
+      );
+      setIsCopyModalVisible(false);
+      exitSelectMode();
+
+      // Reload entries if targetDate === selectedDate so UI updates immediately
+      const targetStart = new Date(
+        targetDate.getFullYear(),
+        targetDate.getMonth(),
+        targetDate.getDate(),
+      );
+      const selectedStart = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+      );
+      if (targetStart.getTime() === selectedStart.getTime()) {
+        await loadEntries(selectedDate);
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to copy entries.');
+    } finally {
+      setIsCopySubmitting(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -717,37 +799,77 @@ export default function Tab() {
                   ) : null}
                 </>
               ) : (
-                section.entries.map((entry) => (
-                  <TouchableOpacity
-                    key={entry.id}
-                    style={[
-                      styles.entryCard,
-                      {
-                        borderColor: colors.modalSecondary,
-                        backgroundColor: colors.modal,
-                      },
-                    ]}
-                    activeOpacity={0.7}
-                    onPress={() => openEditModal(entry)}
-                    testID={`diary-item-${entry.id}`}
-                  >
-                    <View style={styles.entryRow}>
-                      <View style={styles.entryInfo}>
-                        <ThemedText style={styles.entryTitle}>
-                          {getEntryTitle(entry)}
-                        </ThemedText>
+                section.entries.map((entry) => {
+                  const isSelected = selectedEntryIds.has(entry.id);
+                  return (
+                    <TouchableOpacity
+                      key={entry.id}
+                      style={[
+                        styles.entryCard,
+                        {
+                          borderColor: colors.modalSecondary,
+                          backgroundColor: isSelected ? colors.tint : colors.modal,
+                        },
+                      ]}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        if (isSelectMode) {
+                          toggleEntrySelection(entry.id);
+                        } else {
+                          openEditModal(entry);
+                        }
+                      }}
+                      onLongPress={() => {
+                        if (!isSelectMode) {
+                          setIsSelectMode(true);
+                          setSelectedEntryIds(new Set([entry.id]));
+                        }
+                      }}
+                      testID={`diary-item-${entry.id}`}
+                    >
+                      <View style={styles.entryRow}>
+                        {isSelectMode && (
+                          <View
+                            style={[
+                              styles.checkbox,
+                              {
+                                backgroundColor: isSelected ? colors.tint : 'transparent',
+                                borderColor: isSelected ? colors.tint : colors.icon,
+                              },
+                            ]}
+                          >
+                            {isSelected && (
+                              <ThemedText style={styles.checkmark}>✓</ThemedText>
+                            )}
+                          </View>
+                        )}
+                        <View style={styles.entryInfo}>
+                          <ThemedText style={styles.entryTitle}>
+                            {getEntryTitle(entry)}
+                          </ThemedText>
+                          <ThemedText
+                            style={[
+                              styles.entrySubtitle,
+                              {
+                                color: isSelected ? '#FFFFFF' : colors.icon,
+                              },
+                            ]}
+                          >
+                            {getEntryServingsText(entry)}
+                          </ThemedText>
+                        </View>
                         <ThemedText
-                          style={[styles.entrySubtitle, { color: colors.icon }]}
+                          style={[
+                            styles.entryCalories,
+                            { color: isSelected ? '#FFFFFF' : undefined },
+                          ]}
                         >
-                          {getEntryServingsText(entry)}
+                          {formatEntryCalories(entry)}
                         </ThemedText>
                       </View>
-                      <ThemedText style={styles.entryCalories}>
-                        {formatEntryCalories(entry)}
-                      </ThemedText>
-                    </View>
-                  </TouchableOpacity>
-                ))
+                    </TouchableOpacity>
+                  );
+                })
               )}
               {section.entries.length > 0 ? (
                 <MealNutritionSection
@@ -785,6 +907,54 @@ export default function Tab() {
           })
         )}
       </ScrollView>
+
+      {/* Selection Action Bar */}
+      {isSelectMode && (
+        <View
+          style={[
+            styles.actionBar,
+            {
+              backgroundColor: colors.modal,
+              borderColor: colors.modalSecondary,
+            },
+          ]}
+        >
+          <ThemedText style={styles.actionBarText}>
+            {selectedEntryIds.size} selected
+          </ThemedText>
+          <View style={styles.actionBarButtons}>
+            <TouchableOpacity
+              style={[
+                styles.actionBarButton,
+                {
+                  backgroundColor: colors.tint,
+                  opacity: selectedEntryIds.size === 0 ? 0.5 : 1,
+                },
+              ]}
+              onPress={() => setIsCopyModalVisible(true)}
+              disabled={selectedEntryIds.size === 0}
+              activeOpacity={0.7}
+            >
+              <ThemedText style={styles.actionBarButtonText}>Copy</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.actionBarButton,
+                { borderColor: colors.modalSecondary },
+              ]}
+              onPress={exitSelectMode}
+              activeOpacity={0.7}
+            >
+              <ThemedText
+                style={[styles.actionBarButtonText, { color: colors.text }]}
+              >
+                Cancel
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
       <FoodEntryModal
         visible={isModalVisible}
         onDismiss={() => setIsModalVisible(false)}
@@ -812,6 +982,16 @@ export default function Tab() {
           onCancel={() => setIsDatePickerVisible(false)}
         />
       ) : null}
+      <CopyToDayModal
+        visible={isCopyModalVisible}
+        onDismiss={() => setIsCopyModalVisible(false)}
+        onConfirm={handleCopyEntries}
+        selectedCount={selectedEntryIds.size}
+        defaultDate={copyDefaultDate}
+        defaultMealType={copyDefaultMealType}
+        isSubmitting={isCopySubmitting}
+        colors={colors}
+      />
     </SafeAreaView>
   );
 }
@@ -1021,5 +1201,49 @@ const styles = StyleSheet.create({
   entryCalories: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  checkmark: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  actionBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    gap: 16,
+  },
+  actionBarText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  actionBarButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionBarButton: {
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  actionBarButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

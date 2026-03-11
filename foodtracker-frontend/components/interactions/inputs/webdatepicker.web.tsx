@@ -3,6 +3,7 @@ import { Colors } from "@/constants/Colors";
 import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import "./webdatepicker.css";
 import { View, useColorScheme } from "react-native";
 
 interface WebDatePickerProps {
@@ -69,6 +70,7 @@ const WebDatePicker: React.FC<WebDatePickerProps> = ({
 				onClickOutside={onClose}
 				portalId="datepicker-portal"
 				popperProps={{ strategy: "fixed" }}
+				popperClassName="react-datepicker-modal-popper"
 				customInput={
 					<input
 						style={{
