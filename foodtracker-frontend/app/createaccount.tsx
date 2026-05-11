@@ -236,6 +236,7 @@ export default function CreateAccount() {
                 editable={!isLoading}
                 textContentType="emailAddress"
                 autoComplete="email"
+                importantForAutofill='yes'
               />
               {errors.email && (
                 <ThemedText style={styles.errorText}>{errors.email}</ThemedText>
@@ -272,6 +273,7 @@ export default function CreateAccount() {
                 textContentType="newPassword"
                 autoComplete="new-password"
                 passwordRules="minlength: 8; required: upper; required: lower; required: digit;"
+                importantForAutofill='yes'
               />
               {errors.password ? (
                 <ThemedText style={styles.errorText}>{errors.password}</ThemedText>
