@@ -1,12 +1,11 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { User } from "src/users/entities/user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserRequest } from "src/common/user";
 import { In, Repository } from "typeorm";
 
+import { AllFoodsDto } from "./dto/allfoods.dto";
 import { CreateBasicFoodDto } from "./dto/createbasicfood.dto";
 import { CreateFoodDto } from "./dto/createfood.dto";
-import { AllFoodsDto } from "./dto/allfoods.dto";
 import { Food } from "./entities/food.entity";
 import { FoodSearchService } from "./food-search.service";
 
@@ -82,7 +81,7 @@ export class FoodService {
     };
   }
 
-  async getFoodsByName(foodName: string, limit: number = 20) {
+  async getFoodsByName(foodName: string, limit: number = 50) {
     const ids = await this.foodSearchService.searchFoodsByName(foodName, limit);
     if (ids.length === 0) {
       return [];
