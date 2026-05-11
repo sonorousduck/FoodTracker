@@ -106,6 +106,7 @@ export default function SignIn() {
                 editable={!isLoading}
                 textContentType="emailAddress"
                 autoComplete="email"
+                importantForAutofill='yes'
               />
             </View>
 
@@ -139,7 +140,8 @@ export default function SignIn() {
                 autoCorrect={false}
                 editable={!isLoading}
                 textContentType="password"
-                autoComplete="current-password"
+                autoComplete="password"
+                importantForAutofill='yes'
               />
             </View>
 
