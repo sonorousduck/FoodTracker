@@ -14,4 +14,4 @@ If I make updates, I can re-run everything by
 
 #### App
 
-npx eas build -p ios --auto-submit
+npx eas-cli build -p ios --auto-submit
