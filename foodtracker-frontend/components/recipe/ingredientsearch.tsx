@@ -1,7 +1,7 @@
 import DuckTextInput from '@/components/interactions/inputs/textinput';
 import ThemedText from '@/components/themedtext';
 import { Food } from '@/types/food/food';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome from "@react-native-vector-icons/fontawesome";
 import {
   ActivityIndicator,
   StyleSheet,

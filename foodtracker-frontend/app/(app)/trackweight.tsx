@@ -5,7 +5,7 @@ import { Colors } from "@/constants/Colors";
 import { isAxiosError } from "@/lib/api";
 import { createWeight } from "@/lib/api/weight";
 import { CreateWeightDto } from "@/types/weight/createweight";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import AntDesign from "@react-native-vector-icons/ant-design";
 import { useNavigation } from "expo-router/react-navigation";
 import { useRouter } from "expo-router";
 import React, { useCallback, useLayoutEffect, useState } from "react";
