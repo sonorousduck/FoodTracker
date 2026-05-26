@@ -8,10 +8,12 @@ import { Lucide } from "@react-native-vector-icons/lucide";
 import { Octicons } from "@react-native-vector-icons/octicons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -20,12 +22,10 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: "absolute",
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom,
+        },
       }}
     >
       <Tabs.Screen
