@@ -30,7 +30,7 @@ export default function WeightCardDisplay() {
 			<View style={styles.content}>
 				<ThemedText style={styles.title}>Weight trend</ThemedText>
 				{hasWeights ? (
-					<WeightChart weights={normalizedWeights} />
+					<WeightChart weights={normalizedWeights} height={180}/>
 				) : (
 					<Pressable
 						testID="weight-empty-state-action"

@@ -1301,7 +1301,7 @@
     slash "^3.0.0"
     strip-ansi "^6.0.0"
 
-"@jest/create-cache-key-function@^29.2.1":
+"@jest/create-cache-key-function@^29.2.1", "@jest/create-cache-key-function@^29.7.0":
   version "29.7.0"
   resolved "https://registry.yarnpkg.com/@jest/create-cache-key-function/-/create-cache-key-function-29.7.0.tgz#793be38148fab78e65f40ae30c36785f4ad859f0"
   integrity sha512-4QqS3LY5PBmTRHj9sAg1HLoPzqAI0uOX6wI/TRqHIcOxlFidy6YEmCQJk6FSZjNLGCeubDMfmkWL+qaLKhSGQA==
@@ -1890,6 +1890,17 @@
   resolved "https://registry.yarnpkg.com/@react-native/gradle-plugin/-/gradle-plugin-0.85.3.tgz#79f94aa38bc68be9b331cfd197de5bb53109465a"
   integrity sha512-39dY2j50Q1pntejzwt3XL7vwXtrj8jcIfHq6E+gyu3jzYxZJVvMkMutQ39vSg6zinIQOX36oQDhidXUbCXzgoA==
 
+"@react-native/jest-preset@^0.85.3":
+  version "0.85.3"
+  resolved "https://registry.yarnpkg.com/@react-native/jest-preset/-/jest-preset-0.85.3.tgz#e7ce02f0fdf2b51d06097598f24a3e4f234478bb"
+  integrity sha512-ALPSrM0q2fU+5AXcOXzDKx7rxVKPMvygAZfsTWLdrGRVWIqf/HEfM0R8euQqIKUqmEuQ1TxMWN+px3h6gc4vow==
+  dependencies:
+    "@jest/create-cache-key-function" "^29.7.0"
+    "@react-native/js-polyfills" "0.85.3"
+    babel-jest "^29.7.0"
+    jest-environment-node "^29.7.0"
+    regenerator-runtime "^0.13.2"
+
 "@react-native/js-polyfills@0.85.3":
   version "0.85.3"
   resolved "https://registry.yarnpkg.com/@react-native/js-polyfills/-/js-polyfills-0.85.3.tgz#f3eef60ee619f51f78f8db7489abc192e685508f"
@@ -1912,56 +1923,6 @@
   dependencies:
     invariant "^2.2.4"
     nullthrows "^1.1.1"
-
-"@react-navigation/bottom-tabs@^7.3.10":
-  version "7.16.2"
-  resolved "https://registry.yarnpkg.com/@react-navigation/bottom-tabs/-/bottom-tabs-7.16.2.tgz#9c721e76351627fcdb261e1a7d0d10e648b07040"
-  integrity sha512-Lbp++BGMc7SQXnyKuO/JrQJIhFH0zyB5v4kIEbnzDJLJfgubd5hoSe+QfCqy4YHfLA4phC4Xf/6Q2Ic8x7datQ==
-  dependencies:
-    "@react-navigation/elements" "^2.9.19"
-    color "^4.2.3"
-    sf-symbols-typescript "^2.1.0"
-
-"@react-navigation/core@^7.17.5":
-  version "7.17.5"
-  resolved "https://registry.yarnpkg.com/@react-navigation/core/-/core-7.17.5.tgz#75ca0815385dc795d9a367c0f3e2be0fa17c0b42"
-  integrity sha512-6fDCwDTWC7DJn0SDb9DJGRlipaygHIc+2elpZBJI6Crl/2Pu+Z1d6W4jMJ2gZO6iHKf+Pe5sUiQ/uwepGprZtg==
-  dependencies:
-    "@react-navigation/routers" "^7.5.5"
-    escape-string-regexp "^4.0.0"
-    fast-deep-equal "^3.1.3"
-    nanoid "^3.3.11"
-    query-string "^7.1.3"
-    react-is "^19.1.0"
-    use-latest-callback "^0.2.4"
-    use-sync-external-store "^1.5.0"
-
-"@react-navigation/elements@^2.3.8", "@react-navigation/elements@^2.9.19":
-  version "2.9.19"
-  resolved "https://registry.yarnpkg.com/@react-navigation/elements/-/elements-2.9.19.tgz#8b9756ce0daab39095c90cd11d85ab41f78ba4f9"
-  integrity sha512-gBUvCZuUkOGw1KpLQEZIkByUz8RYPwXeoA6mZFJy9K1mxd8GdqHDMFCIoB0lfPz9rgrHj99RvtdlGZ/ZzkZv2A==
-  dependencies:
-    color "^4.2.3"
-    use-latest-callback "^0.2.4"
-    use-sync-external-store "^1.5.0"
-
-"@react-navigation/native@^7.1.6":
-  version "7.2.5"
-  resolved "https://registry.yarnpkg.com/@react-navigation/native/-/native-7.2.5.tgz#f98db27148d1c8734ad021b204f117e18255a087"
-  integrity sha512-01AAUQiiHQAfTabq+ZyU1/ZWq+AbB/J3v0CB0UTJSON6M6cuadWNsbChzrZUdqQvHrXvg96U5i2PQLJzK3+zpg==
-  dependencies:
-    "@react-navigation/core" "^7.17.5"
-    escape-string-regexp "^4.0.0"
-    fast-deep-equal "^3.1.3"
-    nanoid "^3.3.11"
-    use-latest-callback "^0.2.4"
-
-"@react-navigation/routers@^7.5.5":
-  version "7.5.5"
-  resolved "https://registry.yarnpkg.com/@react-navigation/routers/-/routers-7.5.5.tgz#04358f1997cc31aa702d01719af274dc123d6025"
-  integrity sha512-9/hhMte12Kgu+pMnLfA4EWJ0OQmIEAMVMX06FPH2yGkEQSQ3JhhCN/GkcRikzQhtEi97VYYQA15umptBUShcOQ==
-  dependencies:
-    nanoid "^3.3.11"
 
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
@@ -6590,7 +6551,7 @@ multitars@^1.0.0:
   resolved "https://registry.yarnpkg.com/multitars/-/multitars-1.0.0.tgz#50828be6b04328242e1c0f8439fbca4f6569e761"
   integrity sha512-H/J4fMLedtudftaYMOg7ajzLYgT3/rwbWVJbqr/iUgB8DQztn38ys5HOqI1CzSxx8QhXXwOOnnBvd4v3jG5+Mg==
 
-nanoid@^3.3.11, nanoid@^3.3.12, nanoid@^3.3.8:
+nanoid@^3.3.12, nanoid@^3.3.8:
   version "3.3.12"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.12.tgz#ab3d912e217a6d0a514f00a72a16543a28982c05"
   integrity sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==
@@ -8490,11 +8451,6 @@ use-sidecar@^1.1.3:
   dependencies:
     detect-node-es "^1.1.0"
     tslib "^2.0.0"
-
-use-sync-external-store@^1.5.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz#b174bfa65cb2b526732d9f2ac0a408027876f32d"
-  integrity sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==
 
 utils-merge@1.0.1:
   version "1.0.1"
