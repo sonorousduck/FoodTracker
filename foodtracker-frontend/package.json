@@ -14,14 +14,10 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~56.0.13",
-    "@expo/vector-icons": "^15.0.3",
     "@react-native-community/datetimepicker": "9.1.0",
     "@react-native-vector-icons/lucide": "^12.3.0",
     "@react-native-vector-icons/material-design-icons": "^12.3.0",
     "@react-native-vector-icons/octicons": "^20.3.0",
-    "@react-navigation/bottom-tabs": "^7.3.10",
-    "@react-navigation/elements": "^2.3.8",
-    "@react-navigation/native": "^7.1.6",
     "@sentry/react-native": "~7.11.0",
     "@shopify/react-native-skia": "2.6.2",
     "@zxing/browser": "^0.1.5",
@@ -60,7 +56,11 @@
     "sentry": "^0.10.2",
     "victory": "^37.3.6",
     "victory-native": "^41.20.2",
-    "wrap-ansi": "^9.0.2"
+    "wrap-ansi": "^9.0.2",
+    "@react-native-vector-icons/fontawesome": "^13.1.2",
+    "@react-native-vector-icons/material-icons": "^13.1.2",
+    "@react-native-vector-icons/ant-design": "^13.1.2",
+    "@react-native-vector-icons/ionicons": "^13.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
