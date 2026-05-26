@@ -28,7 +28,7 @@ import { createRecipe, deleteRecipe, getRecipe, updateRecipe } from '@/lib/api/r
 import { Food } from '@/types/food/food';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCameraPermissions } from 'expo-camera';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';

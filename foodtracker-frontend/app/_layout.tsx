@@ -3,7 +3,7 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
 import { SessionProvider, useSession } from '@/hooks/auth';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import * as Sentry from '@sentry/react-native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
