@@ -7,26 +7,26 @@ import { GoalType } from '../dto/goaltype';
 @Entity()
 export class Goal {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  name: string;
+  name!: string;
 
   @Column()
-  value: number;
+  value!: number;
 
   @Column({ type: "enum", enum: GoalType })
-  goalType: GoalType;
+  goalType!: GoalType;
 
   @ManyToOne(() => User, (user) => user.goals, { cascade: true })
-  user: User;
+  user!: User;
 
   @Column({ nullable: true })
-  startDate: Date;
+  startDate!: Date;
 
   @Column({ nullable: true })
-  endDate: Date;
+  endDate!: Date;
 
   @CreateDateColumn()
-  createdDate: Date;
+  createdDate!: Date;
 }

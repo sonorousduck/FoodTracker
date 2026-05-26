@@ -1,11 +1,11 @@
-import { IsString, IsOptional, IsNumber, Min, Max } from "class-validator";
-import { Type, Transform } from "class-transformer";
+import { Transform } from "class-transformer";
+import { IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 
 
 export class CreateBasicFoodDto {
   @IsString()
   @Transform(({ value }) => value?.trim())
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -15,22 +15,22 @@ export class CreateBasicFoodDto {
   @IsNumber()
   @Min(0)
   @Max(9999)
-  calories: number;
+  calories!: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  protein: number;
+  protein!: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  carbs: number;
+  carbs!: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  fat: number;
+  fat!: number;
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })

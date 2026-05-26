@@ -1,4 +1,4 @@
-import { Type, Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
@@ -14,11 +14,11 @@ import { CreateRecipeIngredientDto } from './createrecipeingredient.dto';
 export class CreateRecipeDto {
   @IsString()
   @Transform(({ value }) => value?.trim())
-  title: string;
+  title!: string;
 
   @IsInt()
   @Min(1)
-  servings: number;
+  servings!: number;
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -28,5 +28,5 @@ export class CreateRecipeDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateRecipeIngredientDto)
-  ingredients: CreateRecipeIngredientDto[];
+  ingredients!: CreateRecipeIngredientDto[];
 }

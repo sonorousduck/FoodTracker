@@ -20,28 +20,28 @@ export enum FriendshipStatus {
 @Index(['requester', 'addressee'], { unique: true })
 export class Friendship {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => User, (user) => user.friendRequestsSent, {
     nullable: false,
   })
-  requester: User;
+  requester!: User;
 
   @ManyToOne(() => User, (user) => user.friendRequestsReceived, {
     nullable: false,
   })
-  addressee: User;
+  addressee!: User;
 
   @Column({
     type: 'enum',
     enum: FriendshipStatus,
     default: FriendshipStatus.Pending,
   })
-  status: FriendshipStatus;
+  status!: FriendshipStatus;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

@@ -17,13 +17,13 @@ export enum AuthEventType {
 @Index(['email', 'createdAt'])
 export class AuthLog {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'int', nullable: true })
   userId?: number;
 
   @Column({ type: 'enum', enum: AuthEventType })
-  eventType: AuthEventType;
+  eventType!: AuthEventType;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   email?: string;
@@ -35,11 +35,11 @@ export class AuthLog {
   userAgent?: string;
 
   @Column({ type: 'boolean', default: true })
-  success: boolean;
+  success!: boolean;
 
   @Column({ type: 'json', nullable: true })
   metadata?: Record<string, any>;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 }

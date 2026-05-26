@@ -4,9 +4,9 @@ import { CreateFoodDto } from "src/food/dto/createfood.dto";
 
 export class CreateFoodBarcodeDto {
   @IsString()
-  barcode: string;
+  barcode!: string;
 
   @ValidateNested()
   @Type(() => CreateFoodDto)
-  food: CreateFoodDto;
+  food!: CreateFoodDto;
 }
