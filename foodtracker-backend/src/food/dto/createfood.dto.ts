@@ -1,6 +1,6 @@
-import { IsOptional, IsString, IsNumber, Min, Max, IsArray, ValidateNested } from "class-validator";
+import { Transform, Type } from "class-transformer";
+import { IsArray, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from "class-validator";
 import { CreateFoodMeasurementDto } from "src/foodmeasurement/dto/createfoodmeasurement.dto";
-import { Type, Transform } from "class-transformer";
 
 
 export class CreateFoodDto {
@@ -10,7 +10,7 @@ export class CreateFoodDto {
 
   @IsString()
   @Transform(({ value }) => value?.trim())
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -26,37 +26,37 @@ export class CreateFoodDto {
   @IsNumber()
   @Min(0)
   @Max(9999) // Reasonable max calories per 100g
-  calories: number; // Calories per 100g
+  calories!: number; // Calories per 100g
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100) // Reasonable max protein per 100g
-  protein: number; // Protein per 100g
+  protein!: number; // Protein per 100g
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  carbs: number; // Carbohydrate per 100g
+  carbs!: number; // Carbohydrate per 100g
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  fat: number; // Fat per 100g
+  fat!: number; // Fat per 100g
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  fiber: number; // Fiber per 100g
+  fiber!: number; // Fiber per 100g
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Max(100)
-  sugar: number; // Sugars per 100g
+  sugar!: number; // Sugars per 100g
 
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0)
   @Max(50000) // Sodium can be high in some foods (in mg)
-  sodium: number; // Sodium per 100g (in mg)
+  sodium!: number; // Sodium per 100g (in mg)
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })

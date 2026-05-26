@@ -1,33 +1,33 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, Column } from "typeorm";
 import { Food } from "src/food/entities/food.entity";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 
 @Entity()
 export class FoodMeasurement {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Food, (food) => food.measurements, { onDelete: "CASCADE" })
-  food: Food;
+  food!: Food;
 
   @Column()
-  unit: string;
+  unit!: string;
 
   @Column()
-  name: string; // "1 cup", "1 tablespoon", "100g", etc.
+  name!: string; // "1 cup", "1 tablespoon", "100g", etc.
 
   @Column()
-  abbreviation: string; // "cup", "tbsp", "100g", etc.
+  abbreviation!: string; // "cup", "tbsp", "100g", etc.
 
   @Column("decimal", { precision: 10, scale: 2 })
-  weightInGrams: number; // How many grams this measurement represents
+  weightInGrams!: number; // How many grams this measurement represents
 
   @Column({ default: false })
-  isDefault: boolean; // Mark the primary serving size
+  isDefault!: boolean; // Mark the primary serving size
 
   @Column({ default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @Column({ default: false })
-  isFromSource: boolean; // Indicates this came from the original CSV data
+  isFromSource!: boolean; // Indicates this came from the original CSV data
 }

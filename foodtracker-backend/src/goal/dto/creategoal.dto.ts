@@ -8,10 +8,10 @@ export class CreateGoalDto {
   name?: string;
 
   @IsNumber()
-  value: number;
+  value!: number;
 
   @IsEnum(GoalType)
-  goalType: GoalType;
+  goalType!: GoalType;
 
   @IsOptional()
   @IsDate()

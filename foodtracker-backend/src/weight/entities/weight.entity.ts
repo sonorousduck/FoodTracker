@@ -5,18 +5,18 @@ import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedCol
 @Entity()
 export class Weight {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  weightEntry: number;
+  weightEntry!: number;
 
   @Index()
   @Column()
-  date: Date;
+  date!: Date;
 
   @ManyToOne(() => User, (user) => user.weightEntries, { cascade: true })
-  user: User;
+  user!: User;
 
   @CreateDateColumn()
-  createdDate: Date;
+  createdDate!: Date;
 }
