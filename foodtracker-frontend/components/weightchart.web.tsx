@@ -4,10 +4,10 @@ import { Weight } from "@/types/weight/weight";
 import { useMemo } from "react";
 import { View, useWindowDimensions } from "react-native";
 import {
-	VictoryAxis,
-	VictoryChart,
-	VictoryLine,
-	VictoryScatter,
+  VictoryAxis,
+  VictoryChart,
+  VictoryLine,
+  VictoryScatter,
 } from "victory";
 
 type ChartDatum = {
@@ -64,14 +64,14 @@ export default function WeightChartWeb({
 				animate={true}
 				width={chartWidth}
 				height={height}
-				padding={{ top: 16, left: 48, right: 48, bottom: 32 }}
+				padding={{ top: 8, left: 40, right: 8, bottom: 32 }}
 			>
 				<VictoryAxis
 					tickFormat={(value) => formatDateLabel(value)}
 					style={{
 						axis: { stroke: colors.text },
 						ticks: { stroke: colors.text },
-						tickLabels: { fill: colors.text, fontSize: 10 },
+						tickLabels: { fill: colors.text, fontSize: 10, angle: 90, textAnchor: 'start', padding: 5},
 						grid: { stroke: colors.modalSecondary },
 					}}
 				/>
