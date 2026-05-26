@@ -2,7 +2,7 @@ import WebDatePicker from '@/components/interactions/inputs/webdatepicker';
 import ThemedText from '@/components/themedtext';
 import { Colors } from '@/constants/Colors';
 import { MealType } from '@/types/foodentry/updatefoodentry';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -38,14 +38,6 @@ export default function CopyToDayModal({
   const [targetDate, setTargetDate] = useState(defaultDate);
   const [targetMealType, setTargetMealType] = useState<MealType>(defaultMealType);
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
-  // Reset state when modal visibility changes
-  useEffect(() => {
-    if (visible) {
-      setTargetDate(defaultDate);
-      setTargetMealType(defaultMealType);
-    }
-  }, [visible, defaultDate, defaultMealType]);
 
   // Calculate the 7-day window centered on targetDate
   const dateWindow = useMemo(() => {
@@ -104,6 +96,7 @@ export default function CopyToDayModal({
           onPress={onDismiss}
         />
         <View
+        key={visible ? 'open' : 'closed'}
           style={[
             styles.modalContent,
             { backgroundColor: colors.modal },

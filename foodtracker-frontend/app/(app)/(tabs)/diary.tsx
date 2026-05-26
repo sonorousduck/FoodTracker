@@ -19,6 +19,7 @@ import { Colors } from '@/constants/Colors';
 import { DefaultCalorieGoal } from '@/constants/goals';
 import {
   createFoodEntry,
+  deleteFoodEntries,
   deleteFoodEntry,
   getDiaryEntries,
   getLastMealEntries,
@@ -355,6 +356,26 @@ export default function Tab() {
     setIsSelectMode(false);
     setSelectedEntryIds(new Set());
   };
+
+
+  const removeSelectedFoods = async () => {
+    const selectedEntryIdFoods = selectedEntryIds;
+
+    if (selectedEntryIdFoods.size === 0) {
+      return;
+    }
+
+    const ids = [...selectedEntryIdFoods];
+
+    setIsSubmitting(true);
+    try {
+      await deleteFoodEntries(ids);
+      exitSelectMode();
+      await loadEntries(selectedDate);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const handleUpdateEntry = async ({
     servings,
@@ -937,6 +958,14 @@ export default function Tab() {
             >
               <ThemedText style={styles.actionBarButtonText}>Copy</ThemedText>
             </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.actionBarButton, { borderColor: colors.danger}]} onPress={removeSelectedFoods}>
+              <ThemedText style={[styles.actionBarButtonText, {color: colors.danger}]}>
+                Remove
+              </ThemedText>
+            </TouchableOpacity>
+
+
             <TouchableOpacity
               style={[
                 styles.actionBarButton,

@@ -55,3 +55,12 @@ export const updateFoodEntry = async (
 export const deleteFoodEntry = async (id: number): Promise<boolean> => {
   return apiMethods.delete<boolean>(`/foodentry/${id}`);
 };
+
+
+export const deleteFoodEntries = async (ids: ReadonlyArray<number>): Promise<boolean[]> => {
+  const promises = Promise.all(ids.map(async (id) => {
+    return await deleteFoodEntry(id);
+  }));
+
+  return promises;
+}
