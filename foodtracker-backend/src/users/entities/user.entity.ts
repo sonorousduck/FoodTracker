@@ -1,54 +1,54 @@
 import { Food } from 'src/food/entities/food.entity';
 import { FoodEntry } from 'src/foodentry/entities/foodentry.entity';
+import { Friendship } from 'src/friends/entities/friendship.entity';
 import { Goal } from 'src/goal/entities/goal.entity';
 import { Meal } from 'src/meal/entities/meal.entity';
 import { Recipe } from 'src/recipe/entities/recipe.entity';
 import { Weight } from 'src/weight/entities/weight.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Friendship } from 'src/friends/entities/friendship.entity';
 
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  email: string;
+  email!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
   @Column()
-  firstName: string;
+  firstName!: string;
 
   @Column()
-  lastName: string;
+  lastName!: string;
 
   @Column({ type: 'boolean', default: true })
-  isActive: boolean;
+  isActive!: boolean;
 
   @OneToMany(() => Food, (food) => food.createdBy)
-  foods: ReadonlyArray<Food>;
+  foods!: ReadonlyArray<Food>;
 
   @OneToMany(() => FoodEntry, (foodEntry) => foodEntry.user)
-  foodEntries: ReadonlyArray<FoodEntry>;
+  foodEntries!: ReadonlyArray<FoodEntry>;
 
   @OneToMany(() => Meal, (meal) => meal.user)
-  meals: ReadonlyArray<Meal>;
+  meals!: ReadonlyArray<Meal>;
 
   @OneToMany(() => Recipe, (recipe) => recipe.user)
-  recipes: ReadonlyArray<Recipe>;
+  recipes!: ReadonlyArray<Recipe>;
 
   @OneToMany(() => Weight, (weight) => weight.user)
-  weightEntries: ReadonlyArray<Weight>;
+  weightEntries!: ReadonlyArray<Weight>;
 
   @OneToMany(() => Goal, (goal) => goal.user)
-  goals: ReadonlyArray<Goal>;
+  goals!: ReadonlyArray<Goal>;
 
   @OneToMany(() => Friendship, (friendship) => friendship.requester)
-  friendRequestsSent: ReadonlyArray<Friendship>;
+  friendRequestsSent!: ReadonlyArray<Friendship>;
 
   @OneToMany(() => Friendship, (friendship) => friendship.addressee)
-  friendRequestsReceived: ReadonlyArray<Friendship>;
+  friendRequestsReceived!: ReadonlyArray<Friendship>;
 }

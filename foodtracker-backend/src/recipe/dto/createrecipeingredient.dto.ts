@@ -3,11 +3,11 @@ import { IsInt, IsNumber, IsOptional, Min } from 'class-validator';
 export class CreateRecipeIngredientDto {
   @IsInt()
   @Min(1)
-  foodId: number;
+  foodId!: number;
 
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
-  servings: number;
+  servings!: number;
 
   @IsOptional()
   @IsInt()

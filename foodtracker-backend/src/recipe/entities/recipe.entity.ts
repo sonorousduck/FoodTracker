@@ -1,26 +1,26 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany } from "typeorm";
 import { RecipeFood } from "src/recipefood/entities/recipefood.entity";
 import { User } from "src/users/entities/user.entity";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 
 @Entity()
 export class Recipe {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => User, (user) => user.recipes, { nullable: false })
-  user: User;
+  user!: User;
 
   @Column()
-  title: string;
+  title!: string;
 
   @Column("int")
-  servings: number;
+  servings!: number;
 
   // Optional pre-calculated totals (can also be computed dynamically)
   @Column("decimal", { precision: 10, scale: 2, nullable: true })
   calories?: number;
 
   @OneToMany(() => RecipeFood, (recipeFood) => recipeFood.recipe, { cascade: true })
-  ingredients: ReadonlyArray<RecipeFood>;
+  ingredients!: ReadonlyArray<RecipeFood>;
 }

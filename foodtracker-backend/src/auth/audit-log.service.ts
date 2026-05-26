@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, MoreThan } from 'typeorm';
 import type { Request } from 'express';
+import { MoreThan, Repository } from 'typeorm';
 
-import { AuthLog, AuthEventType } from './entities/auth-log.entity';
+import { AuthEventType, AuthLog } from './entities/auth-log.entity';
 
 interface LogEventOptions {
   userId?: number;
@@ -48,7 +48,7 @@ export class AuditLogService {
         `Auth event logged: ${options.eventType} for ${options.email || 'user ' + options.userId} (success: ${options.success})`
       );
     } catch (error) {
-      this.logger.error(`Failed to log auth event: ${error.message}`);
+      this.logger.error(`Failed to log auth event: ${String(error)}`);
       // Don't throw - logging failures shouldn't break authentication flow
     }
   }

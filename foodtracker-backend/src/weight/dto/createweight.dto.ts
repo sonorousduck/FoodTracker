@@ -1,11 +1,11 @@
-import { IsDate, IsNumber } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsNumber } from 'class-validator';
 
 export class CreateWeightDto {
   @IsNumber({ maxDecimalPlaces: 2 })
-  weightEntry: number;
+  weightEntry!: number;
 
   @Type(() => Date)
   @IsDate()
-  date: Date;
+  date!: Date;
 }

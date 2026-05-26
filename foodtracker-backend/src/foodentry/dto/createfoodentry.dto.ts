@@ -1,5 +1,5 @@
-import { IsDate, IsIn, IsInt, IsNumber, IsOptional, Min } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsIn, IsInt, IsNumber, IsOptional, Min } from 'class-validator';
 
 export const MEAL_TYPES = [0, 1, 2, 3] as const;
 
@@ -27,12 +27,12 @@ export class CreateFoodEntryDto {
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 4 })
   @Min(0.0001)
-  servings: number;
+  servings!: number;
 
   @Type(() => Number)
   @IsInt()
   @IsIn(MEAL_TYPES)
-  mealType: MealType;
+  mealType!: MealType;
 
   @IsOptional()
   @Type(() => Date)

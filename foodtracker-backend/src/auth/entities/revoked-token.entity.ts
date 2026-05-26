@@ -4,20 +4,20 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 
 @Index(['expiresAt'])
 export class RevokedToken {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'varchar', length: 64, unique: true })
-  tokenHash: string;
+  tokenHash!: string;
 
   @Column()
-  userId: number;
+  userId!: number;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   reason?: string;
 
   @CreateDateColumn()
-  revokedAt: Date;
+  revokedAt!: Date;
 
   @Column({ type: 'timestamp' })
-  expiresAt: Date;
+  expiresAt!: Date;
 }

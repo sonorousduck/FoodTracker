@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
 import { createHash } from 'crypto';
+import { LessThan, Repository } from 'typeorm';
 
 import { RevokedToken } from './entities/revoked-token.entity';
 
@@ -63,7 +63,7 @@ export class TokenRevocationService implements OnModuleInit {
         `Token revoked for user ${userId}. Reason: ${reason}. Hash: ${tokenHash.substring(0, 8)}...`,
       );
     } catch (error) {
-      this.logger.error(`Failed to revoke token: ${error.message}`);
+      this.logger.error(`Failed to revoke token: ${String(error)}`);
       throw error;
     }
   }
@@ -119,7 +119,7 @@ export class TokenRevocationService implements OnModuleInit {
 
       this.logger.debug(`Cache refreshed with ${this.revokedTokensCache.size} revoked tokens`);
     } catch (error) {
-      this.logger.error(`Failed to refresh cache: ${error.message}`);
+      this.logger.error(`Failed to refresh cache: ${String(error)}`);
     }
   }
 
@@ -142,7 +142,7 @@ export class TokenRevocationService implements OnModuleInit {
       // Refresh cache after cleanup
       await this.refreshCache();
     } catch (error) {
-      this.logger.error(`Failed to cleanup expired tokens: ${error.message}`);
+      this.logger.error(`Failed to cleanup expired tokens: ${String(error)}`);
     }
   }
 

@@ -1,18 +1,18 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from "typeorm";
-import { Recipe } from "src/recipe/entities/recipe.entity";
-import { User } from "src/users/entities/user.entity";
-import { Meal } from "src/meal/entities/meal.entity";
 import { Food } from "src/food/entities/food.entity";
 import { FoodMeasurement } from "src/foodmeasurement/entities/foodmeasurement.entity";
+import { Meal } from "src/meal/entities/meal.entity";
+import { Recipe } from "src/recipe/entities/recipe.entity";
+import { User } from "src/users/entities/user.entity";
+import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 
 @Entity()
 export class FoodEntry {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => User, (user) => user.foodEntries, { nullable: false })
-  user: User;
+  user!: User;
 
   @ManyToOne(() => Food, { nullable: true })
   food?: Food;
@@ -24,11 +24,11 @@ export class FoodEntry {
   recipe?: Recipe;
 
   @Column("decimal", { precision: 10, scale: 4 })
-  servings: number;
+  servings!: number;
 
   @ManyToOne(() => Meal, { nullable: true })
   meal?: Meal;
 
   @CreateDateColumn()
-  loggedAt: Date;
+  loggedAt!: Date;
 }
