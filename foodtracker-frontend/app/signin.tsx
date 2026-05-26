@@ -183,7 +183,7 @@ export default function SignIn() {
               lightColor={Colors.light.icon}
               darkColor={Colors.dark.icon}
             >
-              Don&apos;t have an account?{' '}
+              Don't have an account?
             </ThemedText>
             <TouchableOpacity onPress={() => router.replace('/createaccount')}>
               <ThemedText
