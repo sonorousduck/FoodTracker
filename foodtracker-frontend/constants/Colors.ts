@@ -17,6 +17,7 @@ export const Colors = {
     modal: '#FFFFFF',
     modalSecondary: '#E7E8E9',
     card: '#FFFFFF',
+    danger: '#ed5249'
   },
   dark: {
     text: '#ECEDEE',
@@ -28,5 +29,6 @@ export const Colors = {
     modal: '#1E1E1E',
     modalSecondary: 'rgba(255, 255, 255, 0.3)',
     card: '#1E1E1E',
+    danger: '#ed5249'
   },
 };
