@@ -24,7 +24,7 @@ import { Food } from '@/types/food/food';
 import { FoodEntry } from '@/types/foodentry/foodentry';
 import { MealType } from '@/types/foodentry/updatefoodentry';
 import { Recipe } from '@/types/recipe/recipe';
-import { HeaderHeightContext } from '@react-navigation/elements';
+import { HeaderHeightContext } from "expo-router/react-navigation";
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   useCallback,

@@ -1,8 +1,8 @@
 import { fireEvent, render } from "@testing-library/react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer } from "expo-router/react-navigation";
 import { HapticTab } from "../HapticTab";
 import * as Haptics from "expo-haptics";
-import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import type { BottomTabBarButtonProps } from "expo-router/js-tabs";
 import { Platform } from "react-native";
 
 const createProps = (

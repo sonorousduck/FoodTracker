@@ -56,7 +56,10 @@
           "organization": "sonorousduck"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      "@react-native-community/datetimepicker",
+      "expo-image",
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

@@ -9,7 +9,7 @@ import { createFoodEntry } from '@/lib/api/foodentry';
 import { CreateFoodDto } from '@/types/food/createfood';
 import { Food } from '@/types/food/food';
 import { MealType } from '@/types/foodentry/updatefoodentry';
-import { HeaderHeightContext } from '@react-navigation/elements';
+import { HeaderHeightContext } from "expo-router/react-navigation";
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useContext, useMemo, useState } from 'react';
 import {
