@@ -1,5 +1,7 @@
 # Deployment
 
+Just run `deploy-tmux.sh` and that will do all the steps
+
 If I make updates, I can re-run everything by
 
 ### Backend
@@ -11,6 +13,10 @@ If I make updates, I can re-run everything by
 
 `npx expo export --platform web` to rebuild for web
 `npx serve dist -l 7776` to serve from the right port
+
+### Docker
+
+`docker compose up` to start the docker container that needs to be running for elasticsearch
 
 #### App
 
