@@ -1,7 +1,7 @@
+import CalorieProgress from '@/components/calorieprogress';
 import {
   getEntryCalories,
 } from '@/components/foodentry/foodentry-utils';
-import CalorieProgress from '@/components/calorieprogress';
 import ThemedText from '@/components/themedtext';
 import WeightCardDisplay from '@/components/weightcarddisplay';
 import { Colors } from '@/constants/Colors';
@@ -17,6 +17,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { Card, Snackbar } from 'react-native-paper';
 import {
   SafeAreaView,
@@ -125,6 +126,7 @@ export default function Tab() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
       <Card mode="elevated" style={styles.calorieCard}>
         <View style={styles.calorieCardContent}>
         <ThemedText style={styles.cardTitle}>Daily Calories</ThemedText>
@@ -183,6 +185,7 @@ export default function Tab() {
           {toastEmoji} {toastText}
         </ThemedText>
       </Snackbar>
+</ScrollView>
     </SafeAreaView>
   );
 }
@@ -190,8 +193,13 @@ export default function Tab() {
 const styles = StyleSheet.create({
   container: {
     display: 'flex',
+    flex: 1,
+    padding: 8,
+  },
+  scrollContent: {
     gap: 8,
     padding: 8,
+    paddingBottom: 24
   },
   calorieCard: {
     alignSelf: 'center',
